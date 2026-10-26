@@ -1,7 +1,7 @@
 {
-  "name": "Shelfswap",
-  "short_name": "Shelfswap",
-  "description": "Trade the books you've finished for the ones you want next.",
+  "name": "Shelf Swap",
+  "short_name": "Shelf Swap",
+  "description": "Turn the books you've finished into credits for your next read.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

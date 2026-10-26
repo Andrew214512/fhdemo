@@ -1,5 +1,5 @@
 // Caches the app shell so Shelfswap opens offline once installed.
-const CACHE = "shelfswap-v1";
+const CACHE = "shelfswap-v2";
 const SHELL = ["./", "index.html", "app.css", "app.js", "icon.svg", "manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {

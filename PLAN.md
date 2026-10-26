@@ -1,121 +1,140 @@
-# Shelfswap — product plan
+# Shelf Swap: product plan
 
-Working name: **Shelfswap**. Other options: *Dog-Ear*, *Spine Swap*, *Swapshelf*, *Library Trader*. Check trademarks and app-store names before you commit to one.
+**Your bookshelf is full of books someone else wants. Shelf Swap helps you turn them into your next great read.**
 
-**What it is:** a one-for-one book trading app. You list books you've finished, keep a wishlist, and trade a book for a book. Shelfswap charges a **$1 fee per person per trade**, and each person pays for their own shipping label.
+Readers scan their books into a personal library, send books other readers request, and earn **book credits** they can spend on any available book. Shelf Swap runs the marketplace. It doesn't own inventory or pay for shipping.
 
 ---
 
-## 1. Lessons from Poshmark
+## 1. Decisions so far
 
-| Poshmark does | What we copy | What changes for trades |
-|---|---|---|
-| Sends a prepaid shipping label, so tracking is automatic | **We generate both labels.** Nobody types in a tracking number; the first carrier scan tells us the book shipped | There are two shipments, one in each direction |
-| Seller has 7 days to ship, or the buyer can cancel | **3-day ship window** after a trade is accepted | Both people have to ship, so we need a guarantee that covers whoever doesn't |
-| Buyer has 3 days after delivery to accept or open a case | **2 days after delivery** to confirm "as described" or report a problem. If you do nothing, it auto-confirms | Each person confirms the book they received |
-| Holds the money until the buyer accepts | **Guarantee hold** on each person's card (see §3) | No money goes from one trader to the other |
-| Offers are binding (payment is taken when you offer) | Card is authorized when you send an offer, charged when it's accepted | Offers expire after 48 hours |
-| Closet, likes, "price drop" alerts | **Library** (Up for trade / Keeping / Wishlist) and **match alerts** | Matching is two-sided: "they have what you want *and* you have what they want" |
-
-## 2. Core objects
-
-- **Book**: one edition, found by ISBN (Open Library or Google Books API). The ISBN barcode can be scanned with the phone camera.
-- **Copy (listing)**: your physical copy. It records the shelf (Up for trade / Keeping), condition, format (hardcover/paperback), flags, and 1–4 photos.
-- **Wishlist entry**: a book you want, with an optional minimum condition ("Very Good or better").
-- **Trade**: two copies, two people, and a status (below).
-
-### Condition scale (same as AbeBooks/Amazon so people already know it)
-
-| Grade | Meaning |
+| Topic | Decision |
 |---|---|
-| New | Unread, no marks |
-| Like New | Read once, no creases or marks |
-| Very Good | Light shelf wear, spine intact, no writing |
-| Good | Visible wear, spine creases, any notes must be disclosed |
-| Acceptable | Heavy wear, but complete and readable |
+| Exchange model | **Credits, not direct swaps.** Send a book, earn 1 credit. Spend 1 credit on any book from anyone. Nobody needs to want the other person's book |
+| Fees | $1 to send + $1 to receive (pricing experiment B: recipient pays $2, sender $0) |
+| How fees are paid | Prepaid **fee balance**, topped up $5 or more at a time, so card processing doesn't eat a third of each $1 |
+| Deposit | **None.** The earlier $8 hold protected direct swaps. With credits, a recipient who never gets their book just has the credit returned |
+| Shipping | Sender buys postage (USPS Media Mail suggested) and **enters tracking**. Shelf Swap checks tracking automatically. In-app labels come later |
+| When credits settle | When tracking shows delivered **and** the recipient confirms, or 2 days after delivery with no problem reported |
+| Welcome credit | 1 credit after listing **3 available books** and adding a card. Logged separately so it can be measured or switched off |
+| Region | US only (50 states + DC) |
+| Navigation | Discover · My Shelf (Available / Not available / Wishlist) · **Scan** · **Exchanges** · Profile. Credit balance and alerts sit in the header |
 
-**Flags:** highlighting/notes, dust jacket included, ex-library, signed, smoke-free home. Photos are required for Good and Acceptable.
+## 2. Data model
 
-## 3. Trade lifecycle
+Credits are never treated as dollars, and balances are never stored as a single editable number.
 
-```
-Offer ──48h──▶ Accepted ──3 days──▶ Both shipped ──▶ Both delivered ──2 days──▶ Complete ──▶ Rate each other
-  │  │                    │
-  │  └ Countered          └ Someone misses the ship window ──▶ Cancelled (guarantee applies)
-  └ Declined / Expired
-```
+| Table | What it is | Key rules |
+|---|---|---|
+| **books** | Canonical metadata, keyed by ISBN (Open Library, Google Books fallback) | One row per edition |
+| **copies** | A physical book a user owns: condition, format, flags, photos | Ownership moves to the recipient when an exchange completes |
+| **listings** | A copy that's open for requests (`opened_at`, `closed_at`) | At most one open listing per copy |
+| **requests** | A reader asking for a listing. Status: pending, accepted, declined, expired, withdrawn | One pending request per reader per listing |
+| **exchanges** | Fulfillment of an accepted request: ship-by date, carrier, tracking, delivered, confirmed. Status: accepted, shipped, delivered, disputed, complete, cancelled | **At most one active exchange per copy** (database unique index on `copy_id` where status is active) |
+| **credit_entries** | Append-only ledger: grant, reserve, release, spend, earn, reverse. Each moves exactly 1 credit | Never updated or deleted. Balances are computed from it |
+| **payments** | Real money: fee-balance top-ups (Stripe charges) and captured fees | Fees are captured only when an exchange completes |
 
-**Money at each step (per person):**
+### Credit entries
 
-| Step | Charged | Held | Released |
+| Entry | When | Available | Reserved |
 |---|---|---|---|
-| Send offer | — | $1 fee + label (~$4.50) + guarantee | — |
-| Offer accepted | $1 fee + label | Guarantee stays held | — |
-| Your book's first carrier scan | — | — | **Guarantee released** |
-| You miss the 3-day window | **Guarantee charged**, paid to your partner as credit | — | Partner's fee refunded |
-| Offer declined or expired | — | — | Everything released |
+| grant | Welcome credit unlocked | +1 | |
+| reserve | Reader sends a request | −1 | +1 |
+| release | Request declined, expired, withdrawn, or exchange cancelled | +1 | −1 |
+| spend | Exchange completes (recipient side) | | −1 |
+| earn | Exchange completes (sender side) | +1 | |
+| reverse | A completed exchange is overturned later | −1 | |
 
-The **guarantee** is a flat **$8** card hold on each person, whatever the book. It ends the "what if they don't ship" problem: shipping is the only way to get the hold released.
+**"Pending"** in the wallet is not a ledger entry. It counts books you've shipped that haven't completed yet. They aren't spendable, so marking a book as shipped never creates credit.
 
-### Edge cases
+### Safeguards
 
-| Case | What happens |
-|---|---|
-| Partner never ships | Day 2: reminder push. Day 3: trade cancelled, partner's guarantee goes to you as credit, your fee is refunded, partner gets a strike. If your book is already moving, we issue a return label charged to them |
-| Neither ships | Cancelled, both holds released, both get a strike |
-| Book isn't as described | "Report a problem" within 2 days, with photos. If upheld, the other person pays for a return label and gets a strike |
-| Lost or damaged in the mail | Label insurance covers it (Shippo/EasyPost add-on). You get credit for the book's value |
-| A book is in two offers | Accepting one auto-declines the others for that copy |
-| Someone cancels after accepting | Treated as missing the window |
-| 3 strikes in 6 months | Account paused, so bad actors can't build up a history |
-| New users | Card on file and a verified address before the first offer. Limit 2 open trades until the first one completes |
+- **No double-spending:** a request can only be created when available ≥ 1. The check and the reserve entry happen in one database transaction, with a row lock on the user.
+- **No duplicate awards:** unique index on `(user_id, request_id, type)` for reserve, release, spend, earn and reverse. Release and spend are mutually exclusive per request.
+- **No unavailable requests:** a request needs an open listing whose copy isn't in an active exchange. Accepting one request auto-declines the others for that copy.
+- **Payments follow status:** a fee is set aside when a request is made (recipient) or accepted (sender), and only captured when the exchange completes.
 
-## 4. Notifications
+The prototype in this repo uses exactly these records and rules (`app.js`), so it can be ported table for table.
 
-| Trigger | Channel |
-|---|---|
-| Someone lists a book on your wishlist (**match**) | Push + daily digest email |
-| Two-way match ("Maya has *Pachinko* and wants *Circe*") | Push, top of Discover |
-| You receive an offer or counter | Push + email |
-| Offer accepted (time to ship) | Push + email with label PDF |
-| 24 hours left to ship | Push |
-| Partner shipped / book delivered | Push |
-| Confirm or report (auto-confirm in 24h) | Push |
+## 3. Exchange lifecycle
 
-On iPhone, web push only works after the user adds the PWA to the home screen (iOS 16.4+). The app should prompt for this after the first trade, when the user has a reason to say yes.
+```
+Requested ─48h─▶ Accepted ─3 days─▶ Shipped ─▶ Delivered ─2 days─▶ Complete
+    │                │                  │            │               (spend + earn + fees)
+    │                │                  │            └─ Problem reported ─▶ Support decides
+    │                │                  └─ No delivery in 10 days ─▶ Cancelled (lost)
+    │                └─ No tracking in 3 days ─▶ Cancelled + sender strike
+    └─ Declined / expired / withdrawn ─▶ Credit released
+```
 
-## 5. Services to integrate
-
-| Need | Recommended | Why |
+| Situation | Recipient | Sender |
 |---|---|---|
-| **Payments** | **Stripe** (Payment Element + Apple Pay/Google Pay) | Save card with SetupIntent; charge the fee and label; use a *manual-capture* PaymentIntent for the guarantee hold. A Stripe card hold lasts 7 days, which covers 48h offer + 3-day ship window |
-| Payouts to users? | **Not needed** | Penalties are paid out as Shelfswap credit, not cash. That means no Stripe Connect, no identity checks for payouts, and no money-transmitter questions. Check this with a lawyer before launch |
-| **Shipping labels + tracking** | **Shippo** or **EasyPost** | Buy USPS **Media Mail** labels (~$4–5 for one book), get tracking webhooks (shipped/delivered), add insurance |
-| **Address** | Shippo/EasyPost address validation + Google Places autocomplete | Addresses are **never shown to the other trader**; they only appear on the label |
-| Book data + covers | Open Library (free), Google Books as fallback | ISBN lookup, covers, authors |
-| Barcode scan | Browser `BarcodeDetector`, with ZXing as fallback | Scan the ISBN on the back cover |
-| Accounts, database, photo storage | **Supabase** (Postgres + Auth + Storage + Edge Functions) | One service, generous free tier, runs the Stripe/Shippo webhooks |
-| Push | Web Push (VAPID) through the service worker | Works in a PWA without app stores |
-| Email | Resend or Postmark | Offers, labels, receipts |
-| Sales tax on the $1 fee | Stripe Tax | Some states tax service fees |
+| Completes normally | Credit spent, $1 fee | +1 credit, $1 fee |
+| Owner declines or doesn't answer in 48h | Credit released | Nothing |
+| Sender doesn't ship in 3 days | Credit released, nothing charged | Strike |
+| Lost in the mail (10 days, no delivery) | Credit released | No credit. Insurance claim is theirs |
+| Book doesn't match listing, upheld | Credit released, no fee | No credit, strike |
+| Problem reported, rejected | Completes normally | Completes normally |
+| 3 strikes in 6 months | | Requests and listings paused |
 
-**Unit economics (one trade):** each person pays $1 + ~$4.50 label = ~$5.50. Stripe takes ~2.9% + 30¢ per charge, which would eat a third of a $1 fee. Charge the fee and the label together as one payment so the 30¢ only applies once. Shelfswap nets roughly **$0.55 per person per trade**. Fixes for later: a $2 fee, or prepaid "trade credits" (buy 5 trades for $5) to cut card fees.
+## 4. Fees and unit economics
 
-**Media Mail rules:** books only, nothing promotional inside the package, and it's slower (2–8 days). Tell users this when they create the label.
+Default pricing: **$1 to send, $1 to receive.** Senders also pay postage (~$4–5 with Media Mail).
 
-## 6. Build phases
+| Per completed exchange | Amount |
+|---|---|
+| Platform fees | $2.00 |
+| Card cost if each $1 were charged separately | ~$0.66 (2 × 30¢ + 2.9%) |
+| Card cost with $5 top-ups (each covers 5 fees) | ~$0.18 per exchange, about $0.09 per fee |
 
-1. **Clickable prototype (this repo):** PWA, fake data, a demo panel to fast-forward time and simulate the other trader.
-2. **MVP:** Supabase auth and database, ISBN lookup, Stripe test mode, Shippo test labels, web push. US only.
-3. **Launch:** strikes and disputes admin view, insurance, ratings, two-way match feed.
-4. **Later:** 2-for-1 trades, local meetup trades (no shipping, no label fee), book clubs and shared shelves, "trade circles" (A→B→C→A).
+**Pricing experiment B:** recipient pays $2, sender pays $0. Same revenue, and it may make it easier to get people to list books. The demo panel switches between the two. Each request records the pricing it was made under.
 
-## 7. Decisions
+The wallet should feel like a library card, not a bank account. Credits can't be bought, cashed out or transferred, and they don't expire.
 
-- **Fee:** $1 from each person, per trade.
-- **Guarantee:** flat $8 hold per person, released at the first carrier scan.
-- **Region:** US only (50 states + DC). Addresses outside the US are rejected at signup.
+## 5. Screens (prototype status)
 
-### Still open
+| Screen | What's there |
+|---|---|
+| Onboarding | Name and photo, favorite genres, a few wanted books, then List → Earn → Discover → Request |
+| Discover | Search (title, author, ISBN), welcome-credit progress, wishlist matches, Trending, Recently listed, genre/condition/availability filters |
+| Book page | Condition, owner, and the cost: **1 credit + $1 fee**, who ships and how |
+| Request | Credit check, address confirmation, fee from balance, reserve |
+| My Shelf | Available / Not available / Wishlist. Per-copy condition, format, flags, availability toggle |
+| Scan | Viewfinder (real camera on supported phones, simulated elsewhere), default condition, rapid add, quick condition fixes, title/ISBN search with Open Library lookup |
+| Exchanges | To send / Coming to me / History. Step tracker, ship-by stamp, tracking entry, confirm or report, ratings |
+| Wallet | Available / reserved / pending, credit history, fee balance and top-ups |
+| Profile | Address (US), card, fees, strikes, help |
+| Demo panel | Plays other readers, moves the clock, decides disputes, switches pricing, shows a small business view |
 
-- Allow uneven trades (hardcover for paperback), or only match on condition?
+## 6. Real backend (next phase)
+
+| Need | Recommended |
+|---|---|
+| Accounts, database, photo storage, scheduled jobs | **Supabase** (Postgres + Auth + Storage + Edge Functions + cron) |
+| Fee-balance top-ups, saved cards | **Stripe** (Payment Element, Apple Pay, Google Pay). No Stripe Connect needed, since no money is paid out to users |
+| Tracking checks | **EasyPost** or **Shippo** tracking API (works with any carrier's number), then label purchase later |
+| Address validation | EasyPost/Shippo, plus Google Places autocomplete |
+| Book metadata and ISBN scan | Open Library + Google Books. `BarcodeDetector` on Android, ZXing fallback on iPhone |
+| Alerts | Web Push (iPhone needs the app added to the home screen) + email via Resend or Postmark |
+| Analytics | PostHog, for the metrics below |
+
+Timers (48h accept, 3-day ship, 2-day confirm, 10-day lost) run as an hourly scheduled job, the same way the prototype's `tick()` does.
+
+## 7. Metrics
+
+**North star: completed exchanges per monthly active user.**
+
+| Supply | Demand and fulfillment | Business |
+|---|---|---|
+| Books listed per active user | % of listings that get a request | Revenue per completed exchange |
+| Time from listing to first request | % of requests that complete | Card processing cost per exchange |
+| Books shipped per active user | Time from request to delivery | Customer acquisition cost |
+| | Repeat exchanges per user | Contribution margin per exchange |
+| | Welcome credits granted vs. credits earned | |
+
+## 8. Still open
+
+- Uneven trades: should a hardcover cost more than 1 credit? (MVP: 1 book = 1 credit.)
+- Photos: required for every listing, or only Good and Acceptable?
+- Welcome credit experiment: what result would make it permanent?
+- When to add in-app shipping labels (and whether to mark them up).
