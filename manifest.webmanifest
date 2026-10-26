@@ -1,0 +1,13 @@
+{
+  "name": "Shelfswap",
+  "short_name": "Shelfswap",
+  "description": "Trade the books you've finished for the ones you want next.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eef2ee",
+  "theme_color": "#1d5a42",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
