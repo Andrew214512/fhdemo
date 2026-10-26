@@ -55,7 +55,7 @@ Offer ──48h──▶ Accepted ──3 days──▶ Both shipped ──▶ B
 | You miss the 3-day window | **Guarantee charged**, paid to your partner as credit | — | Partner's fee refunded |
 | Offer declined or expired | — | — | Everything released |
 
-The **guarantee** is a card hold sized to the book's value (about $4–12, based on condition and used-market price). It ends the "what if they don't ship" problem: shipping is the only way to get the hold released.
+The **guarantee** is a flat **$8** card hold on each person, whatever the book. It ends the "what if they don't ship" problem: shipping is the only way to get the hold released.
 
 ### Edge cases
 
@@ -110,9 +110,12 @@ On iPhone, web push only works after the user adds the PWA to the home screen (i
 3. **Launch:** strikes and disputes admin view, insurance, ratings, two-way match feed.
 4. **Later:** 2-for-1 trades, local meetup trades (no shipping, no label fee), book clubs and shared shelves, "trade circles" (A→B→C→A).
 
-## 7. Open questions for you
+## 7. Decisions
 
-- Is the $1 fee per person, or $1 total split 50¢/50¢?
-- Should the guarantee be a fixed amount ($8) or based on the book's market value?
+- **Fee:** $1 from each person, per trade.
+- **Guarantee:** flat $8 hold per person, released at the first carrier scan.
+- **Region:** US only (50 states + DC). Addresses outside the US are rejected at signup.
+
+### Still open
+
 - Allow uneven trades (hardcover for paperback), or only match on condition?
-- US only at launch? (International shipping costs more than most books.)

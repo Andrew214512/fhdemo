@@ -9,17 +9,19 @@
   const FEE = 1;
   const LABEL = 4.49;
   const OFFER_TTL = 2 * DAY;
+  const HOLD = 8; // flat guarantee deposit per person, per trade
   const SHIP_WINDOW = 3 * DAY;
   const CONFIRM_WINDOW = 2 * DAY;
   const STORE_KEY = "shelfswap-demo-v1";
 
   const CONDITIONS = [
-    { id: "new", label: "New", short: "NEW", hold: 12, desc: "Unread. No marks, no wear." },
-    { id: "ln", label: "Like New", short: "LIKE NEW", hold: 10, desc: "Read once. No creases, no marks." },
-    { id: "vg", label: "Very Good", short: "V. GOOD", hold: 8, desc: "Light shelf wear. Spine intact, no writing." },
-    { id: "good", label: "Good", short: "GOOD", hold: 6, desc: "Visible wear or spine creases. Any notes disclosed." },
-    { id: "acc", label: "Acceptable", short: "ACCEPT.", hold: 4, desc: "Heavy wear, but complete and readable." },
+    { id: "new", label: "New", short: "NEW", desc: "Unread. No marks, no wear." },
+    { id: "ln", label: "Like New", short: "LIKE NEW", desc: "Read once. No creases, no marks." },
+    { id: "vg", label: "Very Good", short: "V. GOOD", desc: "Light shelf wear. Spine intact, no writing." },
+    { id: "good", label: "Good", short: "GOOD", desc: "Visible wear or spine creases. Any notes disclosed." },
+    { id: "acc", label: "Acceptable", short: "ACCEPT.", desc: "Heavy wear, but complete and readable." },
   ];
+  const US_STATES = "AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY".split(" ");
   const FLAGS = ["Highlighting or notes", "Dust jacket included", "Ex-library", "Signed", "Smoke-free home"];
   const COND = Object.fromEntries(CONDITIONS.map((c) => [c.id, c]));
 
@@ -172,10 +174,6 @@
   };
   const myBook = (t) => bookOf(myListing(t), t, t.from === "me" ? "give" : "get");
   const theirBook = (t) => bookOf(theirListing(t), t, t.from === "me" ? "get" : "give");
-  const holdFor = (lid) => {
-    const l = listing(lid);
-    return l ? COND[l.cond].hold : 8;
-  };
   const onWishlist = (bookId) => S.wishlist.me.includes(bookId);
   const busy = (lid) => S.trades.some((t) => ["shipping", "delivered"].includes(t.status) && (t.give === lid || t.get === lid));
 
@@ -326,11 +324,11 @@
               t.outcome = "Neither of you shipped in 3 days. Holds released, fees refunded, and both accounts got a strike.";
               S.me.strikes++;
             } else if (theyMissed) {
-              const hold = holdFor(theirListing(t));
+              const hold = HOLD;
               S.me.credit += hold + FEE;
               t.outcome = first(p) + " didn't ship in time. Their " + money(hold) + " guarantee and your " + money(FEE) + " fee were added to your Shelfswap credit. A prepaid return label, charged to " + first(p) + ", brings your book back.";
             } else {
-              const hold = holdFor(myListing(t));
+              const hold = HOLD;
               S.me.strikes++;
               t.outcome = "You didn't ship in time. Your " + money(hold) + " guarantee hold was charged and paid to " + first(p) + " as credit. Your account got a strike (3 in 6 months pauses trading).";
             }
@@ -559,6 +557,7 @@
             <div><span class="k">Card</span><span class="v">${esc(S.me.card.brand)} ending ${esc(S.me.card.last4)}</span></div>
             <div><span class="k">Trade fee</span><span class="v">${money(FEE)} per trade</span></div>
             <div><span class="k">Shipping</span><span class="v">USPS Media Mail, about ${money(LABEL)}</span></div>
+            <div><span class="k">Guarantee hold</span><span class="v">${money(HOLD)}, released when you ship</span></div>
           </div>
           <p class="lede">Payments in the real app go through Stripe. This demo charges nothing.</p>
         </div>
@@ -627,7 +626,7 @@
   }
 
   function feeLedger(giveLid, note) {
-    const hold = holdFor(giveLid);
+    const hold = HOLD;
     return `<dl class="ledger">
       <div><dt>Shelfswap fee</dt><dd>${money(FEE)}</dd></div>
       <div><dt>USPS Media Mail label</dt><dd>${money(LABEL)}</dd></div>
@@ -703,7 +702,7 @@
         <button class="btn danger" data-act="withdraw" data-id="${t.id}">Withdraw offer</button>`;
     } else if (t.status === "shipping") {
       const meShipped = t.ship.me.shippedAt;
-      main = `${!meShipped ? `<div class="row"><div class="grow"><strong>Ship ${esc(myBook(t).title)}</strong><p class="lede">${left(t.shipBy)} left. Miss it and your ${money(holdFor(myListing(t)))} guarantee goes to ${esc(first(p))}.</p></div>${stampHTML(t.shipBy)}</div>` : ""}
+      main = `${!meShipped ? `<div class="row"><div class="grow"><strong>Ship ${esc(myBook(t).title)}</strong><p class="lede">${left(t.shipBy)} left. Miss it and your ${money(HOLD)} guarantee goes to ${esc(first(p))}.</p></div>${stampHTML(t.shipBy)}</div>` : ""}
         ${lanes(t)}
         ${!meShipped ? `<div class="btns"><button class="btn primary" data-act="label" data-id="${t.id}">Show shipping label</button></div>
           <button class="btn ghost" data-act="myShip" data-id="${t.id}">Demo: USPS scans my package</button>
@@ -804,10 +803,10 @@
       <div class="field"><label for="a-line1">Street address</label><input id="a-line1" name="line1" value="${esc(a.line1)}" required autocomplete="address-line1"></div>
       <div class="fields-2">
         <div class="field"><label for="a-city">City</label><input id="a-city" name="city" value="${esc(a.city)}" required autocomplete="address-level2"></div>
-        <div class="field"><label for="a-state">State</label><input id="a-state" name="state" value="${esc(a.state)}" required maxlength="2" autocomplete="address-level1"></div>
+        <div class="field"><label for="a-state">State</label><select id="a-state" name="state" required autocomplete="address-level1">${US_STATES.map((st) => `<option ${st === a.state ? "selected" : ""}>${st}</option>`).join("")}</select></div>
         <div class="field"><label for="a-zip">ZIP</label><input id="a-zip" name="zip" value="${esc(a.zip)}" required inputmode="numeric" pattern="[0-9]{5}" autocomplete="postal-code"></div>
       </div>
-      <p class="lede">The real app checks this with USPS address validation before you can trade.</p>
+      <p class="lede">Shelfswap ships within the US only. The real app checks this address with USPS before you can trade.</p>
       <button class="btn primary" type="submit">Save address</button>
     </form>`;
   }
@@ -815,7 +814,7 @@
   function sheetHow() {
     const steps = [
       ["Offer", "Pick a book of yours for a book of theirs. Your card is authorized, not charged. Offers last 48 hours."],
-      ["Accept", "Both of you pay the $1 fee and a USPS Media Mail label (about $4.49). Each card also gets a small guarantee hold."],
+      ["Accept", "Both of you pay the $1 fee and a USPS Media Mail label (about $4.49). Each card also gets an $8 guarantee hold."],
       ["Ship within 3 days", "Drop your book off. The first USPS scan releases your guarantee hold. If one person doesn't ship, their hold goes to the other person as credit."],
       ["Confirm", "When your book arrives you have 2 days to say it looks right or report a problem. After that it confirms on its own."],
       ["Rate", "Rate each other. Ratings and strikes keep the shelf honest."],
@@ -825,8 +824,8 @@
   }
 
   function sheetConditions() {
-    return `<div class="kv">${CONDITIONS.map((c) => `<div><span class="k"><strong style="color:var(--ink)">${c.label}</strong><br>${c.desc}</span><span class="v cond">${money(c.hold)} hold</span></div>`).join("")}</div>
-      <p class="lede">The guarantee hold is sized to the copy's condition. You only lose it if you don't ship.</p>`;
+    return `<div class="kv">${CONDITIONS.map((c) => `<div><span class="k"><strong style="color:var(--ink)">${c.label}</strong><br>${c.desc}</span></div>`).join("")}</div>
+      <p class="lede">Grade honestly. If a book arrives worse than its grade, the sender pays for the return label and gets a strike.</p>`;
   }
 
   function sheetDemo() {
@@ -1190,7 +1189,7 @@
     if (e.target.id !== "addrForm") return;
     e.preventDefault();
     const f = new FormData(e.target);
-    S.me.address = { name: f.get("name"), line1: f.get("line1"), city: f.get("city"), state: String(f.get("state")).toUpperCase(), zip: f.get("zip") };
+    S.me.address = { name: f.get("name"), line1: f.get("line1"), city: f.get("city"), state: f.get("state"), zip: f.get("zip") };
     closeSheet();
     commit("Address saved");
   });
