@@ -73,17 +73,52 @@
     ["b29", "Book Lovers", "Emily Henry", 2022, "9780593334836", "#ffe58f", "#2b4a3a", 4, 4],
     ["b30", "Sapiens", "Yuval Noah Harari", 2015, "9780062316097", "#f4efe6", "#c0392b", 2, 5],
   ].map(([id, title, author, year, isbn, bg, fg, jacket, g]) => ({ id, title, author, year, isbn, bg, fg, jacket, genre: GENRES[g] }));
+  // "About this book" notes for the demo catalog. Like the live ones (supabase/functions/book-summary),
+  // they're AI-written in their own words from the title and author: no quotes, no publisher copy, no spoilers.
+  const SUMMARIES = {
+    b1: "Two childhood friends reunite in college and start designing video games together, building a celebrated studio over the next thirty years. A story about creative partnership, friendship and the worlds people make to get through the one they're in.",
+    b2: "A science teacher wakes up alone on a spaceship with no memory of how he got there, and slowly works out that he may be Earth's last hope. A funny, puzzle-driven space adventure built on real science.",
+    b3: "The daughter of the sun god Helios is exiled to an island for practicing witchcraft, where she crosses paths with gods, monsters and heroes of Greek myth. A lyrical retelling that gives a sidelined figure her own voice.",
+    b4: "Nine strangers, each changed by an encounter with trees, are drawn together to defend America's last old-growth forests. An ambitious, sweeping novel about people, nature and time.",
+    b5: "A man lives in a vast house of endless halls, statues and tidal waters, keeping careful journals of everything he finds. A strange, quietly gripping puzzle of a novel that's best started knowing little.",
+    b6: "After a pandemic collapses civilization, a traveling company of actors and musicians performs Shakespeare for scattered settlements. Moving between before and after, it's a hopeful story about art, memory and what's worth saving.",
+    b7: "An envoy is sent to an icy planet whose people have no fixed sex, hoping to bring it into contact with other worlds. A classic of thoughtful science fiction about politics, trust and gender.",
+    b8: "In the early 1960s, a brilliant chemist pushed out of her lab ends up hosting a TV cooking show and teaching science to the women watching. Witty and warm, with a sharp eye for sexism in science.",
+    b9: "A saga following four generations of a Korean family who move to Japan in the early twentieth century and face discrimination and hard choices. Big, absorbing and deeply humane.",
+    b10: "A boy born to a teenage mother in rural Appalachia tells his own story of foster care, hard work and the opioid crisis. A modern reimagining of Dickens's David Copperfield, full of voice and humor.",
+    b11: "Klara, an Artificial Friend with remarkable powers of observation, watches the world from a store window and hopes to be chosen by a child. A gentle, unsettling novel about love and what makes us human.",
+    b12: "In 1830s Oxford, a boy brought from Canton trains at a translation institute whose silver-working magic powers the British Empire. A dark academic fantasy about language, empire and revolution.",
+    b13: "The story of the Greek hero Achilles told by Patroclus, the exiled prince who becomes his closest companion. A tender, intense retelling of the Iliad as a love story.",
+    b14: "A strange moment in a forest in 1912 links lives across centuries, from a writer on a book tour to an investigator from a moon colony. A short, inventive novel about time and connection.",
+    b15: "A memoir of growing up in a survivalist family in rural Idaho without schooling, and teaching herself enough to reach college and beyond. A gripping story about family, loyalty and the cost of an education.",
+    b16: "A widow who cleans an aquarium at night strikes up an unlikely friendship with a grumpy, very clever giant Pacific octopus. A cozy, heartfelt story about grief and second chances.",
+    b17: "An aging English butler takes a rare road trip in 1956 and looks back on decades of service at a great house. A quiet, devastating novel about duty, dignity and what goes unsaid.",
+    b18: "Two teenagers from very different backgrounds in a small Irish town drift together and apart through school and university. A closely observed story about class, intimacy and growing up.",
+    b19: "Between life and death, a woman finds a library where every book lets her try another version of her life. An uplifting, easy read about regret and what makes a life worth living.",
+    b20: "In 1922, a Russian count is sentenced to house arrest in a grand Moscow hotel and builds a whole life within its walls. Charming, witty and warm.",
+    b21: "A reimagining of Shakespeare's family in 1580s Stratford, centered on his wife and their children. A luminous novel about love and loss.",
+    b22: "A legendary figure, now living quietly as an innkeeper, tells the true story of his life, from a childhood with traveling performers to a university of magic. Immersive, richly told epic fantasy.",
+    b23: "After the Civil War, a woman who escaped slavery lives in Ohio in a house haunted by her past. A powerful novel about memory, love and the legacy of slavery.",
+    b24: "A botanist and member of the Citizen Potawatomi Nation weaves together science, Indigenous knowledge and personal stories about plants. Essays about gratitude and our relationship with the living world.",
+    b25: "A noble family takes over the desert planet that is the only source of the most valuable substance in the universe, and their son is drawn into its politics and prophecy. A landmark of science fiction.",
+    b26: "Four friends in a retirement village meet every week to look into unsolved murders, until a real one happens on their doorstep. A funny, cozy mystery.",
+    b27: "On their fifth wedding anniversary a woman disappears, and suspicion falls on her husband. A twisty psychological thriller about marriage and the stories couples tell.",
+    b28: "Two writers with writer's block, one of romance and one of literary fiction, end up as summer neighbors and agree to swap genres. A smart, funny romance with real emotional weight.",
+    b29: "A cutthroat literary agent spends a summer in a small North Carolina town and keeps running into an editor she can't stand. A witty romance that plays with small-town love story clichés.",
+    b30: "A brief history of humankind, from early humans to the present, told through the big revolutions in thought, farming and science. Big-picture nonfiction built to spark debate.",
+  };
+  CATALOG.forEach((b) => { b.summary = SUMMARIES[b.id]; });
   const CATALOG_BY_ID = Object.fromEntries(CATALOG.map((b) => [b.id, b]));
   // Jacket colors for real books that don't come with a cover image.
   const PALETTE = [["#9fd8cb", "#1d4a44"], ["#ffb48a", "#3a1d0f"], ["#ffd36e", "#2a1f17"], ["#c8d58e", "#2c3a12"], ["#d8c8f2", "#2e2350"], ["#f8c6bd", "#5a2018"], ["#a9d4f0", "#1d3550"], ["#3d4a6b", "#ffd36e"]];
 
   const DEMO_USERS = {
     me: { id: "me", name: "Andrew P.", handle: "andrew.p", city: "Brooklyn, NY", rating: 5.0 },
-    maya: { id: "maya", name: "Maya R.", handle: "mayareads", city: "Portland, OR", rating: 4.9 },
-    jonah: { id: "jonah", name: "Jonah B.", handle: "jonahbinds", city: "Austin, TX", rating: 4.7 },
-    priya: { id: "priya", name: "Priya S.", handle: "priyapages", city: "Chicago, IL", rating: 5.0 },
-    theo: { id: "theo", name: "Theo T.", handle: "theo.t", city: "Denver, CO", rating: 4.8 },
-    sam: { id: "sam", name: "Sam K.", handle: "samshelves", city: "Raleigh, NC", rating: 4.6 },
+    maya: { id: "maya", name: "Maya R.", handle: "mayareads", city: "Portland, OR", rating: 4.9, condRated: 14, condAccurate: 14 },
+    jonah: { id: "jonah", name: "Jonah B.", handle: "jonahbinds", city: "Austin, TX", rating: 4.7, condRated: 9, condAccurate: 8 },
+    priya: { id: "priya", name: "Priya S.", handle: "priyapages", city: "Chicago, IL", rating: 5.0, condRated: 6, condAccurate: 6 },
+    theo: { id: "theo", name: "Theo T.", handle: "theo.t", city: "Denver, CO", rating: 4.8, condRated: 11, condAccurate: 10 },
+    sam: { id: "sam", name: "Sam K.", handle: "samshelves", city: "Raleigh, NC", rating: 4.6, condRated: 7, condAccurate: 7 },
   };
   let USERS = DEMO_USERS;
 
@@ -154,11 +189,17 @@
     C("c38", "sam", "b28", "vg", true);
     C("c40", "jonah", "b3", "good", false);
     C("c42", "priya", "b8", "vg", false);
+    // Copies that changed hands before the demo starts.
+    const H = (id, trips) => { S.copies.find((c) => c.id === id).history = trips.map(([days, listed, received]) => ({ at: t - days * DAY, listed, received })); };
+    H("c20", [[210, "ln", "ln"], [64, "ln", "vg"]]);
+    H("c28", [[120, "good", "acc"]]);
+    H("c30", [[300, "vg", "vg"], [150, "vg", "vg"], [40, "vg", "vg"]]);
+    H("c33", [[80, "vg", "good"]]);
     if (fresh) return S;
 
     const L = (user, type, requestId, at, note) => S.ledger.push({ id: "e" + S.ledger.length, user, type, requestId, at, note });
     const P = (user, kind, amount, at, requestId, note) => S.payments.push({ id: "p" + S.payments.length, user, kind, amount, at, requestId, note });
-    const R = (o) => { S.requests.push(Object.assign({ fees: { sender: 1, recipient: 1 }, log: [] }, o)); };
+    const R = (o) => { S.requests.push(Object.assign({ fees: { sender: 1, recipient: 1 }, log: [], listedCond: S.copies.find((c) => c.id === o.copyId).cond }, o)); };
     const X = (o) => S.exchanges.push(Object.assign({ carrier: "USPS", tracking: null, shippedAt: null, deliveredAt: null, completedAt: null }, o));
 
     P("me", "topup", 10, t - 21 * DAY, null, "Added to fee balance");
@@ -174,13 +215,13 @@
 
     R({ id: "r01", listingId: "lc40x", copyId: "c40", bookId: "b3", sender: "me", recipient: "jonah", at: t - 12 * DAY, status: "accepted",
       log: [{ at: t - 8 * DAY, text: "Jonah confirmed Circe. You earned 1 credit." }] });
-    X({ id: "x01", requestId: "r01", sender: "me", recipient: "jonah", copyId: "c40", status: "complete", acceptedAt: t - 12 * DAY, shipBy: t - 9 * DAY, tracking: "9400111899224410007220", shippedAt: t - 11 * DAY, deliveredAt: t - 9 * DAY, completedAt: t - 8 * DAY, rated: 5 });
+    X({ id: "x01", requestId: "r01", sender: "me", recipient: "jonah", copyId: "c40", status: "complete", acceptedAt: t - 12 * DAY, shipBy: t - 9 * DAY, tracking: "9400111899224410007220", shippedAt: t - 11 * DAY, deliveredAt: t - 9 * DAY, completedAt: t - 8 * DAY, rated: 5, receivedCond: "good" });
     L("me", "earn", "r01", t - 8 * DAY, "Sent Circe to Jonah");
     P("me", "fee", 1, t - 8 * DAY, "r01", "Fee for sending Circe");
 
     R({ id: "r02", listingId: "lc42x", copyId: "c42", bookId: "b8", sender: "me", recipient: "priya", at: t - 9 * DAY, status: "accepted",
       log: [{ at: t - 5 * DAY, text: "Priya confirmed Lessons in Chemistry. You earned 1 credit." }] });
-    X({ id: "x02", requestId: "r02", sender: "me", recipient: "priya", copyId: "c42", status: "complete", acceptedAt: t - 9 * DAY, shipBy: t - 6 * DAY, tracking: "9400111899227781339020", shippedAt: t - 8 * DAY, deliveredAt: t - 6 * DAY, completedAt: t - 5 * DAY, rated: 4 });
+    X({ id: "x02", requestId: "r02", sender: "me", recipient: "priya", copyId: "c42", status: "complete", acceptedAt: t - 9 * DAY, shipBy: t - 6 * DAY, tracking: "9400111899227781339020", shippedAt: t - 8 * DAY, deliveredAt: t - 6 * DAY, completedAt: t - 5 * DAY, rated: 4, receivedCond: "vg" });
     L("me", "earn", "r02", t - 5 * DAY, "Sent Lessons in Chemistry to Priya");
     P("me", "fee", 1, t - 5 * DAY, "r02", "Fee for sending Lessons in Chemistry");
 
@@ -220,6 +261,7 @@
     tab: "discover", shelf: "available", xTab: "ship", q: "", genre: "All", cond: "all", showAll: false,
     sheet: null, sheetEnter: false, toast: null, ob: 0, obActive: false, draft: {}, scanQ: "", scanned: [], searchHits: null,
     defCond: "vg", cam: null, busy: 0, screen: LIVE ? "loading" : "app", otpEmail: null,
+    summaries: {}, // live: isbn → "loading" | "none" while a book's summary is fetched
   };
 
   function load() {
@@ -275,6 +317,40 @@
     const light = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255 > 0.55;
     const set = light ? DEEP_ACCENTS : BRIGHT_ACCENTS;
     return set[(hash(b.isbn || b.title) >>> 3) % set.length];
+  }
+
+  /* ---------------- condition ratings ----------------
+     Each request remembers what condition the copy was listed in. After it arrives, the
+     recipient says what condition it's really in. Every copy keeps that history as it travels,
+     and every sender builds a record of how often books arrived as described. */
+
+  const condRank = (id) => CONDITIONS.findIndex((c) => c.id === id);
+  function condVerdict(received, listed) {
+    const got = "arrived " + COND[received].label;
+    if (!listed) return got;
+    if (condRank(received) < condRank(listed)) return got + ", better than listed";
+    if (received === listed) return got + ", as described";
+    return got + " (listed as " + COND[listed].label + ")";
+  }
+  // Every completed trip of this physical copy: listed as, arrived as. No names.
+  function copyHistory(c) {
+    if (S.live) return c.history || [];
+    const trips = S.exchanges.filter((x) => x.copyId === c.id && x.status === "complete")
+      .map((x) => ({ at: x.completedAt, listed: (req(x.requestId) || {}).listedCond, received: x.receivedCond || null }));
+    return (c.history || []).concat(trips).sort((a, z) => a.at - z.at);
+  }
+  // How often a reader's books arrived as described or better.
+  function condRecord(u) {
+    const who = user(u);
+    if (S.live && u !== "me") return { rated: who.condRated || 0, accurate: who.condAccurate || 0 };
+    let rated = who.condRated || 0, accurate = who.condAccurate || 0;
+    for (const x of S.exchanges) {
+      const r = req(x.requestId);
+      if (x.sender !== u || !x.receivedCond || !r || !r.listedCond) continue;
+      rated++;
+      if (condRank(x.receivedCond) <= condRank(r.listedCond)) accurate++;
+    }
+    return { rated, accurate };
   }
 
   /* ---------------- credit ledger ----------------
@@ -392,6 +468,8 @@
     return { r, x, role, other, stage, book: bk(r.bookId), copy: copy(r.copyId) || { cond: "vg", format: "Paperback", flags: [] } };
   }
   const rated = (d) => S.me.ratings[d.r.id] || (d.x && d.x.rated);
+  // Received books get rated twice: the sender (stars) and the condition it arrived in.
+  const condDue = (d) => d.role === "recipient" && d.stage === "complete" && !d.x.receivedCond;
 
   function stageInfo(d) {
     const p = first(d.other);
@@ -404,6 +482,7 @@
       case "disputed": return { cls: "s-warn", text: "Problem reported" };
       case "complete":
         if (!rated(d)) return { cls: "s-act", text: "Rate " + p };
+        if (condDue(d)) return { cls: "s-act", text: "Rate its condition" };
         return s ? { cls: "s-ok", text: "Earned 1 credit" } : { cls: "s-ok", text: "Received" };
       case "declined": return { cls: "s-off", text: "Declined" };
       case "expired": return { cls: "s-off", text: "Expired" };
@@ -412,9 +491,9 @@
     }
     return { cls: "", text: d.stage };
   }
-  const isLive = (d) => ["pending", "accepted", "shipped", "delivered", "disputed"].includes(d.stage) || (d.stage === "complete" && !rated(d));
+  const isLive = (d) => ["pending", "accepted", "shipped", "delivered", "disputed"].includes(d.stage) || (d.stage === "complete" && (!rated(d) || condDue(d)));
   const needsMe = (d) => {
-    if (d.stage === "complete") return !rated(d);
+    if (d.stage === "complete") return !rated(d) || condDue(d);
     if (d.role === "sender") return d.stage === "pending" || d.stage === "accepted";
     return d.stage === "delivered";
   };
@@ -425,7 +504,7 @@
     const c = copy(l.copyId);
     if (!requestable(l) || c.owner === recipient) return null;
     if (S.requests.some((r) => r.listingId === listingId && r.recipient === recipient && r.status === "pending")) return null;
-    const r = { id: uid("r"), listingId, copyId: c.id, bookId: c.bookId, sender: c.owner, recipient, at: S.now, status: "pending", fees: { sender: fees().sender, recipient: fees().recipient }, log: [] };
+    const r = { id: uid("r"), listingId, copyId: c.id, bookId: c.bookId, sender: c.owner, recipient, at: S.now, status: "pending", fees: { sender: fees().sender, recipient: fees().recipient }, log: [], listedCond: c.cond };
     if (recipient === "me") {
       if (balances().available < 1 || feeFree() < r.fees.recipient) return null;
       post("me", "reserve", r.id, "Requested " + bk(c.bookId).title);
@@ -491,6 +570,10 @@
     if (x.recipient === "me") S.wishlist.me = S.wishlist.me.filter((b) => b !== c.bookId);
     if (x.sender === "me") {
       notify("You earned 1 credit", first(x.recipient) + " confirmed " + title + " arrived.", { request: r.id });
+      // Demo: the other reader says what condition it arrived in. Usually as described.
+      const listed = r.listedCond || c.cond;
+      x.receivedCond = hash(r.id) % 5 === 0 ? (CONDITIONS[condRank(listed) + 1] || COND[listed]).id : listed;
+      notify("Condition rated", first(x.recipient) + " says " + title + " " + condVerdict(x.receivedCond, listed) + ".", { request: r.id });
       ui.sheet = { type: "celebrate", kind: "earn", id: r.id };
       ui.sheetEnter = true;
     }
@@ -927,6 +1010,7 @@
         <div class="stat" ${rv("stat:recv")}><b>${mineDone.length - sent}</b><span>received</span></div>
         <div class="stat" ${rv("stat:fee")}><b>${money(feeFree())}</b><span>fee balance</span></div>
       </div>
+      ${condRecord("me").rated ? `<p class="lede record">Your books arrived as described in ${condRecord("me").accurate} of ${condRecord("me").rated} swaps.</p>` : ""}
       ${S.disputes ? `<button class="card tap attn" data-act="support"><span class="eyebrow">Wormy support</span><strong>${S.disputes.length ? plural(S.disputes.length, "problem report") + " to review" : "No open problem reports"}</strong></button>` : ""}
       ${S.me.strikes ? `<p class="note warn"><strong>${plural(S.me.strikes, "strike")}.</strong> Missing a ship window adds one. 3 in 6 months pauses requests.</p>` : ""}
       <div class="section">
@@ -1078,6 +1162,38 @@
     </div>`;
   }
 
+  // "About this book": a short AI-written note. In live mode it's written the first time anyone opens the book.
+  function aboutHTML(b) {
+    if (b.summary) {
+      return `<div class="about"><p class="eyebrow">About this book</p><p>${esc(b.summary)}</p>
+        <p class="fine">Written by AI from the book's title and author, so it can get details wrong.</p></div>`;
+    }
+    if (!S.live || !b.isbn || ui.summaries[b.isbn] === "none") return "";
+    if (!ui.summaries[b.isbn]) setTimeout(() => fetchSummary(b.isbn));
+    return `<div class="about" aria-busy="true"><p class="eyebrow">About this book</p><span class="skel line"></span><span class="skel line"></span><span class="skel line w70"></span></div>`;
+  }
+  async function fetchSummary(isbn) {
+    if (ui.summaries[isbn]) return;
+    ui.summaries[isbn] = "loading";
+    const res = await invoke("book-summary", { isbn }, { quiet: true });
+    const text = res && res.summary;
+    if (text && S.extraBooks[isbn]) S.extraBooks[isbn].summary = text;
+    ui.summaries[isbn] = text ? "done" : "none";
+    render();
+  }
+  const monthYear = (ms) => new Date(ms).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  function historyHTML(c) {
+    const trips = copyHistory(c);
+    if (!trips.length) return "";
+    return `<div class="section"><p class="eyebrow">This copy's history</p>
+      <p class="lede">Swapped ${plural(trips.length, "time")} on Wormy. Each reader said what condition it arrived in.</p>
+      <ol class="trips">${trips.map((h) => `<li><time>${monthYear(h.at)}</time><span>Listed ${h.listed ? COND[h.listed].label : "–"}</span><span class="to" aria-hidden="true">→</span><span class="${h.received && h.listed && condRank(h.received) > condRank(h.listed) ? "worse" : ""}">${h.received ? "arrived " + COND[h.received].label : "not rated"}</span></li>`).join("")}</ol></div>`;
+  }
+  function recordText(u) {
+    const rec = condRecord(u);
+    return rec.rated ? `Condition as described in ${rec.accurate} of ${rec.rated}` : "";
+  }
+
   function sheetListing(s) {
     const l = listing(s.id);
     if (!l || !copy(l.copyId)) return '<p class="lede">This book is no longer listed.</p>';
@@ -1110,11 +1226,13 @@
           </div>
         </div>
       </div>
+      ${aboutHTML(b)}
       <p class="note">${COND[c.cond].label}: ${COND[c.cond].desc}</p>
-      ${o ? `<div class="row">${avatar("sm", o.avatar, o.name)}<div class="grow"><strong>${esc(o.name)}</strong> <span class="lede">@${esc(o.handle)}</span><p class="lede">${stars(o)}${o.city ? " · ships from " + esc(o.city) : ""}</p></div></div>` : ""}
+      ${o ? `<div class="row">${avatar("sm", o.avatar, o.name)}<div class="grow"><strong>${esc(o.name)}</strong> <span class="lede">@${esc(o.handle)}</span><p class="lede">${stars(o)}${o.city ? " · ships from " + esc(o.city) : ""}</p>${recordText(c.owner) ? `<p class="lede record">${recordText(c.owner)} swaps</p>` : ""}</div></div>` : ""}
       ${o ? costBox(c) : ""}
       ${cta}
       ${o ? `<button class="btn ghost" data-act="wish" data-id="${esc(b.id)}">${onWishlist(b.id) ? "On your wishlist ✓" : "Add to wishlist"}</button>` : ""}
+      ${historyHTML(c)}
     `;
   }
 
@@ -1126,6 +1244,7 @@
         ${cover(b, "lg")}
         <div><h3>${esc(b.title)}</h3><p class="by">${esc(b.author)}${b.year ? ", " + b.year : ""}</p><p class="isbn" style="margin-top:8px">ISBN ${esc(b.isbn)}</p></div>
       </div>
+      ${aboutHTML(b)}
       ${avail.length
         ? `<div class="section"><p class="eyebrow">Available copies</p><div class="list">${avail.map((l) => { const c = copy(l.copyId); return `<button class="card tap" data-act="openListing" data-id="${esc(l.id)}"><span class="row"><span class="cond">${COND[c.cond].short}</span><span class="grow">${esc(c.format)} · @${esc(user(c.owner).handle)}</span><span class="lede">${stars(user(c.owner))}</span></span></button>`; }).join("")}</div></div>`
         : `<p class="note">Nobody has listed this yet. You'll get an alert when someone does.</p>`}
@@ -1213,7 +1332,17 @@
       main = `<p class="note warn"><strong>Problem reported: ${esc(x.dispute)}.</strong> Support reviews photos within 1 business day. If the listing was wrong, the recipient's credit goes back to them, and the sender earns nothing and gets a strike.</p>`;
     } else if (d.stage === "complete") {
       const stars5 = rated(d);
+      const listed = r.listedCond || c.cond;
+      const got = x.receivedCond;
+      let condPart = "";
+      if (d.role === "recipient" && got) condPart = `<p class="lede">You said it ${condVerdict(got, listed)}.</p>`;
+      else if (d.role === "recipient") {
+        condPart = `<div class="section"><p class="eyebrow">What condition did it arrive in?</p>
+          <div class="chips cond-rate" role="group" aria-label="Condition it arrived in">${CONDITIONS.map((k) => `<button class="chip sm" data-act="rateCond" data-id="${esc(r.id)}" data-cond="${k.id}">${k.label}${k.id === listed ? '<small>listed</small>' : ""}</button>`).join("")}</div>
+          <p class="lede">It was listed as ${COND[listed].label}. Your answer updates your copy and goes on its history, so the next reader knows what they're getting.</p></div>`;
+      } else if (got) condPart = `<p class="lede">${esc(p)} says it ${condVerdict(got, listed)}.</p>`;
       main = `<p class="note">${d.role === "sender" ? "You earned 1 credit for sending this book." : esc(d.book.title) + " is on your shelf under Not available. Make it available when you're done reading."}</p>
+        ${condPart}
         ${stars5 ? `<p class="lede">You rated ${esc(p)} ${stars5} stars.</p>` : `<div class="section"><p class="eyebrow">Rate ${esc(p)}</p><div class="stars">${[1, 2, 3, 4, 5].map((n) => `<button data-act="rate" data-id="${esc(r.id)}" data-n="${n}" aria-label="${n} stars">★</button>`).join("")}</div></div>`}`;
     } else if (d.stage === "cancelled") {
       main = `<p class="note warn">${esc(x.outcome)}</p>`;
@@ -1856,6 +1985,17 @@
       log(req(d.id), "You left a rating.");
       commit("Thanks. Rating saved.");
     },
+    rateCond(d) {
+      const r = req(d.id);
+      const x = r && exOf(r.id);
+      if (!x || x.status !== "complete" || x.recipient !== "me" || x.receivedCond || !COND[d.cond]) return;
+      x.receivedCond = d.cond;
+      // It's my copy now, so my shelf shows what I saw (unless the next reader already asked for it).
+      const c = copy(x.copyId);
+      if (c && c.owner === "me" && !activeExchange(c.id) && !S.requests.some((q) => q.copyId === c.id && q.status === "pending")) c.cond = d.cond;
+      log(r, "You said it " + condVerdict(d.cond, r.listedCond) + ".");
+      commit("Thanks. That's on this copy's history now.");
+    },
 
     toggleListing(d) {
       const c = copy(d.id);
@@ -2093,7 +2233,7 @@
     ME_ID = d.me_id;
     const id = (x) => (x === ME_ID ? "me" : x);
     const users = { me: { id: "me", name: d.me.name || "You", handle: d.me.handle || "you", city: [d.me.city, d.me.state].filter(Boolean).join(", "), rating: null, avatar: photoUrl(d.me.photo) } };
-    for (const [uidKey, u] of Object.entries(d.users || {})) users[uidKey] = { id: uidKey, name: u.name, handle: u.handle, city: u.city, rating: u.rating, avatar: photoUrl(u.avatar) };
+    for (const [uidKey, u] of Object.entries(d.users || {})) users[uidKey] = { id: uidKey, name: u.name, handle: u.handle, city: u.city, rating: u.rating, avatar: photoUrl(u.avatar), condRated: u.condRated || 0, condAccurate: u.condAccurate || 0 };
     USERS = users;
     const books = {};
     for (const b of Object.values(d.books || {})) books[b.isbn] = decorate(b);
@@ -2280,6 +2420,7 @@
       if (!r.error) openSheet("deal", { id: d.id });
     },
     async rate(d) { await call("rate_exchange", { p_req: d.id, p_stars: Number(d.n) }, "Thanks. Rating saved."); },
+    async rateCond(d) { await call("rate_condition", { p_req: d.id, p_condition: d.cond }, "Thanks. That's on this copy's history now."); },
     async toggleListing(d) {
       const on = !!openListing(d.id);
       await call("set_available", { p_copy: d.id, p_available: !on }, on ? "Hidden from Discover" : "Available for exchange");

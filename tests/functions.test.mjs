@@ -7,18 +7,37 @@ import crypto from "node:crypto";
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import http from "node:http";
 import Stripe from "stripe";
 import { freshDatabase, pool, rpc } from "./lib/db.mjs";
 import { startMock, ANON_KEY, SERVICE_KEY, userToken } from "./lib/mock-supabase.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const DENO = process.env.DENO_BIN || "deno";
-const MOCK_PORT = 54321, FN_PORT = 54330;
+const MOCK_PORT = 54321, FN_PORT = 54330, CLAUDE_PORT = 54341;
 const STRIPE_WEBHOOK_SECRET = "whsec_test_secret";
 const EASYPOST_SECRET = "easypost-test-secret";
 const stripe = new Stripe("sk_test_dummy");
 
-let db, mock, deno;
+let db, mock, deno, claudeServer;
+// A stand-in for the Claude API: records each request and answers with whatever `claude.reply` says.
+const claude = { calls: [], reply: { status: 200, text: "" } };
+function startClaude() {
+  claudeServer = http.createServer((req, res) => {
+    let raw = "";
+    req.on("data", (d) => (raw += d));
+    req.on("end", () => {
+      claude.calls.push({ path: req.url, headers: req.headers, body: JSON.parse(raw || "{}") });
+      const { status, text } = claude.reply;
+      res.writeHead(status, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(status === 200
+        ? { id: "msg_test", type: "message", role: "assistant", model: "claude-opus-5-5", content: [{ type: "text", text }],
+            stop_reason: "end_turn", stop_sequence: null, usage: { input_tokens: 60, output_tokens: 40 } }
+        : { type: "error", error: { type: "api_error", message: "busy" } }));
+    });
+  });
+  return new Promise((resolve) => claudeServer.listen(CLAUDE_PORT, resolve));
+}
 const A = crypto.randomUUID(), B = crypto.randomUUID(), C = crypto.randomUUID();
 const sql = (t, p) => db.query(t, p).then((r) => r.rows);
 const rejects = (p, re) => assert.rejects(p, (e) => { assert.match(e.message, re); return true; });
@@ -50,12 +69,14 @@ before(async () => {
   db = pool(await freshDatabase("worm_fn_test"));
   for (const u of [A, B, C]) await sql("insert into auth.users (id, email) values ($1, $2)", [u, u.slice(0, 6) + "@example.com"]);
   mock = await startMock({ db, port: MOCK_PORT, functionsUrl: `http://localhost:${FN_PORT}` });
+  await startClaude();
   deno = spawn(DENO, ["run", "--allow-net", "--allow-env", "--allow-read", path.join(here, "lib", "functions-router.ts")], {
     env: {
       ...process.env,
       SUPABASE_URL: mock.url, SUPABASE_ANON_KEY: ANON_KEY, SUPABASE_SERVICE_ROLE_KEY: SERVICE_KEY,
       STRIPE_SECRET_KEY: "sk_test_dummy", STRIPE_WEBHOOK_SECRET, EASYPOST_WEBHOOK_SECRET: EASYPOST_SECRET,
       APP_URL: mock.url + "/", APP_ORIGINS: mock.url, FUNCTIONS_PORT: String(FN_PORT),
+      ANTHROPIC_API_KEY: "sk-ant-test", ANTHROPIC_BASE_URL: `http://localhost:${CLAUDE_PORT}`,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -74,11 +95,12 @@ before(async () => {
 after(async () => {
   deno?.kill();
   mock?.close();
+  claudeServer?.close();
   await db?.end();
 });
 
 test("functions refuse callers who aren't signed in", async () => {
-  for (const name of ["create-checkout", "add-book", "add-tracking", "delete-account"]) {
+  for (const name of ["create-checkout", "add-book", "add-tracking", "delete-account", "book-summary"]) {
     const r = await call(name, {}, null);
     assert.equal(r.status, 401, name);
   }
@@ -118,6 +140,58 @@ test("add-book checks ISBNs, converts ISBN-10, and looks up new books", async ()
   assert.equal(r.status, 400);
   r = await call("add-book", { q: "piranesi clarke" }, userToken(A));
   assert.ok(r.status === 200 ? Array.isArray(r.body.results) : r.status === 503, JSON.stringify(r.body));
+});
+
+test("book-summary: Claude writes it once from the title and author, then everyone gets the saved copy", async () => {
+  const isbn = "9780525657606";
+  await rpc(db, "service", "upsert_book", { p_isbn: isbn, p_title: "Hamnet", p_author: "Maggie O'Farrell", p_year: 2020, p_genre: "Historical", p_cover_url: null, p_source: "test" });
+  assert.equal((await call("book-summary", { isbn: "123" }, userToken(A))).status, 400);
+  assert.equal((await call("book-summary", { isbn: "9780000000002" }, userToken(A))).status, 404);
+  claude.reply = { status: 200, text: "A novel imagining Shakespeare's family in Stratford, centred on his wife Agnes and their children. Lyrical and intimate." };
+  const before = claude.calls.length;
+  const r = await call("book-summary", { isbn }, userToken(A));
+  assert.equal(r.status, 200);
+  assert.match(r.body.summary, /^A novel imagining Shakespeare's family/);
+  assert.equal(claude.calls.length, before + 1);
+  const sent = claude.calls.at(-1);
+  assert.match(sent.path, /^\/v1\/messages/);
+  assert.equal(sent.headers["x-api-key"], "sk-ant-test");
+  assert.equal(sent.body.model, "claude-opus-5-5");
+  assert.equal(sent.body.fallbacks, "default");
+  assert.match(sent.headers["anthropic-beta"], /server-side-fallback-2026-07-01/);
+  assert.match(sent.body.system, /own words/);
+  assert.match(sent.body.system, /UNKNOWN/);
+  assert.equal(sent.body.messages.length, 1);
+  assert.equal(sent.body.messages[0].content, "Title: Hamnet\nAuthor: Maggie O'Farrell\nFirst published: 2020\nISBN: " + isbn, "only the title, author, year and ISBN are sent");
+  // A second reader gets the saved summary; Claude isn't asked again.
+  const again = await call("book-summary", { isbn }, userToken(B));
+  assert.equal(again.body.summary, r.body.summary);
+  assert.equal(claude.calls.length, before + 1);
+});
+
+test("book-summary: a book Claude doesn't know shows no summary and isn't asked about again soon", async () => {
+  const isbn = "9780000000019";
+  await rpc(db, "service", "upsert_book", { p_isbn: isbn, p_title: "Pamphlet", p_author: "Anonymous", p_year: null, p_genre: null, p_cover_url: null, p_source: "test" });
+  claude.reply = { status: 200, text: "UNKNOWN" };
+  const before = claude.calls.length;
+  assert.equal((await call("book-summary", { isbn }, userToken(A))).body.summary, null);
+  assert.equal((await call("book-summary", { isbn }, userToken(A))).body.summary, null);
+  assert.equal(claude.calls.length, before + 1);
+  const row = (await sql("select summary, summary_at from books where isbn = $1", [isbn]))[0];
+  assert.equal(row.summary, null);
+  assert.ok(row.summary_at, "the 'don't know' answer is remembered");
+});
+
+test("book-summary: when Claude is unavailable nothing is saved, and the next visit tries again", async () => {
+  const isbn = "9780000000026";
+  await rpc(db, "service", "upsert_book", { p_isbn: isbn, p_title: "Dune Messiah", p_author: "Frank Herbert", p_year: 1969, p_genre: null, p_cover_url: null, p_source: "test" });
+  claude.reply = { status: 500, text: "" };
+  const r = await call("book-summary", { isbn }, userToken(A));
+  assert.equal(r.status, 200);
+  assert.equal(r.body.summary, null);
+  assert.equal((await sql("select summary_at from books where isbn = $1", [isbn]))[0].summary_at, null);
+  claude.reply = { status: 200, text: "The second Dune novel follows Paul Atreides years into his rule, as conspiracies gather around his empire." };
+  assert.match((await call("book-summary", { isbn }, userToken(A))).body.summary, /Paul Atreides/);
 });
 
 test("stripe-webhook rejects unsigned or tampered events", async () => {

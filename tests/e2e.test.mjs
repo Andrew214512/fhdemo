@@ -50,6 +50,7 @@ await rpc(db, MAYA, "save_profile", { p_handle: "mayareads", p_display_name: "Ma
 await rpc(db, MAYA, "save_address", { p_name: "Maya Rivera", p_line1: "88 Alder St", p_line2: null, p_city: "Portland", p_state: "OR", p_zip: "97204" });
 for (const k of ["babel", "piranesi", "hamnet"]) await rpc(db, MAYA, "add_copy", { p_isbn: BOOKS[k][0], p_condition: "vg", p_format: "Paperback" });
 await rpc(db, "service", "credit_topup", { p_user: MAYA, p_cents: 1000, p_session: "cs_maya", p_payment_intent: "pi_maya", p_fingerprint: "fp_maya" });
+await rpc(db, "service", "set_book_summary", { p_isbn: BOOKS.babel[0], p_summary: "A student at an Oxford translation institute learns how its magic powers an empire.", p_model: "test" });
 
 // Edge functions, for real, in Deno.
 const deno = spawn(process.env.DENO_BIN || "deno", ["run", "--allow-net", "--allow-env", "--allow-read", path.join(here, "lib", "functions-router.ts")], {
@@ -58,6 +59,7 @@ const deno = spawn(process.env.DENO_BIN || "deno", ["run", "--allow-net", "--all
     SUPABASE_URL: `http://localhost:${MOCK_PORT}`, SUPABASE_ANON_KEY: ANON_KEY, SUPABASE_SERVICE_ROLE_KEY: SERVICE_KEY,
     STRIPE_SECRET_KEY: "sk_test_dummy", STRIPE_WEBHOOK_SECRET: WEBHOOK_SECRET, EASYPOST_WEBHOOK_SECRET: "unused",
     APP_URL: `http://localhost:${MOCK_PORT}/`, APP_ORIGINS: `http://localhost:${MOCK_PORT}`, FUNCTIONS_PORT: String(FN_PORT),
+    ANTHROPIC_API_KEY: "", // book summaries off: pages without a saved summary just don't show one
   },
   stdio: ["ignore", "pipe", "pipe"],
 });
@@ -189,6 +191,7 @@ try {
 
   console.log("Requesting a book");
   await page.locator(".book", { hasText: "Babel" }).first().click();
+  check("the book page shows its saved summary, labeled as AI-written", /translation institute/.test(await text(".sheet .about")) && /Written by AI/.test(await text(".sheet .about")));
   await tap('.sheet [data-act="request"]');
   await tap('[data-act="editAddress"]');
   await page.fill("#a-name", "Jamie Reader");
@@ -224,6 +227,11 @@ try {
   await tap('[data-act="rate"][data-n="5"]');
   await idle();
   check("rating saves", (await sql("select stars from ratings where request_id = $1 and rater_id = $2", [reqId, JAMIE]))[0]?.stars === 5);
+  await tap('[data-act="rateCond"][data-cond="ln"]');
+  await idle();
+  check("Jamie's condition rating saves and updates the copy on Jamie's shelf",
+    (await sql("select x.received_condition r, c.condition c from exchanges x join copies c on c.id = x.copy_id where x.request_id = $1", [reqId])).every((row) => row.r === "ln" && row.c === "ln"));
+  check("Maya hears how it arrived", (await rpc(db, MAYA, "get_state")).notes.some((n) => /arrived Like New, better than listed/.test(n.body)));
   await tap('[data-act="close"].x');
 
   console.log("Jamie sends a book");
@@ -319,6 +327,7 @@ try {
 } catch (e) {
   failed++;
   console.log("  FAIL unexpected error :: " + (e.stack || e.message));
+  if (problems.length) console.log("  page problems: " + problems.join(" | "));
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/e2e-error.png` }).catch(() => {});
 } finally {
   await browser.close();

@@ -19,6 +19,7 @@ The app, database, payments, sign-in and server code are built and tested. What'
 | 7 | **Resend** (or Postmark) | Sends sign-in emails reliably. Supabase's built-in email is capped at a handful an hour | Free tier to start |
 | 8 | *Optional:* **EasyPost** | Marks books "delivered" automatically from tracking. Without it, readers tap "It arrived" | Small per-package fee |
 | 9 | A **support email** (like `help@yourdomain`) | Required on the Apple and Google sign-in screens and in the legal pages | Usually free with your email host |
+| 10 | *Optional:* **Anthropic** API account (console.anthropic.com) | Writes the short "About this book" summary on each book page. Without it, book pages simply skip the summary | Under a cent per book, once (each summary is saved and reused) |
 
 ### Business and legal (before real money moves)
 
@@ -27,6 +28,7 @@ The app, database, payments, sign-in and server code are built and tested. What'
 - **Ask the lawyer two specific questions:**
   1. Whether your state requires sales tax on a $1 service fee.
   2. Whether a prepaid fee balance that can only pay Wormy's own fees needs any money-transmitter license. Usually it doesn't, but confirm.
+  3. Whether the AI-written book summaries need anything more. They're short (2 or 3 sentences), written fresh from only the title and author, never quote the book or reuse the publisher's description, avoid spoilers, and are labeled as AI-written. That's the usual way to stay clear of copyright, but it's worth a quick look, and the Terms may want a line about it.
 - **Run a trademark search on "Wormy"** for an app in this category before you print anything.
 
 ### Decisions only you can make
@@ -91,6 +93,7 @@ These are written so you can follow along, or hand them to a developer. Do every
 | `GOOGLE_BOOKS_API_KEY` | Google Cloud → APIs → enable *Books API* → create an API key and restrict it to the Books API |
 | `EASYPOST_API_KEY` | Optional. From EasyPost |
 | `EASYPOST_WEBHOOK_SECRET` | Optional. Set when you add the EasyPost webhook pointing at `https://<your-ref>.supabase.co/functions/v1/tracking-webhook` |
+| `ANTHROPIC_API_KEY` | Optional. From console.anthropic.com → API keys. Turns on book summaries. Set a monthly spend limit there too |
 
 Supabase provides `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` to functions automatically.
 
@@ -144,9 +147,9 @@ They need PostgreSQL (set `PG_ADMIN_URL`, default `postgres://postgres:postgres@
 
 | Suite | What it proves |
 |---|---|
-| `db.test.mjs` (26) | No direct table access. Credits can't be minted, double-spent or duplicated, even with simultaneous requests. Address privacy, timers, disputes, strikes, refunds, account deletion, photo-path rules |
-| `functions.test.mjs` (10) | Unsigned or tampered Stripe and EasyPost events are rejected. Replays count once. Rate limits work. Internal errors don't leak |
-| `e2e.test.mjs` (46) | Sign-in (Google redirect with PKCE, email code), profile setup with photo, scanning, Stripe top-up via webhook, welcome credit, a full exchange both ways, tracking rules, the support queue, sign out, account deletion |
+| `db.test.mjs` (29) | No direct table access. Credits can't be minted, double-spent or duplicated, even with simultaneous requests. Address privacy, timers, disputes, strikes, refunds, account deletion, photo-path rules, condition ratings (only the recipient, once, after it arrives), summaries server-only |
+| `functions.test.mjs` (13) | Unsigned or tampered Stripe and EasyPost events are rejected. Replays count once. Rate limits work. Internal errors don't leak. Book summaries: only the title and author are sent to Claude, each book is summarized once, unknown books show nothing, outages retry later (against a stand-in for the Claude API, so no key is needed) |
+| `e2e.test.mjs` (49) | Sign-in (Google redirect with PKCE, email code), profile setup with photo, scanning, Stripe top-up via webhook, welcome credit, a book page with its summary, a full exchange both ways with a condition rating, tracking rules, the support queue, sign out, account deletion |
 
 ## Not built yet
 

@@ -22,6 +22,8 @@ Readers scan their books into a personal library, send books other readers reque
 | "Points" | Read as fee-balance top-ups. Book credits still can't be bought |
 | Brand | **Wormy**. The logo is a hand-drawn marker mark, traced to a vector (`brand/logo.svg`, original in `brand/logo-source.png`) and drawn in the text color so it works in light and dark. It's the header logo and the app icon. Every icon and drawing follows it: felt-tip lines with a slight wobble and rough edges, loops that overshoot, and pastel color laid a little off the line (the current tab's icon gets its color). Book-jacket art is cut into hand-made shapes in each book's colors. All of it comes from one seeded script, `brand/handdraw.py`. Eclectic mid-century look on **aged paper**: a warm off-white ground with fine grain, a high-contrast serif (Gloock) for headings, Jost for text, one bottle-green action color, and pastel accents. Books without a cover photo get a printed-style jacket in one of seven mid-century layouts (Penguin bands, Bauhaus, Swiss grid, cut paper, stripes, sunburst, framed). A few hand-drawn marks, used sparingly: a felt-tip underline under the reader's name and under "a credit" when one is earned, and a highlighter swipe on the sign-in headline and the featured pick's label. They draw on once, like someone marking up a favorite page. Discover opens with a greeting and one featured pick. Cards and books fade in as they load, over shimmering placeholder shelves |
 | Region | US only (50 states + DC) |
+| Book summaries | A 2–3 sentence "About this book" note, **written by Claude** from only the title and author: its own words, no quotes, no publisher copy, no spoilers, labeled as AI-written. Written once per book and shared. Optional |
+| Condition ratings | When a book arrives, the recipient says what condition it's **really** in. That updates their copy, goes on that physical copy's history (shown without names), and builds each sender's "condition as described in N of M swaps" record. Bigger problems still go through Report a problem |
 | Navigation | Discover · My Shelf (Available / Not available / Wishlist) · **Scan** · **Exchanges** · Profile. Credit balance and alerts sit in the header |
 
 ## 2. Data model
@@ -30,11 +32,11 @@ Credits are never treated as dollars, and balances are never stored as a single 
 
 | Table | What it is | Key rules |
 |---|---|---|
-| **books** | Canonical metadata, keyed by ISBN (Open Library, Google Books fallback) | One row per edition |
+| **books** | Canonical metadata, keyed by ISBN (Open Library, Google Books fallback), plus the saved AI summary | One row per edition. One summary per book; the first one written is kept |
 | **copies** | A physical book a user owns: condition, format, flags, photos | Ownership moves to the recipient when an exchange completes |
 | **listings** | A copy that's open for requests (`opened_at`, `closed_at`) | At most one open listing per copy |
-| **requests** | A reader asking for a listing. Status: pending, accepted, declined, expired, withdrawn | One pending request per reader per listing |
-| **exchanges** | Fulfillment of an accepted request: ship-by date, carrier, tracking, delivered, confirmed. Status: accepted, shipped, delivered, disputed, complete, cancelled | **At most one active exchange per copy** (database unique index on `copy_id` where status is active) |
+| **requests** | A reader asking for a listing, with the condition the copy was listed in at that moment. Status: pending, accepted, declined, expired, withdrawn | One pending request per reader per listing |
+| **exchanges** | Fulfillment of an accepted request: ship-by date, carrier, tracking, delivered, confirmed, and the condition it arrived in. Status: accepted, shipped, delivered, disputed, complete, cancelled | **At most one active exchange per copy** (database unique index on `copy_id` where status is active) |
 | **credit_entries** | Append-only ledger: grant, reserve, release, spend, earn, reverse. Each moves exactly 1 credit | Never updated or deleted. Balances are computed from it |
 | **payments** | Real money: fee-balance top-ups (Stripe charges) and captured fees | Fees are captured only when an exchange completes |
 
@@ -101,11 +103,11 @@ The wallet should feel like a library card, not a bank account. Credits can't be
 |---|---|
 | Onboarding | Name and photo, favorite genres, a few wanted books, then List → Earn → Discover → Request |
 | Discover | Search (title, author, ISBN), welcome-credit progress, wishlist matches, Trending, Recently listed, genre/condition/availability filters |
-| Book page | Condition, owner, and the cost: **1 credit + $1 fee**, who ships and how |
+| Book page | Condition, AI summary, owner (with their condition record), the cost: **1 credit + $1 fee**, who ships and how, and this copy's history |
 | Request | Credit check, address confirmation, fee from balance, reserve |
 | My Shelf | Available / Not available / Wishlist. Per-copy condition, format, flags, availability toggle |
 | Scan | Viewfinder (real camera on supported phones, simulated elsewhere), default condition, rapid add, quick condition fixes, title/ISBN search with Open Library lookup |
-| Exchanges | To send / Coming to me / History. Step tracker, ship-by stamp, tracking entry, confirm or report, ratings |
+| Exchanges | To send / Coming to me / History. Step tracker, ship-by stamp, tracking entry, confirm or report, star rating, and "what condition did it arrive in?" |
 | Wallet | Available / reserved / pending, credit history, fee balance and top-ups |
 | Sign in | Apple, Google, or email link with a 6-digit code |
 | Profile | Photo, name, @handle, city; address (US); fees and Stripe top-ups; strikes; appearance (light by default, or dark, or match the phone); help; legal; sign out; delete account; support queue for admins |
@@ -120,6 +122,7 @@ The wallet should feel like a library card, not a bank account. Credits can't be
 | Book lookup and search | Open Library, then Google Books (server-side, so readers can't rename books) | `supabase/functions/add-book` |
 | Barcode scanning | Browser `BarcodeDetector` (Android), bundled ZXing (iPhone) | `app.js`, `vendor/` |
 | Tracking | Format checks and one-use rule in the database; **EasyPost** delivery updates via a signed webhook (optional) | `add-tracking`, `tracking-webhook` |
+| Book summaries | **Claude** (Anthropic API), once per book, saved and shared (optional) | `book-summary` |
 | Account deletion | Anonymizes the profile, removes photo and sign-in; keeps the ledgers | `delete-account` |
 | Alerts | In-app, refreshed every 30 seconds. **Push and email: not built yet** | |
 | Analytics | **Not built yet.** PostHog suggested, for the metrics below | |
@@ -135,7 +138,7 @@ Timers (48h accept, 24h ship reminder, 3-day ship, 2-day confirm, 10-day lost) r
 - **Fraud brakes.** A tracking number can prove only one shipment. One card can unlock only one welcome credit. A copy can be in only one exchange. 3 strikes in 6 months pause an account. There are limits on open requests, shelf size, wishlist size, and per-reader limits on the server functions.
 - **Photos.** Shrunk in the browser, which strips location data. Stored only in the reader's own folder, and saved as a path in Wormy's storage, never as an outside web address.
 - **Web page hardening.** A Content Security Policy allows scripts from Wormy only (libraries are bundled, not pulled from CDNs). Every reader-entered text is escaped. `_headers` adds clickjacking, sniffing and HSTS protection.
-- **Tests.** 82 automated checks, including attack attempts (see `SETUP.md`).
+- **Tests.** 91 automated checks, including attack attempts (see `SETUP.md`).
 
 ## 7. Metrics
 

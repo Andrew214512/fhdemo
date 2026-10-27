@@ -24,7 +24,7 @@ export async function requireUser(req: Request) {
 }
 
 // Stops one reader from hammering a function (limits live in settings.rate_limits).
-export async function rateLimit(userId: string, bucket: "add-book" | "checkout" | "tracking") {
+export async function rateLimit(userId: string, bucket: "add-book" | "checkout" | "tracking" | "summary") {
   const { data, error } = await adminClient().rpc("rate_limit", { p_user: userId, p_bucket: bucket });
   dbError(error);
   if (!data) throw new HttpError(429, "That's a lot in a short time. Try again in a few minutes.");

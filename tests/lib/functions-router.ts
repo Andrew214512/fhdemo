@@ -2,6 +2,7 @@
 // name, the way Supabase's edge runtime does in production.
 import { handler as addBook } from "../../supabase/functions/add-book/handler.ts";
 import { handler as addTracking } from "../../supabase/functions/add-tracking/handler.ts";
+import { handler as bookSummary } from "../../supabase/functions/book-summary/handler.ts";
 import { handler as createCheckout } from "../../supabase/functions/create-checkout/handler.ts";
 import { handler as deleteAccount } from "../../supabase/functions/delete-account/handler.ts";
 import { handler as stripeWebhook } from "../../supabase/functions/stripe-webhook/handler.ts";
@@ -10,6 +11,7 @@ import { handler as trackingWebhook } from "../../supabase/functions/tracking-we
 const routes: Record<string, (req: Request) => Promise<Response>> = {
   "add-book": addBook,
   "add-tracking": addTracking,
+  "book-summary": bookSummary,
   "create-checkout": createCheckout,
   "delete-account": deleteAccount,
   "stripe-webhook": stripeWebhook,

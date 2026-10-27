@@ -221,7 +221,43 @@ test("ratings: once per reader per exchange, only by the two readers", async () 
   assert.equal(theirB.users[B].rating, 4);
   // C can see A's public profile (A has books in Discover) but nothing private.
   const s = await state(C);
-  assert.deepEqual(Object.keys(s.users[A]).sort(), ["avatar", "city", "handle", "name", "rating", "ratings"]);
+  assert.deepEqual(Object.keys(s.users[A]).sort(), ["avatar", "city", "condAccurate", "condRated", "handle", "name", "rating", "ratings"]);
+});
+
+test("condition: the recipient rates what arrived, once, and it updates their copy and the history", async () => {
+  // The request remembered what the copy was listed as when B asked for it.
+  assert.equal((await sql("select listed_condition from requests where id = $1", [copies.rDune]))[0].listed_condition, "vg");
+  await rejects(rpc(db, A, "rate_condition", { p_req: copies.rDune, p_condition: "acc" }), /couldn't find that exchange/, "the sender can't grade their own book");
+  await rejects(rpc(db, C, "rate_condition", { p_req: copies.rDune, p_condition: "acc" }), /couldn't find that exchange/);
+  await rejects(rpc(db, B, "rate_condition", { p_req: copies.rDune, p_condition: "mint" }), /Choose a condition/);
+  await rpc(db, B, "rate_condition", { p_req: copies.rDune, p_condition: "good" });
+  await rejects(rpc(db, B, "rate_condition", { p_req: copies.rDune, p_condition: "new" }), /already rated/);
+  // It's B's copy now, so B's shelf shows what B saw.
+  assert.equal((await sql("select condition from copies where id = $1", [copies.aDune]))[0].condition, "good");
+  const sb = await state(B);
+  const copy = sb.copies.find((c) => c.id === copies.aDune);
+  assert.equal(copy.history.length, 1);
+  assert.deepEqual([copy.history[0].listed, copy.history[0].received], ["vg", "good"]);
+  assert.equal(sb.exchanges.find((x) => x.requestId === copies.rDune).receivedCond, "good");
+  // A's record: 1 rated, 0 as described. Everyone who can see A sees the same numbers.
+  assert.deepEqual([sb.users[A].condRated, sb.users[A].condAccurate], [1, 0]);
+  const note = (await state(A)).notes.find((n) => n.title === "Condition rated");
+  assert.match(note.body, /arrived Good\. It was listed as Very Good/);
+});
+
+test("condition: can't be rated before the exchange completes", async () => {
+  // C's Pachinko from B is accepted but not shipped yet.
+  await rejects(rpc(db, C, "rate_condition", { p_req: copies.rPach, p_condition: "ln" }), /once the exchange is complete/);
+});
+
+test("book summaries: only the server can read or write them, and the first one written sticks", async () => {
+  await rejects(rpc(db, A, "set_book_summary", { p_isbn: ISBN.dune, p_summary: "Hacked", p_model: "x" }), /permission denied/);
+  await rejects(rpc(db, A, "get_book_summary", { p_isbn: ISBN.dune }), /permission denied/);
+  const first = await rpc(db, "service", "set_book_summary", { p_isbn: ISBN.dune, p_summary: "  A desert planet.  ", p_model: "m" });
+  assert.equal(first.summary, "A desert planet.");
+  const again = await rpc(db, "service", "set_book_summary", { p_isbn: ISBN.dune, p_summary: "Something else", p_model: "m" });
+  assert.equal(again.summary, "A desert planet.");
+  assert.equal((await state(B)).books[ISBN.dune].summary, "A desert planet.");
 });
 
 test("two requests fired at the same moment can't spend one credit twice", async () => {

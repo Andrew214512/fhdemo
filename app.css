@@ -525,6 +525,20 @@ p { margin: 0; }
 .feature .meta { color: var(--muted); font-size: var(--t-12); }
 .feature .btn { margin-top: 8px; align-self: flex-start; position: relative; z-index: 2; }
 
+/* ---------- book page: about, this copy's history ---------- */
+.about { display: flex; flex-direction: column; gap: 8px; }
+.about > p:not(.eyebrow):not(.fine) { font-size: var(--t-15); line-height: 1.55; color: var(--ink-2); text-wrap: pretty; }
+.about .fine { font-size: var(--t-11); color: var(--muted); }
+.about .skel.line { height: 12px; }
+.trips { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--hair); }
+.trips li { display: grid; grid-template-columns: 68px minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--hair); font-size: var(--t-13); color: var(--ink-2); }
+.trips time { font-family: var(--f-mono); font-size: var(--t-11); color: var(--muted); }
+.trips .to { color: var(--muted); }
+.trips .worse { color: var(--accent-ink); font-weight: 600; }
+.record { color: var(--ink-2); }
+.cond-rate .chip small { margin-left: 6px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-ink); }
+.cond-rate .chip[aria-pressed="true"] small { color: inherit; }
+
 /* ---------- shelves ---------- */
 .rail {
   display: grid;
