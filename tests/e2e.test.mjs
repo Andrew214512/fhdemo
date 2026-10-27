@@ -1,4 +1,4 @@
-// Worm end-to-end test: a real browser runs the real app in live mode against the
+// Wormy end-to-end test: a real browser runs the real app in live mode against the
 // local Supabase stand-in, the real database, and the real edge functions in Deno.
 // Stripe's hosted checkout is the only thing faked: the test plays Stripe by sending
 // a correctly signed webhook to the real stripe-webhook function.
@@ -43,7 +43,7 @@ for (const [isbn, title, author] of Object.values(BOOKS)) {
   await rpc(db, "service", "upsert_book", { p_isbn: isbn, p_title: title, p_author: author, p_year: 2020, p_genre: "Literary", p_cover_url: null, p_source: "test" });
 }
 
-// Another reader, Maya, already has books on Worm.
+// Another reader, Maya, already has books on Wormy.
 const MAYA = crypto.randomUUID();
 await sql("insert into auth.users (id, email) values ($1, 'maya@example.com')", [MAYA]);
 await rpc(db, MAYA, "save_profile", { p_handle: "mayareads", p_display_name: "Maya Rivera", p_city: "Portland", p_state: "OR", p_genres: ["Literary"], p_avatar_path: null });
@@ -139,12 +139,12 @@ try {
   await page.setInputFiles("#photo", { name: "me.png", mimeType: "image/png", buffer: png });
   await page.waitForSelector("img.avatar.lg", { timeout: 10000 });
   check("the photo uploads to the reader's own folder", [...mock.files.keys()].some((k) => k.startsWith(`avatars/${JAMIE}/`)));
-  check("the photo shows from Worm's storage", (await page.locator("img.avatar.lg").getAttribute("src")).startsWith(mock.url + "/storage/v1/object/public/avatars/"));
+  check("the photo shows from Wormy's storage", (await page.locator("img.avatar.lg").getAttribute("src")).startsWith(mock.url + "/storage/v1/object/public/avatars/"));
   await shot("e2e-02-profile");
   await tap('[data-act="obNext"]');
   await idle();
   const prof = (await sql("select handle, display_name, city, state, avatar_path from profiles where id = $1", [JAMIE]))[0];
-  check("the profile is saved on the server, with the photo as a path in Worm's storage", prof?.handle === "jamie.reads" && prof.state === "OK" && (prof.avatar_path || "").startsWith(JAMIE + "/"), JSON.stringify(prof));
+  check("the profile is saved on the server, with the photo as a path in Wormy's storage", prof?.handle === "jamie.reads" && prof.state === "OK" && (prof.avatar_path || "").startsWith(JAMIE + "/"), JSON.stringify(prof));
   await tap('[data-act="obGenre"]', 0);
   await tap('[data-act="obNext"]');
   await idle();

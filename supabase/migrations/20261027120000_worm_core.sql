@@ -1,4 +1,4 @@
--- Worm: core database.
+-- Wormy: core database.
 --
 -- Security model, in one paragraph:
 -- Every table has Row Level Security turned on with no policies, and the public
@@ -32,7 +32,7 @@ create table public.profiles (
   id uuid primary key,
   handle text not null unique check (handle ~ '^[a-z0-9_.]{3,20}$'),
   display_name text not null check (char_length(btrim(display_name)) between 1 and 60),
-  -- Path inside Worm's own avatars bucket ("<user id>/<file>"), never a full web address,
+  -- Path inside Wormy's own avatars bucket ("<user id>/<file>"), never a full web address,
   -- so a profile photo can't point at someone else's server.
   avatar_path text check (avatar_path is null or avatar_path ~ '^[0-9a-f-]{36}/[A-Za-z0-9._-]{1,80}$'),
   city text check (city is null or char_length(city) <= 60),
@@ -680,9 +680,9 @@ begin
     raise exception 'Add your name (up to 60 characters).';
   end if;
   if p_state is not null and p_state <> '' and not (p_state = any(array['AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'])) then
-    raise exception 'Worm ships within the US only. Choose a US state.';
+    raise exception 'Wormy ships within the US only. Choose a US state.';
   end if;
-  -- Photos must be a file in this reader's own folder of Worm's storage.
+  -- Photos must be a file in this reader's own folder of Wormy's storage.
   if p_avatar_path is not null and not starts_with(p_avatar_path, u::text || '/') then
     raise exception 'Upload your photo again.';
   end if;
@@ -1024,7 +1024,7 @@ declare
 begin
   if coalesce(auth.role(), '') <> 'service_role'
      and not exists (select 1 from public.profiles where id = auth.uid() and is_admin) then
-    raise exception 'Only Worm support can do that.';
+    raise exception 'Only Wormy support can do that.';
   end if;
   select * into x from public.exchanges where request_id = p_req and status = 'disputed' for update;
   if x.id is null then raise exception 'No open dispute for that exchange.'; end if;
@@ -1045,7 +1045,7 @@ begin
 end $$;
 
 -- ============================================================================
--- Server-only API (granted to the service role used by Worm's edge functions)
+-- Server-only API (granted to the service role used by Wormy's edge functions)
 -- ============================================================================
 
 create function public.app_config() returns jsonb

@@ -1,5 +1,5 @@
 // Starts a fee-balance top-up on Stripe's own checkout page. Card numbers are
-// typed into Stripe, never into Worm, and Apple Pay / Google Pay / Link work
+// typed into Stripe, never into Wormy, and Apple Pay / Google Pay / Link work
 // there automatically. The balance is only credited later, by the signed
 // Stripe webhook, never by this function or the browser.
 import Stripe from "npm:stripe@16.12.0";
@@ -23,7 +23,7 @@ export const handler = endpoint(async (req) => {
     throw new HttpError(400, "Choose one of the top-up amounts shown.");
   }
 
-  // One Stripe customer per reader, so Stripe (not Worm) can offer their saved card next time.
+  // One Stripe customer per reader, so Stripe (not Wormy) can offer their saved card next time.
   const admin = adminClient();
   const existing = await admin.rpc("stripe_customer_for", { p_user: user.id });
   dbError(existing.error);
@@ -52,7 +52,7 @@ export const handler = endpoint(async (req) => {
         currency: "usd",
         unit_amount: amount,
         product_data: {
-          name: "Worm fee balance",
+          name: "Wormy fee balance",
           description: "Covers marketplace fees for book exchanges. Fees are only taken when a book arrives.",
         },
       },

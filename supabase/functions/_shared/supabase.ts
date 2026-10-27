@@ -30,7 +30,7 @@ export async function rateLimit(userId: string, bucket: "add-book" | "checkout" 
   if (!data) throw new HttpError(429, "That's a lot in a short time. Try again in a few minutes.");
 }
 
-// Errors Worm's database raises on purpose (SQLSTATE P0001) are written for
+// Errors Wormy's database raises on purpose (SQLSTATE P0001) are written for
 // readers, so pass them through. Anything else stays generic.
 export function dbError(error: { message: string; code?: string } | null): void {
   if (!error) return;

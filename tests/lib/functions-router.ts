@@ -1,4 +1,4 @@
-// Test-only: serves every Worm edge function from one Deno process, routed by
+// Test-only: serves every Wormy edge function from one Deno process, routed by
 // name, the way Supabase's edge runtime does in production.
 import { handler as addBook } from "../../supabase/functions/add-book/handler.ts";
 import { handler as addTracking } from "../../supabase/functions/add-tracking/handler.ts";

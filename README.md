@@ -1,4 +1,4 @@
-# Worm
+# Wormy
 
 A book-exchange app. Send a book someone requests and earn a credit. Spend credits on any available book from any reader.
 

@@ -1,4 +1,4 @@
-// Shared helpers for Worm's edge functions: CORS limited to Worm's own web
+// Shared helpers for Wormy's edge functions: CORS limited to Wormy's own web
 // address, JSON responses, and readable errors.
 
 const origins = (Deno.env.get("APP_ORIGINS") ?? "")

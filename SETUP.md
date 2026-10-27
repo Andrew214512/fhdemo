@@ -1,4 +1,4 @@
-# Taking Worm live
+# Taking Wormy live
 
 The app, database, payments, sign-in and server code are built and tested. What's left is mostly accounts that have to be in **your** name, plus a few settings only you can switch on.
 
@@ -10,7 +10,7 @@ The app, database, payments, sign-in and server code are built and tested. What'
 
 | # | What | Why | Cost |
 |---|---|---|---|
-| 1 | **A domain name** (for example `wormbooks.com`) | Where the app lives. Apple, Google and Stripe all ask for it | About $10–20 a year |
+| 1 | **A domain name** (for example `wormybooks.com`) | Where the app lives. Apple, Google and Stripe all ask for it | About $10–20 a year |
 | 2 | **Supabase** account and one project | Database, sign-in, photo storage, server code | Free to start. Pro ($25/month) recommended at launch for daily backups |
 | 3 | **Stripe** account | Fee-balance payments, with Apple Pay and Google Pay built in | 2.9% + 30¢ per payment. Needs your legal name or business, tax ID, and a bank account |
 | 4 | **Google Cloud** project | "Continue with Google" sign-in, plus a free Google Books key for book lookups | Free |
@@ -23,11 +23,11 @@ The app, database, payments, sign-in and server code are built and tested. What'
 ### Business and legal (before real money moves)
 
 - **Form a business** (an LLC is common) and get an EIN. This keeps Stripe payouts and liability separate from you.
-- **Have a lawyer finish the Terms and Privacy Policy.** Drafts written for Worm are in `legal/`, with blanks marked like `[this]`.
+- **Have a lawyer finish the Terms and Privacy Policy.** Drafts written for Wormy are in `legal/`, with blanks marked like `[this]`.
 - **Ask the lawyer two specific questions:**
   1. Whether your state requires sales tax on a $1 service fee.
-  2. Whether a prepaid fee balance that can only pay Worm's own fees needs any money-transmitter license. Usually it doesn't, but confirm.
-- **Run a trademark search on "Worm"** for an app in this category before you print anything.
+  2. Whether a prepaid fee balance that can only pay Wormy's own fees needs any money-transmitter license. Usually it doesn't, but confirm.
+- **Run a trademark search on "Wormy"** for an app in this category before you print anything.
 
 ### Decisions only you can make
 
@@ -52,7 +52,7 @@ These are written so you can follow along, or hand them to a developer. Do every
 ### 1. Supabase project
 
 1. Create a project. Pick a **US** region and save the database password somewhere safe.
-2. **Database → Extensions:** turn on **pg_cron**. It runs Worm's hourly timers.
+2. **Database → Extensions:** turn on **pg_cron**. It runs Wormy's hourly timers.
 3. Load the database. Either:
    - with the Supabase CLI: `supabase link --project-ref <your-ref>` then `supabase db push`, or
    - in **SQL Editor**: paste and run each file in `supabase/migrations/`, in name order.
@@ -78,7 +78,7 @@ These are written so you can follow along, or hand them to a developer. Do every
    - Events: `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `charge.refunded`
    - Copy the endpoint's *Signing secret*.
 3. **Settings → Payment methods:** turn on Apple Pay, Google Pay and Link.
-4. **Settings → Public details:** set the statement descriptor (what shows on card statements) to something like `WORM BOOKS`.
+4. **Settings → Public details:** set the statement descriptor (what shows on card statements) to something like `WORMY BOOKS`.
 
 ### 4. Server secrets (Supabase → Edge Functions → Secrets)
 
@@ -98,7 +98,7 @@ Supabase provides `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE
 
 1. In Netlify or Cloudflare Pages, connect the GitHub repo. There's no build step: the publish directory is the repo root.
 2. Add your domain. HTTPS is automatic.
-3. The `_headers` file applies Worm's security headers automatically. If your Supabase project uses a custom domain, add it to `connect-src` in `_headers` and in `index.html`.
+3. The `_headers` file applies Wormy's security headers automatically. If your Supabase project uses a custom domain, add it to `connect-src` in `_headers` and in `index.html`.
 
 ### 6. Book lookups
 
@@ -121,12 +121,12 @@ In SQL Editor:
 update public.profiles set is_admin = true where handle = 'yourhandle';
 ```
 
-Your Profile tab then shows **Worm support** with any problem reports to rule on.
+Your Profile tab then shows **Wormy support** with any problem reports to rule on.
 
 ### 9. Go live
 
 1. Swap in Stripe's **live** secret key, and add a live-mode webhook (it has its own signing secret).
-2. On iPhone, readers install Worm with **Share → Add to Home Screen**. On Android, Chrome offers to install it.
+2. On iPhone, readers install Wormy with **Share → Add to Home Screen**. On Android, Chrome offers to install it.
 
 ---
 
@@ -152,5 +152,5 @@ They need PostgreSQL (set `PG_ADMIN_URL`, default `postgres://postgres:postgres@
 
 - **Push notifications and emails about exchanges.** Today, alerts appear inside the app, which checks for news every 30 seconds while open. Push needs a small addition (stored subscriptions, plus a function that sends them).
 - **Shipping labels inside the app.** Senders buy postage themselves for now.
-- **App Store and Play Store versions.** Worm is an installable web app. A store version can wrap the same code later.
+- **App Store and Play Store versions.** Wormy is an installable web app. A store version can wrap the same code later.
 - **Fuller admin tools.** Refunds happen in the Stripe dashboard. Disputes are handled in the app's support queue.

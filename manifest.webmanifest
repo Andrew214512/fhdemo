@@ -1,6 +1,6 @@
 {
-  "name": "Worm",
-  "short_name": "Worm",
+  "name": "Wormy",
+  "short_name": "Wormy",
   "description": "Send the books you've finished, earn credits, and spend them on your next read.",
   "start_url": "./",
   "scope": "./",

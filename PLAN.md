@@ -1,8 +1,8 @@
-# Worm: product plan
+# Wormy: product plan
 
-**Your bookshelf is full of books someone else wants. Worm helps you turn them into your next great read.**
+**Your bookshelf is full of books someone else wants. Wormy helps you turn them into your next great read.**
 
-Readers scan their books into a personal library, send books other readers request, and earn **book credits** they can spend on any available book. Worm runs the marketplace. It doesn't own inventory or pay for shipping.
+Readers scan their books into a personal library, send books other readers request, and earn **book credits** they can spend on any available book. Wormy runs the marketplace. It doesn't own inventory or pay for shipping.
 
 ---
 
@@ -12,15 +12,15 @@ Readers scan their books into a personal library, send books other readers reque
 |---|---|
 | Exchange model | **Credits, not direct swaps.** Send a book, earn 1 credit. Spend 1 credit on any book from anyone. Nobody needs to want the other person's book |
 | Fees | $1 to send + $1 to receive (pricing experiment B: recipient pays $2, sender $0) |
-| How fees are paid | Prepaid **fee balance**, topped up $5, $10 or $20 on **Stripe's hosted checkout** (Apple Pay, Google Pay, cards, Link). Worm never sees or stores card numbers |
+| How fees are paid | Prepaid **fee balance**, topped up $5, $10 or $20 on **Stripe's hosted checkout** (Apple Pay, Google Pay, cards, Link). Wormy never sees or stores card numbers |
 | Deposit | **None.** The earlier $8 hold protected direct swaps. With credits, a recipient who never gets their book just has the credit returned |
-| Shipping | Sender buys postage (USPS Media Mail suggested) and **enters tracking**. Worm checks tracking automatically (EasyPost), and recipients can confirm by hand. In-app labels come later |
+| Shipping | Sender buys postage (USPS Media Mail suggested) and **enters tracking**. Wormy checks tracking automatically (EasyPost), and recipients can confirm by hand. In-app labels come later |
 | When credits settle | When tracking shows delivered **and** the recipient confirms, or 2 days after delivery with no problem reported |
 | Welcome credit | 1 credit after listing **3 available books** and a **first top-up**. A card that already unlocked a welcome credit on another account can't unlock another (Stripe card fingerprint). Logged separately so it can be measured or switched off |
 | Sign-in | **Continue with Apple**, **Continue with Google**, or an **email link / 6-digit code**. No passwords |
 | Profile | Name, @handle, photo, city and state (public); street address (private, shown only to the reader shipping you a book, until they ship) |
 | "Points" | Read as fee-balance top-ups. Book credits still can't be bought |
-| Brand | **Worm**. The logo is a hand-drawn marker mark, traced to a vector (`brand/logo.svg`, original in `brand/logo-source.png`) and drawn in the text color so it works in light and dark. It's the header logo and the app icon. Every icon and drawing follows it: felt-tip lines with a slight wobble and rough edges, loops that overshoot, and pastel color laid a little off the line (the current tab's icon gets its color). Book-jacket art is cut into hand-made shapes in each book's colors. All of it comes from one seeded script, `brand/handdraw.py`. Eclectic mid-century look on **aged paper**: a warm off-white ground with fine grain, a high-contrast serif (Gloock) for headings, Jost for text, one bottle-green action color, and pastel accents. Books without a cover photo get a printed-style jacket in one of seven mid-century layouts (Penguin bands, Bauhaus, Swiss grid, cut paper, stripes, sunburst, framed). A few hand-drawn marks, used sparingly: a felt-tip underline under the reader's name and under "a credit" when one is earned, and a highlighter swipe on the sign-in headline and the featured pick's label. They draw on once, like someone marking up a favorite page. Discover opens with a greeting and one featured pick. Cards and books fade in as they load, over shimmering placeholder shelves |
+| Brand | **Wormy**. The logo is a hand-drawn marker mark, traced to a vector (`brand/logo.svg`, original in `brand/logo-source.png`) and drawn in the text color so it works in light and dark. It's the header logo and the app icon. Every icon and drawing follows it: felt-tip lines with a slight wobble and rough edges, loops that overshoot, and pastel color laid a little off the line (the current tab's icon gets its color). Book-jacket art is cut into hand-made shapes in each book's colors. All of it comes from one seeded script, `brand/handdraw.py`. Eclectic mid-century look on **aged paper**: a warm off-white ground with fine grain, a high-contrast serif (Gloock) for headings, Jost for text, one bottle-green action color, and pastel accents. Books without a cover photo get a printed-style jacket in one of seven mid-century layouts (Penguin bands, Bauhaus, Swiss grid, cut paper, stripes, sunburst, framed). A few hand-drawn marks, used sparingly: a felt-tip underline under the reader's name and under "a credit" when one is earned, and a highlighter swipe on the sign-in headline and the featured pick's label. They draw on once, like someone marking up a favorite page. Discover opens with a greeting and one featured pick. Cards and books fade in as they load, over shimmering placeholder shelves |
 | Region | US only (50 states + DC) |
 | Navigation | Discover · My Shelf (Available / Not available / Wishlist) · **Scan** · **Exchanges** · Profile. Credit balance and alerts sit in the header |
 
@@ -133,8 +133,8 @@ Timers (48h accept, 24h ship reminder, 3-day ship, 2-day confirm, 10-day lost) r
 - **No card data.** Payments happen on Stripe's page. The balance is only credited by a webhook whose signature is checked, and replays are ignored. Amounts must be on the allowed list and in USD.
 - **Address privacy.** A street address goes only to the sender of an accepted exchange, and disappears once they add tracking.
 - **Fraud brakes.** A tracking number can prove only one shipment. One card can unlock only one welcome credit. A copy can be in only one exchange. 3 strikes in 6 months pause an account. There are limits on open requests, shelf size, wishlist size, and per-reader limits on the server functions.
-- **Photos.** Shrunk in the browser, which strips location data. Stored only in the reader's own folder, and saved as a path in Worm's storage, never as an outside web address.
-- **Web page hardening.** A Content Security Policy allows scripts from Worm only (libraries are bundled, not pulled from CDNs). Every reader-entered text is escaped. `_headers` adds clickjacking, sniffing and HSTS protection.
+- **Photos.** Shrunk in the browser, which strips location data. Stored only in the reader's own folder, and saved as a path in Wormy's storage, never as an outside web address.
+- **Web page hardening.** A Content Security Policy allows scripts from Wormy only (libraries are bundled, not pulled from CDNs). Every reader-entered text is escaped. `_headers` adds clickjacking, sniffing and HSTS protection.
 - **Tests.** 82 automated checks, including attack attempts (see `SETUP.md`).
 
 ## 7. Metrics

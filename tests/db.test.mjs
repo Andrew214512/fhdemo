@@ -1,4 +1,4 @@
-// Worm database tests: the full exchange loop, plus attempts to cheat, snoop,
+// Wormy database tests: the full exchange loop, plus attempts to cheat, snoop,
 // double-spend and break the rules. Run with: npm test (from this folder).
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -336,8 +336,8 @@ test("disputes: only support can decide; upheld returns the credit and strikes t
   await rejects(rpc(db, buyer.id, "report_problem", { p_req: r, p_reason: "I changed my mind" }), /Choose what went wrong/);
   await rpc(db, buyer.id, "report_problem", { p_req: r, p_reason: "Wrong book or edition" });
   await rejects(rpc(db, buyer.id, "confirm_received", { p_req: r }), /isn't on its way/, "a disputed exchange waits for support");
-  await rejects(rpc(db, buyer.id, "resolve_dispute", { p_req: r, p_upheld: true, p_note: null }), /Only Worm support/);
-  await rejects(rpc(db, seller.id, "resolve_dispute", { p_req: r, p_upheld: false, p_note: null }), /Only Worm support/);
+  await rejects(rpc(db, buyer.id, "resolve_dispute", { p_req: r, p_upheld: true, p_note: null }), /Only Wormy support/);
+  await rejects(rpc(db, seller.id, "resolve_dispute", { p_req: r, p_upheld: false, p_note: null }), /Only Wormy support/);
   assert.ok((await state(ADMIN)).notes.some((n) => n.title === "Dispute to review"), "support is alerted");
   const queue = (await state(ADMIN)).disputes;
   assert.equal(queue.length, 1);

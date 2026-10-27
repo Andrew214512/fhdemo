@@ -1,4 +1,4 @@
-# Supabase CLI settings for Worm. Everything not listed uses Supabase's defaults.
+# Supabase CLI settings for Wormy. Everything not listed uses Supabase's defaults.
 project_id = "worm"
 
 # Webhooks are called by Stripe and EasyPost, not by a signed-in reader, so they

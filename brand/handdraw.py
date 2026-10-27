@@ -1,4 +1,4 @@
-"""Hand-drawn artwork for Worm, to match the marker logo: every line wobbles a little, loops
+"""Hand-drawn artwork for Wormy, to match the marker logo: every line wobbles a little, loops
 overshoot where a pen would, and color sits slightly off the outline. Seeded, so the output is
 the same every run.
 

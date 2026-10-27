@@ -1,5 +1,5 @@
 // A small local stand-in for a Supabase project's web API, backed by the real
-// test database. It speaks the same HTTP the supabase-js library and Worm's
+// test database. It speaks the same HTTP the supabase-js library and Wormy's
 // edge functions use: database functions (/rest/v1/rpc), sign-in user lookup
 // (/auth/v1), photo storage (/storage/v1) and edge functions (/functions/v1).
 // Sign-in tokens are real signed JWTs, checked the same way Supabase checks them.

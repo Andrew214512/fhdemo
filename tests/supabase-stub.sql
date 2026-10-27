@@ -1,7 +1,7 @@
--- Test-only stand-in for the parts of a Supabase project that Worm's migrations
+-- Test-only stand-in for the parts of a Supabase project that Wormy's migrations
 -- rely on: the API roles, auth.uid()/auth.role(), the storage schema, and
 -- Supabase's default grants (which are permissive on purpose, so the tests prove
--- Worm's migration locks things down itself).
+-- Wormy's migration locks things down itself).
 
 -- Roles are shared by every database on the server, so create them only once.
 do $$ begin create role anon nologin noinherit; exception when duplicate_object then null; end $$;

@@ -1,4 +1,4 @@
-// Worm edge function tests. Runs the real function code in Deno against the
+// Wormy edge function tests. Runs the real function code in Deno against the
 // local Supabase stand-in and the real test database. Stripe and EasyPost
 // webhooks are sent with genuine signatures made from test secrets.
 import { test, before, after } from "node:test";

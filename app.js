@@ -1,4 +1,4 @@
-/* Worm. Readers send books they've finished, earn a credit for each one that arrives,
+/* Wormy. Readers send books they've finished, earn a credit for each one that arrives,
    and spend credits on any available book from any other reader.
 
    Two modes share every screen:
@@ -927,7 +927,7 @@
         <div class="stat" ${rv("stat:recv")}><b>${mineDone.length - sent}</b><span>received</span></div>
         <div class="stat" ${rv("stat:fee")}><b>${money(feeFree())}</b><span>fee balance</span></div>
       </div>
-      ${S.disputes ? `<button class="card tap attn" data-act="support"><span class="eyebrow">Worm support</span><strong>${S.disputes.length ? plural(S.disputes.length, "problem report") + " to review" : "No open problem reports"}</strong></button>` : ""}
+      ${S.disputes ? `<button class="card tap attn" data-act="support"><span class="eyebrow">Wormy support</span><strong>${S.disputes.length ? plural(S.disputes.length, "problem report") + " to review" : "No open problem reports"}</strong></button>` : ""}
       ${S.me.strikes ? `<p class="note warn"><strong>${plural(S.me.strikes, "strike")}.</strong> Missing a ship window adds one. 3 in 6 months pauses requests.</p>` : ""}
       <div class="section">
         <p class="eyebrow">Shipping address</p>
@@ -946,7 +946,7 @@
             <div><span class="k">Fee balance</span><span class="v">${money(feeFree())}</span></div>
           </div>
           <div class="pay-methods"><span>APPLE PAY</span><span>GOOGLE PAY</span><span>CARDS</span><span>LINK</span></div>
-          <p class="lede">Payments happen on Stripe's secure page. Worm never sees or stores your card number.</p>
+          <p class="lede">Payments happen on Stripe's secure page. Wormy never sees or stores your card number.</p>
           <button class="btn ghost sm" data-act="topup">Add to fee balance</button>
         </div>
       </div>
@@ -957,7 +957,7 @@
       <div class="section">
         <p class="eyebrow">Help</p>
         <div class="card">
-          <button class="link" data-act="how">How Worm works</button>
+          <button class="link" data-act="how">How Wormy works</button>
           <button class="link" data-act="shipping">How to ship a book</button>
           <button class="link" data-act="conditions">Condition guide</button>
           <a class="link" href="legal/terms.html" target="_blank" rel="noopener">Terms</a>
@@ -998,7 +998,7 @@
       </div>
       <div class="or">or</div>
       ${codeStep}
-      <p class="fine">No passwords to remember. By continuing you agree to Worm's <a href="legal/terms.html" target="_blank" rel="noopener">Terms</a> and <a href="legal/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>. Worm is for readers 18 and over in the US.</p>
+      <p class="fine">No passwords to remember. By continuing you agree to Wormy's <a href="legal/terms.html" target="_blank" rel="noopener">Terms</a> and <a href="legal/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>. Wormy is for readers 18 and over in the US.</p>
     </div>`;
   }
 
@@ -1061,7 +1061,7 @@
         ["Discover", "Browse books from readers across the US."],
         ["Request", "Spend 1 credit + " + money(fees().recipient) + " on any available book, from anyone. You never need to want each other's books."],
       ];
-      body = `<h1 class="ob-title">How Worm works</h1>
+      body = `<h1 class="ob-title">How Wormy works</h1>
         <ol class="loop">${steps.map(([h, p]) => `<li><strong>${h}</strong><span>${p}</span></li>`).join("")}</ol>
         <p class="note stamped">List ${welcomeListings()} books and make your first fee-balance top-up, and your first credit is on us.</p>
         <button class="btn primary" data-act="obDone">Scan my first books</button>`;
@@ -1320,7 +1320,7 @@
       <p class="lede">One payment covers several exchanges. Fees are only taken when a book arrives.</p>
       <div class="options">${amounts.map((n) => `<button class="option" data-act="pickTopup" data-id="${n}" aria-pressed="${amt === n}"><span class="radio"></span><span><strong>${money(n)}</strong><span>Covers ${Math.floor(n / Math.max(fees().recipient, 1))} books received</span></span></button>`).join("")}</div>
       <div class="pay-methods"><span>APPLE PAY</span><span>GOOGLE PAY</span><span>CARDS</span><span>LINK</span></div>
-      <p class="lede">You'll finish on Stripe's secure checkout page. Worm never sees or stores your card number.</p>
+      <p class="lede">You'll finish on Stripe's secure checkout page. Wormy never sees or stores your card number.</p>
       <button class="btn primary" data-act="confirmTopup" data-back="${esc(s.back || "")}">Continue to pay ${money(amt)}</button>`;
   }
 
@@ -1330,12 +1330,12 @@
       <p class="note">In the real app you'd be on Stripe's own page now, at checkout.stripe.com. This preview stands in for it.</p>
       <div class="card">
         <div class="kv">
-          <div><span class="k">Worm fee balance</span><span class="v">${money(s.amount)}</span></div>
+          <div><span class="k">Wormy fee balance</span><span class="v">${money(s.amount)}</span></div>
         </div>
         <button class="btn auth-btn apple" data-act="demoPay" data-back="${esc(s.back || "")}">${APPLE_LOGO} Pay</button>
         <button class="btn ghost" data-act="demoPay" data-back="${esc(s.back || "")}">Pay with card</button>
       </div>
-      <button class="link" data-act="close">Cancel and go back to Worm</button>`;
+      <button class="link" data-act="close">Cancel and go back to Wormy</button>`;
   }
 
   function sheetAddress(s) {
@@ -1349,7 +1349,7 @@
         <div class="field"><label for="a-state">State</label><select id="a-state" name="state" required autocomplete="address-level1">${US_STATES.map((st) => `<option ${st === a.state ? "selected" : ""}>${st}</option>`).join("")}</select></div>
         <div class="field"><label for="a-zip">ZIP</label><input id="a-zip" name="zip" value="${esc(a.zip)}" required inputmode="numeric" pattern="[0-9]{5}" autocomplete="postal-code" maxlength="10"></div>
       </div>
-      <p class="lede">Worm ships within the US only. Only the reader sending you a book sees this, and only until they ship.</p>
+      <p class="lede">Wormy ships within the US only. Only the reader sending you a book sees this, and only until they ship.</p>
       <button class="btn primary" type="submit">Save address</button>
     </form>`;
   }
@@ -1378,7 +1378,7 @@
 
   function sheetDeleteAccount() {
     return `
-      <p>Deleting your account removes your profile, photo, address, wishlist and alerts, takes your books off Worm, and signs you out everywhere.</p>
+      <p>Deleting your account removes your profile, photo, address, wishlist and alerts, takes your books off Wormy, and signs you out everywhere.</p>
       <p class="lede">Unspent credits and fee balance can't be recovered. A record of past exchanges and payments is kept, without your name, because the law requires it.</p>
       <p class="note warn">If you're in the middle of an exchange, finish it first.</p>
       <button class="btn danger" data-act="confirmDelete">Delete my account</button>`;
@@ -1428,9 +1428,9 @@
       <li><strong>Pack it</strong><br>Use a padded mailer, or wrap the book in a paper bag or bubble wrap so it can't slide around.</li>
       <li><strong>Choose USPS Media Mail</strong><br>Usually $4 to $5 for one book, and 2 to 8 days to arrive. Books only, so no letters or bookmarks with ads.</li>
       <li><strong>Get a receipt with tracking</strong><br>At the post office counter, or buy a label online at usps.com.</li>
-      <li><strong>Add tracking in Worm</strong><br>Within 3 days of accepting. We check it automatically from there.</li>
+      <li><strong>Add tracking in Wormy</strong><br>Within 3 days of accepting. We check it automatically from there.</li>
     </ol>
-    <p class="note">Coming later: buy a prepaid label right inside Worm.</p>`;
+    <p class="note">Coming later: buy a prepaid label right inside Wormy.</p>`;
   }
 
   function sheetConditions() {
@@ -1494,7 +1494,7 @@
     deal: [sheetDeal, "Exchange"], tracking: [sheetTracking, "Add tracking"], report: [sheetReport, "Report a problem"],
     copy: [sheetCopy, "My copy"], wallet: [sheetWallet, "Your credits"], topup: [sheetTopup, "Add to fee balance"],
     stripe: [sheetStripe, "Checkout"], address: [sheetAddress, "Shipping address"], alerts: [sheetAlerts, "Alerts"],
-    celebrate: [sheetCelebrate, ""], how: [sheetHow, "How Worm works"], shipping: [sheetShipping, "How to ship a book"],
+    celebrate: [sheetCelebrate, ""], how: [sheetHow, "How Wormy works"], shipping: [sheetShipping, "How to ship a book"],
     conditions: [sheetConditions, "Condition guide"], demo: [sheetDemo, "Demo controls"],
     editProfile: [sheetEditProfile, "Edit profile"], deleteAccount: [sheetDeleteAccount, "Delete account"], support: [sheetSupport, "Problem reports"],
   };
@@ -1527,8 +1527,8 @@
   applyLook();
   if (systemDark && systemDark.addEventListener) systemDark.addEventListener("change", () => look === "auto" && applyLook());
 
-  // The Worm mark, traced from the hand-drawn original (brand/logo.svg). Drawn in the text color.
-  const LOGO = `<svg class="logo" viewBox="0 0 885 671" role="img" aria-label="Worm"><path d="M153 665C146 665 134 664 127 663C106 661 104 661 100 658C98 657 94 656 91 655C88 655 85 654 79 649C75 646 69 641 66 639C63 636 60 633 59 631C57 630 55 626 54 623C52 618 51 617 47 614C43 612 42 610 40 605C38 601 35 597 34 595C32 593 29 586 26 579C23 572 20 564 20 563C19 562 18 559 18 558C17 556 16 553 14 551C12 549 11 546 11 542C10 537 10 536 7 533C4 531 4 530 4 526C4 524 5 519 6 516C9 508 10 493 8 485C7 479 7 477 8 471C10 466 10 462 10 459C9 456 10 453 10 450C11 447 12 443 12 440C12 437 13 434 16 430C22 419 25 412 27 404C28 401 30 395 32 392C37 382 42 372 42 366C43 362 44 360 48 355C50 352 53 348 54 346C55 344 59 336 62 329C66 322 71 313 73 309C82 296 90 282 90 280C90 278 96 266 99 262C100 261 101 259 102 257C104 250 108 243 110 241C111 240 112 237 113 234C113 232 115 227 116 225C118 222 120 219 120 217C121 215 123 211 124 209C126 206 128 201 129 195C130 190 131 184 132 182C132 180 134 175 134 172C135 168 137 164 138 161C140 158 142 155 142 149C143 144 145 139 145 136C147 131 147 126 145 120C144 118 144 114 144 112C145 110 144 106 144 103C140 87 140 87 132 80C129 77 123 72 120 70C113 66 103 57 100 51L97 47L97 35L97 23L101 17C105 10 109 7 113 5C115 4 119 4 123 4C128 4 130 5 135 7C138 9 142 10 143 10C144 10 148 12 150 15C153 17 157 20 159 21C162 22 166 25 168 28C171 30 174 33 176 33C180 35 195 51 195 54C195 57 200 67 203 70C204 71 205 74 206 77C206 79 208 82 209 84C210 86 210 87 210 90C209 93 209 95 211 97C212 99 213 104 214 107C214 111 216 116 216 118C217 121 218 128 218 141L217 160L220 163C225 168 224 170 218 176C216 177 216 178 216 181C217 185 216 187 212 195C210 200 208 205 208 206C208 207 207 209 206 211C206 213 205 216 204 219C204 221 202 227 199 232C197 236 195 242 195 243C195 245 194 249 193 252C191 254 190 258 190 260C189 261 187 267 184 272C178 284 175 292 173 300C171 308 165 319 154 337C150 343 146 351 144 356C140 366 139 368 133 377C130 382 129 385 128 389C127 396 125 400 120 404C118 406 117 408 117 408C117 409 115 411 114 414C108 422 105 429 104 436C103 441 102 445 100 447C99 450 98 452 98 456C98 459 99 462 99 463C101 465 101 465 96 471C92 475 90 484 90 492C90 494 89 499 89 503C88 508 88 510 89 514C90 516 90 520 91 522C92 524 94 529 96 532C98 534 100 538 101 541C102 546 106 550 108 550C108 550 111 552 114 554C119 560 131 565 140 566C144 566 148 567 151 567C154 568 164 568 174 569C189 569 193 569 196 568C199 567 204 566 209 565C221 564 227 561 234 555C241 550 245 544 250 534C251 532 255 528 257 525C260 522 265 516 268 510C273 502 274 500 274 496C274 494 275 486 276 480C276 472 277 464 277 460C276 454 276 451 278 447C279 443 280 441 279 440C278 439 278 436 278 434C278 431 278 430 275 429C273 428 270 426 268 424L264 421L259 421C254 422 251 424 248 429C247 431 245 433 244 434C243 436 240 441 237 446L231 456L231 464C231 477 227 482 216 484C214 485 210 487 208 490C200 497 192 499 186 495C185 494 182 493 179 493C175 493 167 490 159 486C157 485 156 481 157 474C157 469 157 468 155 465C153 463 151 459 150 456C149 453 147 448 146 445C144 440 144 439 144 428C145 415 146 414 153 409C158 405 159 403 161 395C162 388 166 382 172 375C175 372 178 367 180 364C182 359 189 350 198 342C201 338 203 337 209 335C212 334 217 332 218 332C226 328 227 328 232 328C235 328 238 327 242 325C249 322 251 321 253 324C254 325 258 325 272 326C282 326 291 326 292 327C294 327 298 329 301 332C306 336 313 339 319 339C320 339 322 341 325 343C327 345 330 348 333 350C335 351 340 355 343 360C348 367 355 374 360 378C361 379 362 381 362 383C362 386 364 392 370 403C372 409 372 406 370 432C370 436 369 442 368 445C367 448 367 455 368 464C368 475 368 479 367 483C366 486 365 493 364 499C363 509 363 511 358 519C356 524 354 530 354 531C354 532 353 535 351 538C349 541 348 545 348 547C348 548 347 552 345 555C344 558 342 563 342 565C341 570 338 575 332 582C330 584 327 589 324 594C323 599 321 602 321 603C321 603 319 604 316 606C312 607 308 611 303 615C300 619 294 624 290 627C286 630 283 634 282 635C280 640 275 643 249 652C244 654 238 656 236 658C232 660 231 660 225 659C220 659 217 659 215 660C210 662 200 665 187 666C173 667 169 667 153 665ZM445 661C439 660 427 656 423 655C421 654 417 653 415 653C411 653 409 652 406 650C402 646 388 633 378 622C369 614 368 611 368 595L368 582L366 577C363 572 364 569 367 567C369 567 371 565 373 563C375 562 379 559 381 558C384 557 386 555 387 554C388 552 391 550 393 549C397 546 398 546 401 547C403 548 407 548 409 548C416 548 427 549 430 551C431 551 436 553 440 555C445 556 449 558 450 558C450 559 454 560 457 560L464 560L469 557C471 556 475 553 478 553C480 552 484 550 487 548C504 534 506 533 511 525C513 521 516 516 516 513C516 510 518 507 519 505C520 503 522 499 524 496C525 493 528 489 530 487L533 483L533 474L534 465L537 460C540 456 541 454 541 450C541 448 542 444 542 441C543 436 543 434 541 431L540 428L541 421C542 417 543 413 543 411C543 408 544 406 547 402L551 398L551 388C551 383 552 378 552 377C553 375 554 370 554 364C554 359 554 351 554 348C555 342 555 340 553 335C552 332 551 328 551 326C551 322 552 320 556 316L560 311L560 301C560 296 559 290 558 288L557 284L564 270C567 263 570 256 571 254C574 245 580 234 588 221L598 207L602 206C604 205 608 203 610 201L614 197L620 198C629 198 629 199 634 205C636 208 640 212 643 214C650 220 652 223 654 232C657 244 657 252 655 270C653 284 653 290 654 307C654 324 654 329 652 332C652 334 650 343 648 353C645 367 644 371 645 374C646 376 646 380 647 383C647 387 647 391 648 394C648 397 648 399 646 403C643 407 643 409 642 420C641 435 640 437 638 440C635 442 634 452 634 471L634 487L631 493C629 497 628 500 628 502C628 503 628 504 627 504C625 504 621 512 621 518C620 520 620 525 619 528C619 531 617 535 615 538C613 541 610 546 609 549C607 552 604 558 602 561C599 565 597 569 596 571C595 572 592 577 590 580C587 584 585 588 585 590C585 592 582 595 574 601C572 603 567 608 564 611C562 615 555 622 549 627C543 632 537 638 536 639C534 642 529 643 528 640C527 637 526 637 522 642C517 647 506 653 497 654C494 655 489 656 486 657C482 658 477 659 472 659C469 659 464 660 462 660C457 662 452 662 445 661ZM674 189C671 188 667 186 664 185C660 183 654 176 650 170C649 167 646 163 644 160C642 157 638 152 636 148C633 140 632 135 634 123C635 118 636 116 639 114C641 113 645 109 648 106C653 102 657 99 662 97C670 94 673 92 682 81C687 76 689 74 691 74C692 74 696 73 700 71C706 68 709 68 714 68L719 68L721 73C722 76 724 79 731 84C741 93 743 96 743 99C743 101 744 104 745 106C747 112 746 122 743 128C742 130 741 134 741 136C741 141 738 147 734 150C733 152 731 154 730 156C729 159 726 163 723 167C720 171 718 173 715 174C713 175 709 178 706 181C701 185 699 186 692 188C683 190 682 190 674 189ZM786 117C780 111 775 104 773 100C772 97 771 95 770 95C770 94 767 90 763 86C760 81 757 77 756 76C756 76 755 75 755 74C754 59 754 52 756 49C757 48 758 45 758 43C760 39 761 38 770 34C774 32 780 28 782 26C785 24 788 22 791 22C797 20 798 20 802 17C812 10 835 4 848 6C852 6 856 7 858 8C859 8 860 9 862 9C865 9 873 20 878 28L881 36L880 43C880 47 879 54 879 60C879 64 878 71 878 75L876 81L870 86C866 89 860 92 856 93C853 94 848 96 846 98C844 99 840 101 836 103C833 105 829 107 828 108C827 109 821 111 816 114C810 116 805 118 804 118C804 119 800 119 796 119C789 119 788 119 786 117Z"/></svg>`;
+  // The Wormy mark, traced from the hand-drawn original (brand/logo.svg). Drawn in the text color.
+  const LOGO = `<svg class="logo" viewBox="0 0 885 671" role="img" aria-label="Wormy"><path d="M153 665C146 665 134 664 127 663C106 661 104 661 100 658C98 657 94 656 91 655C88 655 85 654 79 649C75 646 69 641 66 639C63 636 60 633 59 631C57 630 55 626 54 623C52 618 51 617 47 614C43 612 42 610 40 605C38 601 35 597 34 595C32 593 29 586 26 579C23 572 20 564 20 563C19 562 18 559 18 558C17 556 16 553 14 551C12 549 11 546 11 542C10 537 10 536 7 533C4 531 4 530 4 526C4 524 5 519 6 516C9 508 10 493 8 485C7 479 7 477 8 471C10 466 10 462 10 459C9 456 10 453 10 450C11 447 12 443 12 440C12 437 13 434 16 430C22 419 25 412 27 404C28 401 30 395 32 392C37 382 42 372 42 366C43 362 44 360 48 355C50 352 53 348 54 346C55 344 59 336 62 329C66 322 71 313 73 309C82 296 90 282 90 280C90 278 96 266 99 262C100 261 101 259 102 257C104 250 108 243 110 241C111 240 112 237 113 234C113 232 115 227 116 225C118 222 120 219 120 217C121 215 123 211 124 209C126 206 128 201 129 195C130 190 131 184 132 182C132 180 134 175 134 172C135 168 137 164 138 161C140 158 142 155 142 149C143 144 145 139 145 136C147 131 147 126 145 120C144 118 144 114 144 112C145 110 144 106 144 103C140 87 140 87 132 80C129 77 123 72 120 70C113 66 103 57 100 51L97 47L97 35L97 23L101 17C105 10 109 7 113 5C115 4 119 4 123 4C128 4 130 5 135 7C138 9 142 10 143 10C144 10 148 12 150 15C153 17 157 20 159 21C162 22 166 25 168 28C171 30 174 33 176 33C180 35 195 51 195 54C195 57 200 67 203 70C204 71 205 74 206 77C206 79 208 82 209 84C210 86 210 87 210 90C209 93 209 95 211 97C212 99 213 104 214 107C214 111 216 116 216 118C217 121 218 128 218 141L217 160L220 163C225 168 224 170 218 176C216 177 216 178 216 181C217 185 216 187 212 195C210 200 208 205 208 206C208 207 207 209 206 211C206 213 205 216 204 219C204 221 202 227 199 232C197 236 195 242 195 243C195 245 194 249 193 252C191 254 190 258 190 260C189 261 187 267 184 272C178 284 175 292 173 300C171 308 165 319 154 337C150 343 146 351 144 356C140 366 139 368 133 377C130 382 129 385 128 389C127 396 125 400 120 404C118 406 117 408 117 408C117 409 115 411 114 414C108 422 105 429 104 436C103 441 102 445 100 447C99 450 98 452 98 456C98 459 99 462 99 463C101 465 101 465 96 471C92 475 90 484 90 492C90 494 89 499 89 503C88 508 88 510 89 514C90 516 90 520 91 522C92 524 94 529 96 532C98 534 100 538 101 541C102 546 106 550 108 550C108 550 111 552 114 554C119 560 131 565 140 566C144 566 148 567 151 567C154 568 164 568 174 569C189 569 193 569 196 568C199 567 204 566 209 565C221 564 227 561 234 555C241 550 245 544 250 534C251 532 255 528 257 525C260 522 265 516 268 510C273 502 274 500 274 496C274 494 275 486 276 480C276 472 277 464 277 460C276 454 276 451 278 447C279 443 280 441 279 440C278 439 278 436 278 434C278 431 278 430 275 429C273 428 270 426 268 424L264 421L259 421C254 422 251 424 248 429C247 431 245 433 244 434C243 436 240 441 237 446L231 456L231 464C231 477 227 482 216 484C214 485 210 487 208 490C200 497 192 499 186 495C185 494 182 493 179 493C175 493 167 490 159 486C157 485 156 481 157 474C157 469 157 468 155 465C153 463 151 459 150 456C149 453 147 448 146 445C144 440 144 439 144 428C145 415 146 414 153 409C158 405 159 403 161 395C162 388 166 382 172 375C175 372 178 367 180 364C182 359 189 350 198 342C201 338 203 337 209 335C212 334 217 332 218 332C226 328 227 328 232 328C235 328 238 327 242 325C249 322 251 321 253 324C254 325 258 325 272 326C282 326 291 326 292 327C294 327 298 329 301 332C306 336 313 339 319 339C320 339 322 341 325 343C327 345 330 348 333 350C335 351 340 355 343 360C348 367 355 374 360 378C361 379 362 381 362 383C362 386 364 392 370 403C372 409 372 406 370 432C370 436 369 442 368 445C367 448 367 455 368 464C368 475 368 479 367 483C366 486 365 493 364 499C363 509 363 511 358 519C356 524 354 530 354 531C354 532 353 535 351 538C349 541 348 545 348 547C348 548 347 552 345 555C344 558 342 563 342 565C341 570 338 575 332 582C330 584 327 589 324 594C323 599 321 602 321 603C321 603 319 604 316 606C312 607 308 611 303 615C300 619 294 624 290 627C286 630 283 634 282 635C280 640 275 643 249 652C244 654 238 656 236 658C232 660 231 660 225 659C220 659 217 659 215 660C210 662 200 665 187 666C173 667 169 667 153 665ZM445 661C439 660 427 656 423 655C421 654 417 653 415 653C411 653 409 652 406 650C402 646 388 633 378 622C369 614 368 611 368 595L368 582L366 577C363 572 364 569 367 567C369 567 371 565 373 563C375 562 379 559 381 558C384 557 386 555 387 554C388 552 391 550 393 549C397 546 398 546 401 547C403 548 407 548 409 548C416 548 427 549 430 551C431 551 436 553 440 555C445 556 449 558 450 558C450 559 454 560 457 560L464 560L469 557C471 556 475 553 478 553C480 552 484 550 487 548C504 534 506 533 511 525C513 521 516 516 516 513C516 510 518 507 519 505C520 503 522 499 524 496C525 493 528 489 530 487L533 483L533 474L534 465L537 460C540 456 541 454 541 450C541 448 542 444 542 441C543 436 543 434 541 431L540 428L541 421C542 417 543 413 543 411C543 408 544 406 547 402L551 398L551 388C551 383 552 378 552 377C553 375 554 370 554 364C554 359 554 351 554 348C555 342 555 340 553 335C552 332 551 328 551 326C551 322 552 320 556 316L560 311L560 301C560 296 559 290 558 288L557 284L564 270C567 263 570 256 571 254C574 245 580 234 588 221L598 207L602 206C604 205 608 203 610 201L614 197L620 198C629 198 629 199 634 205C636 208 640 212 643 214C650 220 652 223 654 232C657 244 657 252 655 270C653 284 653 290 654 307C654 324 654 329 652 332C652 334 650 343 648 353C645 367 644 371 645 374C646 376 646 380 647 383C647 387 647 391 648 394C648 397 648 399 646 403C643 407 643 409 642 420C641 435 640 437 638 440C635 442 634 452 634 471L634 487L631 493C629 497 628 500 628 502C628 503 628 504 627 504C625 504 621 512 621 518C620 520 620 525 619 528C619 531 617 535 615 538C613 541 610 546 609 549C607 552 604 558 602 561C599 565 597 569 596 571C595 572 592 577 590 580C587 584 585 588 585 590C585 592 582 595 574 601C572 603 567 608 564 611C562 615 555 622 549 627C543 632 537 638 536 639C534 642 529 643 528 640C527 637 526 637 522 642C517 647 506 653 497 654C494 655 489 656 486 657C482 658 477 659 472 659C469 659 464 660 462 660C457 662 452 662 445 661ZM674 189C671 188 667 186 664 185C660 183 654 176 650 170C649 167 646 163 644 160C642 157 638 152 636 148C633 140 632 135 634 123C635 118 636 116 639 114C641 113 645 109 648 106C653 102 657 99 662 97C670 94 673 92 682 81C687 76 689 74 691 74C692 74 696 73 700 71C706 68 709 68 714 68L719 68L721 73C722 76 724 79 731 84C741 93 743 96 743 99C743 101 744 104 745 106C747 112 746 122 743 128C742 130 741 134 741 136C741 141 738 147 734 150C733 152 731 154 730 156C729 159 726 163 723 167C720 171 718 173 715 174C713 175 709 178 706 181C701 185 699 186 692 188C683 190 682 190 674 189ZM786 117C780 111 775 104 773 100C772 97 771 95 770 95C770 94 767 90 763 86C760 81 757 77 756 76C756 76 755 75 755 74C754 59 754 52 756 49C757 48 758 45 758 43C760 39 761 38 770 34C774 32 780 28 782 26C785 24 788 22 791 22C797 20 798 20 802 17C812 10 835 4 848 6C852 6 856 7 858 8C859 8 860 9 862 9C865 9 873 20 878 28L881 36L880 43C880 47 879 54 879 60C879 64 878 71 878 75L876 81L870 86C866 89 860 92 856 93C853 94 848 96 846 98C844 99 840 101 836 103C833 105 829 107 828 108C827 109 821 111 816 114C810 116 805 118 804 118C804 119 800 119 796 119C789 119 788 119 786 117Z"/></svg>`;
 
   function render() {
     const signedOut = LIVE ? ui.screen === "signin" : !S.signedIn;
@@ -2274,7 +2274,7 @@
       const r = await call("decline_request", { p_req: d.id }, "Request declined");
       if (!r.error) closeSheet();
     },
-    async confirmBook(d) { await call("confirm_received", { p_req: d.id }, "Confirmed. Thanks for reading with Worm."); },
+    async confirmBook(d) { await call("confirm_received", { p_req: d.id }, "Confirmed. Thanks for reading with Wormy."); },
     async submitReport(d) {
       const r = await call("report_problem", { p_req: d.id, p_reason: ui.sheet.reason }, "Problem reported. Support replies within 1 business day.");
       if (!r.error) openSheet("deal", { id: d.id });
@@ -2347,7 +2347,7 @@
     try {
       await loadScript("vendor/supabase.js");
     } catch (e) {
-      app.innerHTML = '<div class="signin"><p>Worm couldn\'t load. Check your connection and refresh.</p></div>';
+      app.innerHTML = '<div class="signin"><p>Wormy couldn\'t load. Check your connection and refresh.</p></div>';
       return;
     }
     sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, {

@@ -1,4 +1,4 @@
-// Creates a fresh Postgres database with the Supabase stand-in and Worm's
+// Creates a fresh Postgres database with the Supabase stand-in and Wormy's
 // migrations applied, and calls functions the same way Supabase's API does:
 // inside a transaction, as the caller's role, with their sign-in claims set.
 import fs from "node:fs";
