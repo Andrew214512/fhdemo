@@ -108,7 +108,7 @@ The wallet should feel like a library card, not a bank account. Credits can't be
 | Exchanges | To send / Coming to me / History. Step tracker, ship-by stamp, tracking entry, confirm or report, ratings |
 | Wallet | Available / reserved / pending, credit history, fee balance and top-ups |
 | Sign in | Apple, Google, or email link with a 6-digit code |
-| Profile | Photo, name, @handle, city; address (US); fees and Stripe top-ups; strikes; help; legal; sign out; delete account; support queue for admins |
+| Profile | Photo, name, @handle, city; address (US); fees and Stripe top-ups; strikes; appearance (light by default, or dark, or match the phone); help; legal; sign out; delete account; support queue for admins |
 | Demo panel | Plays other readers, moves the clock, decides disputes, switches pricing, shows a small business view |
 
 ## 6. Backend (built)

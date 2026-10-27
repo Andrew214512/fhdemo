@@ -958,6 +958,10 @@
         </div>
       </div>
       <div class="section">
+        <p class="eyebrow">Appearance</p>
+        <div class="seg" role="group" aria-label="Appearance">${LOOKS.map(([id, label]) => `<button data-act="look" data-id="${id}" aria-pressed="${look === id}">${label}</button>`).join("")}</div>
+      </div>
+      <div class="section">
         <p class="eyebrow">Help</p>
         <div class="card">
           <button class="link" data-act="how">How Worm works</button>
@@ -1513,6 +1517,23 @@
     return key !== lastScreen ? "entering" : "";
   }
 
+  /* Appearance: light unless the reader picks otherwise. Saved on this device only. */
+  const LOOKS = [["light", "Light"], ["dark", "Dark"], ["auto", "Match my phone"]];
+  const LOOK_KEY = "worm-look";
+  const systemDark = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+  let look = "light";
+  try { look = localStorage.getItem(LOOK_KEY) || "light"; } catch (e) { /* storage blocked: stay light */ }
+  function applyLook() {
+    const dark = look === "dark" || (look === "auto" && !!systemDark && systemDark.matches);
+    document.documentElement.dataset.look = dark ? "dark" : "light";
+    document.documentElement.style.colorScheme = dark ? "dark" : "light";
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) { meta = document.createElement("meta"); meta.name = "theme-color"; document.head.appendChild(meta); }
+    meta.content = dark ? "#1e1a16" : "#f3ede2";
+  }
+  applyLook();
+  if (systemDark && systemDark.addEventListener) systemDark.addEventListener("change", () => look === "auto" && applyLook());
+
   function render() {
     const signedOut = LIVE ? ui.screen === "signin" : !S.signedIn;
     const loading = ui.screen === "loading" && (LIVE || S.signedIn);
@@ -1744,6 +1765,12 @@
     shelfTab(d) { ui.shelf = d.id; render(); },
     xTab(d) { ui.xTab = d.id; render(); },
     genre(d) { ui.genre = d.id; render(); },
+    look(d) {
+      look = LOOKS.some(([id]) => id === d.id) ? d.id : "light";
+      try { localStorage.setItem(LOOK_KEY, look); } catch (e) { /* not saved, still applies now */ }
+      applyLook();
+      render();
+    },
     cond(d) { ui.cond = d.id; render(); },
     showAll() { ui.showAll = !ui.showAll; render(); },
     close: closeSheet,
