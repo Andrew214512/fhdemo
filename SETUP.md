@@ -147,7 +147,7 @@ They need PostgreSQL (set `PG_ADMIN_URL`, default `postgres://postgres:postgres@
 
 | Suite | What it proves |
 |---|---|
-| `db.test.mjs` (33) | No direct table access. Credits can't be minted, double-spent or duplicated, even with simultaneous requests. Address privacy, timers, disputes, strikes, refunds, account deletion, photo-path rules, condition ratings (only the recipient, once, after it arrives), summaries server-only, search (typos, ISBN-10, editions grouped, availability, wildcards), similar books, any-edition wishlists, tracking updates |
+| `db.test.mjs` (34) | No direct table access. Credits can't be minted, double-spent or duplicated, even with simultaneous requests. Address privacy, timers, disputes, strikes, refunds, account deletion, photo-path rules, condition ratings (only the recipient, once, after it arrives), summaries server-only, search (typos, ISBN-10, editions grouped, availability, wildcards), similar books, any-edition wishlists, tracking updates, no credit without tracking |
 | `functions.test.mjs` (13) | Unsigned or tampered Stripe and EasyPost events are rejected. Carrier scans are saved. Replays count once. Rate limits work. Internal errors don't leak. Book summaries: only the title and author are sent to Claude, each book is summarized once, unknown books show nothing, outages retry later (against a stand-in for the Claude API, so no key is needed) |
 | `e2e.test.mjs` (55) | Sign-in (Google redirect with PKCE, email code), profile setup with photo, scanning, Stripe top-up via webhook, welcome credit, search (typos, not on a shelf yet, not on Wormy at all), a book page with a summary arriving fresh, a full exchange both ways with a condition rating, tracking rules, the support queue, sign out, account deletion |
 

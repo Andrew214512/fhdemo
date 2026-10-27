@@ -578,7 +578,8 @@
 
   // Credits and fees settle together, once, when the recipient confirms (or 2 days pass).
   function complete(x, how) {
-    if (x.status === "complete") return;
+    // Same rule as the database: a book has to be shipped, with tracking, before anyone earns for it.
+    if (!["shipped", "delivered", "disputed"].includes(x.status)) return false;
     const r = req(x.requestId);
     x.status = "complete";
     x.deliveredAt = x.deliveredAt || S.now;
@@ -1504,7 +1505,7 @@
     const st = stageInfo(d);
     const c = d.copy;
     const creditLine = d.role === "sender"
-      ? `<p class="credit-line">${icon("credit", 18)} You earn 1 credit when ${esc(p)} confirms it arrived.</p>`
+      ? `<p class="credit-line">${icon("credit", 18)} ${d.stage === "accepted" ? `Your credit starts once you add tracking. You earn it when ${esc(p)} confirms it arrived.` : `You earn 1 credit when ${esc(p)} confirms it arrived.`}</p>`
       : `<p class="credit-line">${icon("credit", 18)} 1 credit reserved. It's spent when the book arrives.</p>`;
     const confirmButtons = `<div class="btns"><button class="btn primary" data-act="confirmBook" data-id="${esc(r.id)}">It arrived. Looks right</button><button class="btn ghost" data-act="report" data-id="${esc(r.id)}">Report a problem</button></div>`;
     let main;
@@ -2213,7 +2214,7 @@
     },
     confirmBook(d) {
       const x = exOf(d.id);
-      complete(x, "You confirmed " + bk(req(d.id).bookId).title + " arrived and matches the listing.");
+      if (complete(x, "You confirmed " + bk(req(d.id).bookId).title + " arrived and matches the listing.") === false) return commit("This book isn't on its way yet.");
       openSheet("deal", { id: d.id });
       commit("Confirmed. " + first(x.sender) + " earned a credit.");
     },

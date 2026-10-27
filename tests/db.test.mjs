@@ -517,6 +517,21 @@ test("tracking updates: server only; out for delivery and problems notify; deliv
   assert.equal(x.trackStatus, "delivered");
 });
 
+test("no tracking, no credit: the sender earns nothing until the book is shipped and arrives", async () => {
+  const sender = await newReader("notrack.sender");
+  const recipient = await newReader("notrack.recipient");
+  const start = await balances(sender.id);
+  const r = await rpc(db, recipient.id, "request_book", { p_listing: await listingOf(sender.books[0]) });
+  await rpc(db, sender.id, "accept_request", { p_req: r });
+  await rejects(rpc(db, recipient.id, "confirm_received", { p_req: r }), /isn't on its way/, "nothing to confirm before tracking");
+  await rejects(rpc(db, recipient.id, "report_problem", { p_req: r, p_reason: "Condition is worse than listed" }), /once the book is on its way/);
+  assert.deepEqual(await balances(sender.id), start, "accepting earns nothing");
+  await rpc(db, sender.id, "ship_exchange", { p_req: r, p_carrier: "USPS", p_tracking: "9400111899223456770003" });
+  assert.deepEqual(await balances(sender.id), start, "adding tracking alone earns nothing yet");
+  await rpc(db, recipient.id, "confirm_received", { p_req: r });
+  assert.equal((await balances(sender.id)).available, start.available + 1, "the credit arrives once the book is confirmed");
+});
+
 test("every credit balance is consistent with the ledger and never negative", async () => {
   const rows = await sql(`select user_id,
       sum(case type when 'grant' then 1 when 'earn' then 1 when 'release' then 1 when 'reserve' then -1 when 'reverse' then -1 else 0 end) available,

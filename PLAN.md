@@ -15,7 +15,7 @@ Readers scan their books into a personal library, send books other readers reque
 | How fees are paid | Prepaid **fee balance**, topped up $5, $10 or $20 on **Stripe's hosted checkout** (Apple Pay, Google Pay, cards, Link). Wormy never sees or stores card numbers |
 | Deposit | **None.** The earlier $8 hold protected direct swaps. With credits, a recipient who never gets their book just has the credit returned |
 | Shipping | Sender buys postage (USPS Media Mail suggested) and **enters the tracking number**. It's real tracking, not a guess: every exchange links to the carrier's own tracking page, and with EasyPost set up each carrier scan (label created, in transit, out for delivery, delivered, problems) shows in the app with the expected date. "Delivered" starts the 2-day confirm window. Recipients can also confirm by hand. In-app labels come later |
-| When credits settle | When tracking shows delivered **and** the recipient confirms, or 2 days after delivery with no problem reported |
+| When credits settle | When tracking shows delivered **and** the recipient confirms, or 2 days after delivery with no problem reported. **No tracking, no credit:** accepting or adding tracking earns nothing by itself, the recipient can't confirm a book that has no tracking yet, and no tracking within 3 days cancels the exchange with a strike |
 | Welcome credit | 1 credit after listing **3 available books** and a **first top-up**. A card that already unlocked a welcome credit on another account can't unlock another (Stripe card fingerprint). Logged separately so it can be measured or switched off |
 | Sign-in | **Continue with Apple**, **Continue with Google**, or an **email link / 6-digit code**. No passwords |
 | Profile | Name, @handle, photo, city and state (public); street address (private, shown only to the reader shipping you a book, until they ship) |
@@ -139,7 +139,7 @@ Timers (48h accept, 24h ship reminder, 3-day ship, 2-day confirm, 10-day lost) r
 - **Fraud brakes.** A tracking number can prove only one shipment. One card can unlock only one welcome credit. A copy can be in only one exchange. 3 strikes in 6 months pause an account. There are limits on open requests, shelf size, wishlist size, and per-reader limits on the server functions.
 - **Photos.** Shrunk in the browser, which strips location data. Stored only in the reader's own folder, and saved as a path in Wormy's storage, never as an outside web address.
 - **Web page hardening.** A Content Security Policy allows scripts from Wormy only (libraries are bundled, not pulled from CDNs). Every reader-entered text is escaped. `_headers` adds clickjacking, sniffing and HSTS protection.
-- **Tests.** 101 automated checks, including attack attempts (see `SETUP.md`).
+- **Tests.** 102 automated checks, including attack attempts (see `SETUP.md`).
 
 ## 7. Search and the book catalog
 
