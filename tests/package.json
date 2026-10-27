@@ -1,0 +1,14 @@
+{
+  "name": "worm-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test db.test.mjs",
+    "test:all": "node --test db.test.mjs functions.test.mjs && node e2e.test.mjs"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "2.45.4",
+    "pg": "8.13.1",
+    "stripe": "16.12.0"
+  }
+}
