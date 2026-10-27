@@ -3024,11 +3024,6 @@
     }
   });
 
-  // The header shows a soft shadow once the page has scrolled beneath it.
-  const markScrolled = () => document.documentElement.classList.toggle("scrolled", scrollY > 2);
-  addEventListener("scroll", markScrolled, { passive: true });
-  markScrolled();
-
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && scanner) return scanner.close();
     if (e.key === "Escape" && ui.sheet) closeSheet();
