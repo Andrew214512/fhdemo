@@ -8,9 +8,11 @@ prints the icon strokes and drawings (pasted into app.js: ICONS, HEART, SPINES, 
 CORNERS) and the CSS images (pasted into app.css :root as --hand-*, --m-* and --mark-* tokens;
 css_dark holds the dark-theme versions of the --mark-* tokens).
 
-Texture comes from ink(): solid ink with small irregular bumps along its edges, sharpened back
-to a crisp line, like the logo. The same filter, at icon and drawing scale, is defined in
-app.js as #wm-ink and #wm-ink-lg."""
+Texture is solid ink with small irregular bumps along its edges, like the logo. Marks shown as
+stretched images (underlines, highlighter, rays, sun) have the bumps drawn into their shapes
+(bumpy(), stroke_outline()), because a filter inside a stretched image renders at low
+resolution and looks blurry. Inline icons and drawings use the ink() filter, defined in app.js
+as #wm-ink and #wm-ink-lg, which the browser renders at full resolution."""
 import math, random, json
 
 def f(v):
@@ -148,6 +150,40 @@ def uri(svg):
     svg = " ".join(svg.split())
     return 'url("data:image/svg+xml,' + svg.replace("%", "%25").replace("#", "%23").replace("<", "%3C").replace(">", "%3E").replace('"', "'") + '")'
 
+def bumpy(points, step=3.0, amp=0.4, seed=1, closed=True):
+    """An outline with small irregular bumps drawn into the shape itself: every edge is split into
+    short pieces and each corner nudged a little. Pure geometry, so it stays sharp at any size.
+    (Used for marks drawn as stretched images, where a filter would be computed at low
+    resolution and come out blurry.)"""
+    rng = random.Random(seed); out = []
+    n = len(points)
+    for i in range(n if closed else n - 1):
+        (x0, y0), (x1, y1) = points[i], points[(i + 1) % n]
+        dx, dy = x1 - x0, y1 - y0; L = math.hypot(dx, dy) or 1
+        px, py = -dy / L, dx / L
+        k = max(1, int(L / step))
+        for j in range(k):
+            t = j / k; a = rng.uniform(-amp, amp) if (j or not out) else 0
+            out.append((x0 + dx * t + px * a, y0 + dy * t + py * a))
+    if not closed: out.append(points[-1])
+    return "M" + " L".join(f"{f(x)} {f(y)}" for x, y in out) + ("Z" if closed else "")
+
+def stroke_outline(center, half, seed=1, amp=0.3, step=2.5, cap=True):
+    """A marker stroke as a filled shape: a centre line and its half-width at each point, tapered
+    where the pen lands and rounded where it lifts, with bumps along both edges."""
+    pts = []
+    for i, (x, y) in enumerate(center):
+        x2, y2 = center[min(i + 1, len(center) - 1)]; x1, y1 = center[max(i - 1, 0)]
+        dx, dy = x2 - x1, y2 - y1; L = math.hypot(dx, dy) or 1
+        pts.append((x, y, -dy / L, dx / L, half(i / (len(center) - 1))))
+    top = [(x + nx * h, y + ny * h) for x, y, nx, ny, h in pts]
+    bot = [(x - nx * h, y - ny * h) for x, y, nx, ny, h in pts][::-1]
+    x, y, nx, ny, h = pts[-1]
+    tx, ty = ny, -nx  # pointing along the stroke, so the cap bulges past the end
+    end = [(x + nx * h * math.cos(a) + tx * h * math.sin(a), y + ny * h * math.cos(a) + ty * h * math.sin(a))
+           for a in [math.pi * k / 6 for k in range(1, 6)]] if cap else []
+    return bumpy(top + end + bot, step, amp, seed)
+
 def ink(freq, scale, seed=3, fid="g"):
     """Marker-ink edges, like the logo: solid ink whose outline is nudged into small irregular bumps,
     then sharpened back to a crisp edge (the alpha is pushed to fully in or fully out). The ink
@@ -167,12 +203,16 @@ def rays(cx, cy, n, r0, r1, w0, w1, seed, jitter=0.06, vw=200, vh=200, color="wh
         p = [(cx + ca * r0 + px * w0, cy + sa * r0 + py * w0), (cx + ca * (r0 + L) / 2 + px * (w0 + ww) / 2 + px * bend, cy + sa * (r0 + L) / 2 + py * (w0 + ww) / 2 + py * bend),
              (cx + ca * L + px * ww, cy + sa * L + py * ww), (cx + ca * L - px * ww, cy + sa * L - py * ww),
              (cx + ca * (r0 + L) / 2 - px * (w0 + ww) / 2 + px * bend, cy + sa * (r0 + L) / 2 - py * (w0 + ww) / 2 + py * bend), (cx + ca * r0 - px * w0, cy + sa * r0 - py * w0)]
-        ps.append("M" + " ".join(f"{f(x)} {f(y)}" for x, y in p) + "Z")
-    return f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {vw} {vh}' preserveAspectRatio='none'>{ink(0.05, 2.4, 5)}<path filter='url(#g)' fill='{color}' d='{''.join(ps)}'/></svg>"
+        ps.append(bumpy(p, step=4, amp=0.45, seed=seed * 31 + i))
+    return f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {vw} {vh}' preserveAspectRatio='none'><path fill='{color}' d='{''.join(ps)}'/></svg>"
 
 CSS = {}
 CSS["--hand-rays"] = uri(rays(100, 100, 15, 14, 98, 1.2, 7, 601, color="#f2c14e"))
-CSS["--hand-sun"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>{ink(0.06, 2.6, 6)}<path filter='url(#g)' fill='#f2c14e' d='{blob(50, 50, 45, 44, 2.4, 602, 11)}'/></svg>")
+def sun_points(cx, cy, r, seed, n=96):
+    rng = random.Random(seed); nz = noise(rng)
+    return [(cx + (r + 2.2 * nz(2 * math.pi * i / n)) * math.cos(2 * math.pi * i / n),
+             cy + (r + 2.2 * nz(2 * math.pi * i / n)) * math.sin(2 * math.pi * i / n)) for i in range(n)]
+CSS["--hand-sun"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path fill='#f2c14e' d='{bumpy(sun_points(50, 50, 44.5, 602), 2.5, 0.45, 603)}'/></svg>")
 # masks for book jackets (white = shape; the color comes from the jacket)
 CSS["--m-blob"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><path fill='white' d='{blob(50, 50, 46, 46, 2.2, 701, 11)}'/></svg>")
 CSS["--m-square"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><path fill='white' d='{fill([(7, 8), (93, 6), (94, 93), (6, 94)], 1.6, 702, tight=0.06)}'/></svg>")
@@ -186,7 +226,8 @@ CSS["--m-stripes"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 
 CSS["--m-frame"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 150' preserveAspectRatio='none'><g fill='none' stroke='white' stroke-linecap='round'><path stroke-width='1.7' d='{outline([(8, 7), (93, 6.5), (93.4, 143), (8.5, 143.6)], 0.8, 801, over=0.08, tight=0.05)}'/><path stroke-width='0.8' d='{outline([(11.5, 10.5), (89.6, 10.2), (89.8, 139.6), (11.8, 139.9)], 0.6, 802, over=0.06, tight=0.05)}'/></g></svg>")
 
 # a thin pen underline for things you can tap (links, the credit counter); stretched to fit
-CSS["--m-underline"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'>{ink(0.25, 0.8, 7)}<path filter='url(#g)' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' d='{line([(1.5, 4.8), (50, 3.9), (98.5, 3.2)], 0.9, 911)}'/></svg>")
+_ul = [(1.5 + 97 * t, 4.8 - 1.6 * t + 0.5 * math.sin(math.pi * t)) for t in [i / 48 for i in range(49)]]
+CSS["--m-underline"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'><path fill='white' d='{stroke_outline(_ul, lambda t: 1.35 * min(1, 0.55 + t * 6), 911, 0.16, 2)}'/></svg>")
 
 # a torn paper edge for the top of the tab bar: tiles left to right without a seam
 def torn_edge(w=360, h=8, seed=921):
@@ -203,17 +244,23 @@ def torn_edge(w=360, h=8, seed=921):
 CSS["--m-torn"] = uri(torn_edge())
 
 # The felt-tip underline (under a reader's name, "a credit") and the highlighter swipe, light and dark.
-# Each layer is inked at full strength and faded afterwards (the opacity attribute): the edge
-# sharpening in ink() would otherwise erase see-through ink like the dark-mode highlighter.
+# The felt-tip underline and the highlighter: drawn shapes with bumps along their edges, no filters
+# (as stretched images, a filter would come out blurry).
 def marker_under(color):
-    return uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 24' preserveAspectRatio='none'>{ink(0.12, 1.6, 11)}"
-               f"<path filter='url(#g)' fill='{color}' opacity='.92' d='M3 15.5C38 12.4 86 10.6 132 10.2C158 10 180 9.2 196.4 7.6C199.4 7.3 200 11.8 197 12.5C176 15 146 15.6 112 16.3C76 17 40 18.6 7 20.4C2.6 20.6 0.4 15.8 3 15.5Z'/>"
-               f"<path filter='url(#g)' fill='{color}' opacity='.35' d='M120 11.4C150 11 176 10 195 8.6C197 8.5 197.4 10.6 195.6 11C176 13.4 148 14.2 121 14.8Z'/></svg>")
+    # the pen lands thin on the left, rises slightly, and lifts with a rounded end on the right
+    center = [(3 + 192 * t, 8.6 - 3.6 * t - 1.1 * math.sin(math.pi * t)) for t in [i / 80 for i in range(81)]]
+    main = stroke_outline(center, lambda t: 1.95 * min(1, 0.3 + t * 7) * (1 - 0.12 * t), 11, 0.28, 2.6)
+    pool = stroke_outline(center[52:], lambda t: 1.45 * min(1, 0.2 + t * 5), 12, 0.22, 2.6)  # ink pooling where it slowed
+    return uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 12' preserveAspectRatio='none'>"
+               f"<path fill='{color}' fill-opacity='.92' d='{main}'/><path fill='{color}' fill-opacity='.35' d='{pool}'/></svg>")
 def marker_hl(color, o):
-    return uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'>{ink(0.08, 2.2, 12)}"
-               f"<path filter='url(#g)' fill='{color}' opacity='{o}' d='M5 6.5C62 4.6 132 3.6 196 3L199 37C134 37.4 64 38.2 1 39.2Z'/>"
-               f"<path filter='url(#g)' fill='{color}' opacity='{round(o * 0.45, 2)}' d='M5 6.5C62 4.6 132 3.6 196 3L196.3 6.4C132 7 62 8 4.6 9.8Z M1.4 35.8C64 34.8 134 34 198.7 33.6L199 37C134 37.4 64 38.2 1 39.2Z'/>"
-               f"<path filter='url(#g)' fill='{color}' opacity='{round(o * 0.5, 2)}' d='M170 3.3L196 3L199 37L174 37.2C176 26 172 14 170 3.3Z'/></svg>")
+    band = bumpy([(5, 6.5), (100, 4.6), (196, 3), (198.4, 20), (199, 37), (100, 38.1), (1, 39.2), (3, 22)], 4, 0.55, 12)
+    top = bumpy([(5, 6.5), (100, 4.6), (196, 3), (196.3, 6.4), (100, 8.1), (4.6, 9.8)], 4, 0.3, 13)
+    bottom = bumpy([(1.4, 35.8), (100, 34.7), (198.7, 33.6), (199, 37), (100, 38.1), (1, 39.2)], 4, 0.3, 14)
+    end = bumpy([(170, 3.3), (196, 3), (199, 37), (174, 37.2), (175.5, 20)], 4, 0.4, 15)
+    return uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'>"
+               f"<path fill='{color}' fill-opacity='{o}' d='{band}'/><path fill='{color}' fill-opacity='{round(o * 0.45, 2)}' d='{top}{bottom}'/>"
+               f"<path fill='{color}' fill-opacity='{round(o * 0.5, 2)}' d='{end}'/></svg>")
 CSS["--mark-under"] = marker_under("#cf5628")
 CSS["--mark-hl"] = marker_hl("#f2c14e", 0.5)
 DARK = {"--mark-under": marker_under("#f08a5d"), "--mark-hl": marker_hl("#f08a5d", 0.2)}
