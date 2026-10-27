@@ -1,5 +1,6 @@
-// EasyPost calls this when a package's status changes. The HMAC signature
-// proves the message came from EasyPost; only "delivered" changes anything.
+// EasyPost calls this whenever the carrier scans a package. The HMAC signature proves the
+// message came from EasyPost. Each update is saved on the exchange (status, latest scan, where,
+// expected date) so both readers can follow the book; "delivered" starts the confirm window.
 import { adminClient } from "../_shared/supabase.ts";
 
 const encoder = new TextEncoder();
@@ -22,17 +23,31 @@ export async function handler(req: Request): Promise<Response> {
   if (!(await validSignature(body, req.headers.get("X-Hmac-Signature")))) {
     return new Response("Signature check failed.", { status: 401 });
   }
-  let event: { description?: string; result?: { id?: string; status?: string } };
+  let event: {
+    description?: string;
+    result?: {
+      id?: string;
+      status?: string;
+      est_delivery_date?: string | null;
+      tracking_details?: { message?: string; tracking_location?: { city?: string | null; state?: string | null } }[];
+    };
+  };
   try {
     event = JSON.parse(body);
   } catch {
     return new Response("Bad JSON.", { status: 400 });
   }
-  if (event.description?.startsWith("tracker.") && event.result?.status === "delivered" && event.result.id) {
-    const { error } = await adminClient().rpc("mark_delivered", { p_tracker: event.result.id });
+  const t = event.result;
+  if (event.description?.startsWith("tracker.") && t?.id) {
+    const latest = t.tracking_details?.at(-1);
+    const where = [latest?.tracking_location?.city, latest?.tracking_location?.state].filter(Boolean).join(", ");
+    const eta = t.est_delivery_date && !Number.isNaN(Date.parse(t.est_delivery_date)) ? t.est_delivery_date : null;
+    const { error } = await adminClient().rpc("set_tracking_status", {
+      p_tracker: t.id, p_status: t.status ?? "unknown", p_detail: latest?.message ?? null, p_where: where || null, p_eta: eta,
+    });
     if (error) {
-      console.error("mark_delivered failed", error);
-      return new Response("Couldn't record the delivery.", { status: 500 });
+      console.error("set_tracking_status failed", error);
+      return new Response("Couldn't record the update.", { status: 500 });
     }
   }
   return new Response("ok", { status: 200 });

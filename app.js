@@ -108,6 +108,14 @@
     b30: "A brief history of humankind, from early humans to the present, told through the big revolutions in thought, farming and science. Big-picture nonfiction built to spark debate.",
   };
   CATALOG.forEach((b) => { b.summary = SUMMARIES[b.id]; });
+  // Demo stand-in for Open Library: books nobody on Wormy has scanned or wished for yet.
+  const OUTSIDE = [
+    ["9780547928227", "The Hobbit", "J. R. R. Tolkien", 1937, 1], ["9780807083697", "Kindred", "Octavia E. Butler", 1979, 1],
+    ["9781400078776", "Never Let Me Go", "Kazuo Ishiguro", 2005, 0], ["9780553418026", "The Martian", "Andy Weir", 2011, 1],
+    ["9780380730407", "Rebecca", "Daphne du Maurier", 1938, 3], ["9781400031702", "The Secret History", "Donna Tartt", 1992, 3],
+    ["9781501160837", "Anxious People", "Fredrik Backman", 2019, 0], ["9780141439549", "Middlemarch", "George Eliot", 1871, 2],
+    ["9780735219106", "Where the Crawdads Sing", "Delia Owens", 2018, 3], ["9780147514011", "Little Women", "Louisa May Alcott", 1868, 2],
+  ].map(([isbn, title, author, year, g]) => ({ isbn, title, author, year, genre: GENRES[g] }));
   const CATALOG_BY_ID = Object.fromEntries(CATALOG.map((b) => [b.id, b]));
   // Jacket colors for real books that don't come with a cover image.
   const PALETTE = [["#9fd8cb", "#1d4a44"], ["#ffb48a", "#3a1d0f"], ["#ffd36e", "#2a1f17"], ["#c8d58e", "#2c3a12"], ["#d8c8f2", "#2e2350"], ["#f8c6bd", "#5a2018"], ["#a9d4f0", "#1d3550"], ["#3d4a6b", "#ffd36e"]];
@@ -232,7 +240,8 @@
         { at: t - 1 * DAY, text: "Maya accepted and has 3 days to ship." },
         { at: t - 3 * HOUR, text: "Maya added USPS tracking 9400111899223456778120." },
       ] });
-    X({ id: "x1", requestId: "r1", sender: "maya", recipient: "me", copyId: "c21", status: "shipped", acceptedAt: t - 1 * DAY, shipBy: t + 2 * DAY, tracking: "9400111899223456778120", shippedAt: t - 3 * HOUR });
+    X({ id: "x1", requestId: "r1", sender: "maya", recipient: "me", copyId: "c21", status: "shipped", acceptedAt: t - 1 * DAY, shipBy: t + 2 * DAY, tracking: "9400111899223456778120", shippedAt: t - 3 * HOUR,
+      trackStatus: "in_transit", trackDetail: "Departed USPS Regional Facility", trackWhere: "Portland, OR", trackEta: t + 2 * DAY, trackAt: t - 1 * HOUR });
     L("me", "reserve", "r1", t - 2 * DAY, "Requested Babel");
 
     // Active: Theo wants my Project Hail Mary.
@@ -262,6 +271,8 @@
     sheet: null, sheetEnter: false, toast: null, ob: 0, obActive: false, draft: {}, scanQ: "", scanned: [], searchHits: null,
     defCond: "vg", cam: null, busy: 0, screen: LIVE ? "loading" : "app", otpEmail: null,
     summaries: {}, // live: isbn → "loading" | "none" while a book's summary is fetched
+    find: null, // live search: { q, state, results }
+    similar: {}, // live suggestions by book: { at, results }
   };
 
   function load() {
@@ -285,7 +296,14 @@
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const money = (n) => "$" + Number(n).toFixed(2);
   const UNKNOWN_BOOK = { id: "?", title: "Unknown book", author: "", year: "", isbn: "", bg: "#f4ecdd", fg: "#2f241b", jacket: 7, genre: "Other" };
-  const bk = (id) => CATALOG_BY_ID[id] || S.extraBooks[id] || UNKNOWN_BOOK;
+  const bk = (id) => CATALOG_BY_ID[id] || S.extraBooks[id] || OUTSIDE_BY_ID()[id] || UNKNOWN_BOOK;
+  let outsideById = null;
+  function OUTSIDE_BY_ID() {
+    if (!outsideById) outsideById = Object.fromEntries(OUTSIDE.map((b) => [b.isbn, decorate(b)]));
+    return outsideById;
+  }
+  // Editions of one book share a work (live: from the server; demo: each book is its own).
+  const workOf = (id) => bk(id).work || id;
   const copy = (id) => S.copies.find((c) => c.id === id);
   const listing = (id) => S.listings.find((l) => l.id === id);
   const openListing = (copyId) => S.listings.find((l) => l.copyId === copyId && !l.closedAt);
@@ -294,7 +312,8 @@
   const user = (id) => USERS[id] || { id, name: "A reader", handle: "reader", city: "", rating: null };
   const first = (id) => (id === "me" ? "You" : user(id).name.split(" ")[0]);
   const stars = (u) => (u && u.rating != null ? "★ " + Number(u.rating).toFixed(1) : "New reader");
-  const onWishlist = (bookId) => S.wishlist.me.includes(bookId);
+  // A wishlist entry covers every edition of the book.
+  const onWishlist = (bookId) => S.wishlist.me.some((w) => w === bookId || workOf(w) === workOf(bookId));
   const ACTIVE_X = ["accepted", "shipped", "delivered", "disputed"];
   const activeExchange = (copyId) => S.exchanges.find((x) => x.copyId === copyId && ACTIVE_X.includes(x.status));
   const isOpenReq = (r) => r.status === "pending" || (r.status === "accepted" && ACTIVE_X.includes((exOf(r.id) || {}).status));
@@ -477,7 +496,13 @@
     switch (d.stage) {
       case "pending": return s ? { cls: "s-act", text: p + " requested this" } : { cls: "", text: "Waiting on " + p + " to accept" };
       case "accepted": return s ? { cls: "s-warn", text: "Ship in " + left(d.x.shipBy) } : { cls: "", text: p + " is packing it" };
-      case "shipped": return s ? { cls: "", text: "In the mail" } : { cls: "s-act", text: "On its way to you" };
+      case "shipped": {
+        const ts = d.x.trackStatus;
+        if (ts === "out_for_delivery") return { cls: "s-act", text: "Out for delivery" };
+        if (ts === "available_for_pickup") return { cls: "s-warn", text: "Waiting at the post office" };
+        if (["return_to_sender", "failure", "error"].includes(ts)) return { cls: "s-warn", text: "Delivery problem" };
+        return s ? { cls: "", text: "In the mail" } : { cls: "s-act", text: "On its way to you" };
+      }
       case "delivered": return s ? { cls: "", text: "Delivered. Waiting on " + p } : { cls: "s-act", text: "Confirm it arrived" };
       case "disputed": return { cls: "s-warn", text: "Problem reported" };
       case "complete":
@@ -539,12 +564,15 @@
     x.carrier = carrier;
     x.tracking = tracking;
     x.shippedAt = S.now;
+    // Demo: plays the carrier scans EasyPost would send.
+    Object.assign(x, { trackStatus: "pre_transit", trackDetail: "Shipping label created, " + carrier + " awaiting item", trackWhere: null, trackEta: S.now + 4 * DAY, trackAt: S.now });
     log(req(x.requestId), (x.sender === "me" ? "You" : first(x.sender)) + " added " + carrier + " tracking " + tracking + ".");
   }
 
   function deliver(x) {
     x.status = "delivered";
     x.deliveredAt = S.now;
+    Object.assign(x, { trackStatus: "delivered", trackDetail: "Delivered, in mailbox", trackWhere: user(x.recipient).city || null, trackEta: null, trackAt: S.now });
     log(req(x.requestId), "Delivered, according to " + x.carrier + " tracking.");
   }
 
@@ -721,6 +749,27 @@
     return bookTile({ act: "openBook", id: bookId, key: "wish:" + bookId, b: bk(bookId), meta: avail ? `<span class="avail">${avail} available</span>` : "Watching for a copy" });
   }
 
+  /* Tracking: the carrier's own page always works; with EasyPost set up, every scan shows here too. */
+  const TRACK_LABEL = {
+    unknown: "Tracking number received", pre_transit: "Label created, not scanned yet", in_transit: "In transit",
+    out_for_delivery: "Out for delivery", delivered: "Delivered", available_for_pickup: "Waiting at the post office",
+    return_to_sender: "Being returned to the sender", failure: "Delivery problem", cancelled: "Shipment cancelled", error: "Tracking problem",
+  };
+  function trackUrl(carrier, num) {
+    const n = encodeURIComponent(num || "");
+    if (carrier === "UPS") return "https://www.ups.com/track?tracknum=" + n;
+    if (carrier === "FedEx") return "https://www.fedex.com/fedextrack/?trknbr=" + n;
+    return "https://tools.usps.com/go/TrackConfirmAction?tLabels=" + n;
+  }
+  function trackingCard(x) {
+    const st = x.trackStatus;
+    const latest = st ? `<p class="track-now"><strong>${esc(TRACK_LABEL[st] || TRACK_LABEL.unknown)}</strong>${x.trackDetail && x.trackDetail !== TRACK_LABEL[st] ? `<span>${esc(x.trackDetail)}${x.trackWhere ? ", " + esc(x.trackWhere) : ""}</span>` : x.trackWhere ? `<span>${esc(x.trackWhere)}</span>` : ""}</p>` : "";
+    const eta = x.trackEta && st !== "delivered" ? `<p class="lede">Expected ${fmtDay(x.trackEta)}</p>` : "";
+    return `<div class="card track"><p class="eyebrow">Tracking</p><p class="mono">${esc(x.carrier)} ${esc(x.tracking)}</p>${latest}${eta}
+      <p class="lede">Shipped ${fmtDay(x.shippedAt)}.${st ? " Updates here as the carrier scans it." : ""}</p>
+      <a class="link" href="${esc(trackUrl(x.carrier, x.tracking))}" target="_blank" rel="noopener noreferrer">Track on ${esc(x.carrier)} ↗</a></div>`;
+  }
+
   function stampHTML(ms, label = "SHIP BY") {
     const s = fmtStamp(ms);
     return `<span class="stamp ${ms - now() < DAY ? "late" : ""}"><small>${label}</small><b>${s.day}</b><small>${s.wd}</small></span>`;
@@ -782,16 +831,7 @@
   function discoverResults() {
     const pool = discoverPool();
     const avail = pool.filter(requestable);
-    const q = ui.q.trim().toLowerCase();
-    if (q) {
-      const hits = pool.filter((l) => {
-        const b = bk(copy(l.copyId).bookId);
-        return (b.title + " " + b.author + " " + b.isbn).toLowerCase().includes(q);
-      });
-      return `<div class="section"><p class="eyebrow">${hits.length} found</p>${
-        hits.length ? `<div class="grid">${hits.map((l) => listingTile(l, "hit")).join("")}</div>` : `<div class="empty">${spines()}<h3>Nobody has listed that yet</h3><p>Find it under Scan and add it to your wishlist. We'll tell you the moment someone lists it.</p><button class="btn ghost sm" data-act="tab" data-id="scan">Search all books</button></div>`
-      }</div>`;
-    }
+    if (ui.q.trim()) return searchResults();
     let html = welcomeBanner();
     if (!pool.length) {
       return html + `<div class="empty">${spines()}<h3>The shelves are filling up</h3><p>No one near you has listed books yet. Scan yours so the first readers find them.</p><button class="btn primary sm" data-act="tab" data-id="scan">Scan my books</button></div>`;
@@ -854,6 +894,168 @@
     </div>`;
   }
 
+  /* ---------------- search ----------------
+     Live: the database searches the whole catalog (search_books), forgiving typos, grouping
+     editions and counting copies anyone can request right now. The demo does the same on its
+     own books. When nobody has a book, similar ones that are available now are suggested. */
+
+  // Copies anyone could request now, of any edition of this book, not counting your own.
+  const availableCopies = (bookId) => S.listings.filter((l) => {
+    const c = requestable(l) && copy(l.copyId);
+    return c && c.owner !== "me" && workOf(c.bookId) === workOf(bookId);
+  }).sort((a, z) => z.openedAt - a.openedAt);
+
+  function isbn13(raw) {
+    const s = String(raw || "").toUpperCase().replace(/[^0-9X]/g, "");
+    if (/^97[89]\d{10}$/.test(s)) return s;
+    if (!/^\d{9}[\dX]$/.test(s)) return null;
+    const body = "978" + s.slice(0, 9);
+    const sum = [...body].reduce((acc, ch, i) => acc + Number(ch) * (i % 2 ? 3 : 1), 0);
+    return body + ((10 - (sum % 10)) % 10);
+  }
+  const norm = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  function trigramSim(a, b) {
+    const grams = (t) => { const p = "  " + t + " ", g = new Set(); for (let i = 0; i < p.length - 2; i++) g.add(p.slice(i, i + 3)); return g; };
+    const A = grams(a), B = grams(b);
+    let both = 0;
+    A.forEach((g) => { if (B.has(g)) both++; });
+    return both / (A.size + B.size - both);
+  }
+  // How well a query matches a title or author: exact text, or the closest run of words (typos ok).
+  function matchScore(q, text) {
+    const t = norm(text);
+    if (!t) return 0;
+    if (t.includes(q)) return 1;
+    const words = t.split(" "), n = q.split(" ").length;
+    let best = trigramSim(q, t);
+    for (let i = 0; i + n <= words.length; i++) best = Math.max(best, trigramSim(q, words.slice(i, i + n).join(" ")));
+    return best;
+  }
+  const wantedBy = (bookId) => Object.entries(S.wishlist).filter(([u, w]) => u !== "me" && w.some((x) => workOf(x) === workOf(bookId))).length;
+  const resultOf = (b) => ({ work: workOf(b.id), isbn: b.id, editions: 1, available: availableCopies(b.id).length, wished: onWishlist(b.id), wanted: wantedBy(b.id) });
+  function demoSearch(raw) {
+    const books = Object.values(Object.assign({}, CATALOG_BY_ID, S.extraBooks));
+    const isbn = isbn13(raw);
+    if (isbn) return books.filter((b) => b.isbn === isbn).map(resultOf);
+    const q = norm(raw);
+    if (q.length < 2) return [];
+    return books.map((b) => [b, Math.max(matchScore(q, b.title), 0.9 * matchScore(q, b.author))])
+      .filter(([, sc]) => sc >= 0.45).sort((a, z) => z[1] - a[1]).slice(0, 30).map(([b]) => resultOf(b));
+  }
+  const surname = (author) => (norm(String(author || "").split(",")[0]).split(" ").pop() || "");
+  function demoSimilar(isbn) {
+    const src = isbn ? bk(isbn) : null;
+    const seen = new Set();
+    const out = [];
+    discoverPool().filter(requestable).forEach((l) => {
+      const b = bk(copy(l.copyId).bookId);
+      const w = workOf(b.id);
+      if (seen.has(w) || (src && w === workOf(src.id))) return;
+      seen.add(w);
+      const score = (src && surname(b.author) && surname(b.author) === surname(src.author) ? 4 : 0) + (src && b.genre === src.genre ? 2 : 0) + Math.min(10, trendScore(b.id)) * 0.1;
+      out.push({ isbn: b.id, score });
+    });
+    return out.sort((a, z) => z.score - a.score).slice(0, 8);
+  }
+
+  // Live: results and suggestions bring books, copies and readers the app hasn't loaded. They're
+  // kept here so the 30-second refresh doesn't drop them while you're looking at them.
+  const extras = { books: new Map(), listings: new Map(), copies: new Map(), users: new Map() };
+  function mergeBundle(bundle) {
+    for (const b of Object.values(bundle.books || {})) extras.books.set(b.isbn, decorate(b));
+    for (const [id, u] of Object.entries(bundle.users || {})) extras.users.set(id, userFrom(id, u));
+    (bundle.copies || []).forEach((c) => extras.copies.set(c.id, Object.assign({}, c, { owner: c.owner === ME_ID ? "me" : c.owner })));
+    (bundle.listings || []).forEach((l) => extras.listings.set(l.id, l));
+    reapplyExtras();
+  }
+  function reapplyExtras() {
+    if (!S.live) return;
+    extras.books.forEach((b, isbn) => { S.extraBooks[isbn] = Object.assign({}, b, S.extraBooks[isbn]); });
+    extras.users.forEach((u, id) => { if (!USERS[id]) USERS[id] = u; });
+    extras.copies.forEach((c, id) => { if (!S.copies.some((x) => x.id === id)) S.copies.push(c); });
+    extras.listings.forEach((l, id) => { if (!S.listings.some((x) => x.id === id)) S.listings.push(l); });
+  }
+
+  let findTimer = null;
+  function liveFind(q) {
+    clearTimeout(findTimer);
+    if (q.trim().length < 2 && !isbn13(q)) { ui.find = null; return; }
+    ui.find = { q, state: "loading", results: ui.find ? ui.find.results : [] };
+    findTimer = setTimeout(async () => {
+      const { data, error } = await sb.rpc("search_books", { p_q: q.trim() });
+      if (ui.q !== q) return;
+      if (error) ui.find = { q, state: "error", results: [] };
+      else { mergeBundle(data); ui.find = { q, state: "done", results: data.results }; }
+      const box = document.getElementById("results");
+      if (box) box.innerHTML = discoverResults();
+    }, 250);
+  }
+  async function fetchSimilar(isbn, key) {
+    const { data, error } = await sb.rpc("similar_books", isbn ? { p_isbn: isbn } : {});
+    if (error) { ui.similar[key] = { at: Date.now(), results: [] }; return; }
+    mergeBundle(data);
+    ui.similar[key] = { at: Date.now(), results: data.results };
+    render();
+  }
+  // "You can get these now": a rail of available books like this one (or the most wanted).
+  function similarRail(isbn, title, inSheet = false) {
+    const key = isbn || "_popular";
+    let results;
+    if (S.live) {
+      const got = ui.similar[key];
+      if (!got || Date.now() - got.at > 120000) {
+        if (!got) ui.similar[key] = { at: 0, results: null };
+        if (!got || got.results) setTimeout(() => fetchSimilar(isbn, key));
+      }
+      results = ui.similar[key].results;
+    } else results = demoSimilar(isbn);
+    const head = inSheet ? `<p class="eyebrow">${esc(title)}</p>` : `<div class="section-head"><h2>${esc(title)}</h2></div>`;
+    if (!results) return `<div class="section">${head}<div class="rail">${'<span class="skel-book"><span class="skel cover-skel"></span><span class="skel line"></span></span>'.repeat(3)}</div></div>`;
+    const tiles = results.map((r) => availableCopies(r.isbn)[0]).filter(Boolean).map((l) => listingTile(l, "sim:" + key));
+    return tiles.length ? `<div class="section">${head}<div class="rail">${tiles.join("")}</div></div>` : "";
+  }
+  const copiesText = (n) => n + " " + (n === 1 ? "copy" : "copies");
+  function resultTile(r) {
+    const b = bk(r.isbn);
+    const meta = r.available ? `<span class="avail">${copiesText(r.available)} available</span>`
+      : r.wanted ? `${r.wanted} ${r.wanted === 1 ? "reader wants" : "readers want"} it` : "Not on a shelf yet";
+    return bookTile({ act: "openBook", id: r.isbn, key: "find:" + r.work, b, flag: r.wished ? WISH_FLAG : "", meta });
+  }
+  function searchResults() {
+    const q = ui.q.trim();
+    if (q.length < 2 && !isbn13(q)) return '<p class="lede">Keep typing: a title, an author, or the ISBN from the back cover.</p>';
+    let results;
+    if (S.live) {
+      const f = ui.find;
+      if (f && f.state === "error") return '<p class="lede">Search isn\'t answering right now. Try again in a moment.</p>';
+      if (!f || f.q !== ui.q || (f.state === "loading" && !f.results.length)) {
+        return `<div class="grid" aria-busy="true">${'<span class="skel-book"><span class="skel cover-skel"></span><span class="skel line"></span><span class="skel line w40"></span></span>'.repeat(3)}</div>`;
+      }
+      results = f.results;
+    } else results = demoSearch(q);
+    if (!results.length) {
+      return `<div class="empty">${spines()}<h3>Not on anyone's shelf yet</h3>
+        <p>No one on Wormy has “${esc(q)}” right now. Look it up to add it to your wishlist, and we'll tell you the moment someone lists a copy.</p>
+        <button class="btn primary sm" data-act="lookUp">Look it up</button></div>
+        ${similarRail(null, "Popular right now")}`;
+    }
+    const now = results.filter((r) => r.available > 0);
+    const later = results.filter((r) => !r.available);
+    let html = "";
+    if (now.length) {
+      html += `<div class="section"><div class="section-head"><h2>Available now</h2><span class="aside">${copiesText(now.reduce((n, r) => n + r.available, 0))}</span></div>
+        <div class="grid">${now.map(resultTile).join("")}</div></div>`;
+    }
+    if (later.length) {
+      html += `<div class="section"><div class="section-head"><h2>Not on a shelf yet</h2><span class="aside">Wish for one</span></div>
+        <p class="lede">These are on Wormy, but nobody has a copy free right now. Add one to your wishlist and we'll tell you when it's listed.</p>
+        <div class="grid">${later.map(resultTile).join("")}</div></div>`;
+    }
+    if (!now.length) html += similarRail(later[0].isbn, "You can get these now");
+    html += `<p class="lede">Not what you meant? <button class="link" data-act="lookUp">Look it up</button></p>`;
+    return html;
+  }
+
   function welcomeBanner() {
     if (S.me.welcome !== "locked") return "";
     const p = welcomeProgress();
@@ -908,7 +1110,7 @@
       }
       return "";
     }
-    const hits = q ? CATALOG.filter((b) => (b.title + " " + b.author + " " + b.isbn).toLowerCase().includes(q)).slice(0, 6) : [];
+    const hits = q ? CATALOG.concat(Object.values(OUTSIDE_BY_ID())).filter((b) => (b.title + " " + b.author + " " + b.isbn).toLowerCase().includes(q)).slice(0, 6) : [];
     return scanResults(hits, isbn && !hits.length ? isbn : null);
   }
 
@@ -1176,7 +1378,7 @@
     if (ui.summaries[isbn]) return;
     ui.summaries[isbn] = "loading";
     const res = await invoke("book-summary", { isbn }, { quiet: true });
-    const text = res && res.summary;
+    const text = res.data && res.data.summary;
     if (text && S.extraBooks[isbn]) S.extraBooks[isbn].summary = text;
     ui.summaries[isbn] = text ? "done" : "none";
     render();
@@ -1238,7 +1440,8 @@
 
   function sheetBook(s) {
     const b = bk(s.id);
-    const avail = S.listings.filter((l) => requestable(l) && copy(l.copyId).bookId === b.id && copy(l.copyId).owner !== "me");
+    const avail = availableCopies(b.id);
+    const wished = onWishlist(b.id);
     return `
       <div class="detail">
         ${cover(b, "lg")}
@@ -1246,9 +1449,11 @@
       </div>
       ${aboutHTML(b)}
       ${avail.length
-        ? `<div class="section"><p class="eyebrow">Available copies</p><div class="list">${avail.map((l) => { const c = copy(l.copyId); return `<button class="card tap" data-act="openListing" data-id="${esc(l.id)}"><span class="row"><span class="cond">${COND[c.cond].short}</span><span class="grow">${esc(c.format)} · @${esc(user(c.owner).handle)}</span><span class="lede">${stars(user(c.owner))}</span></span></button>`; }).join("")}</div></div>`
-        : `<p class="note">Nobody has listed this yet. You'll get an alert when someone does.</p>`}
-      <button class="btn ghost" data-act="wish" data-id="${esc(b.id)}">${onWishlist(b.id) ? "Remove from wishlist" : "Add to wishlist"}</button>
+        ? `<div class="section"><p class="eyebrow">Available copies</p><div class="list">${avail.map((l) => { const c = copy(l.copyId); const other = c.bookId !== b.id ? ", " + (bk(c.bookId).year ? bk(c.bookId).year + " " : "") + "edition" : ""; return `<button class="card tap" data-act="openListing" data-id="${esc(l.id)}"><span class="row"><span class="cond">${COND[c.cond].short}</span><span class="grow">${esc(c.format)}${esc(other)} · @${esc(user(c.owner).handle)}</span><span class="lede">${stars(user(c.owner))}</span></span></button>`; }).join("")}</div></div>
+          <button class="btn ghost" data-act="wish" data-id="${esc(b.id)}">${wished ? "Remove from wishlist" : "Add to wishlist"}</button>`
+        : `<div class="note"><strong>Not on anyone's shelf yet.</strong> ${wished ? "It's on your wishlist. We'll tell you the moment someone lists a copy, any edition." : "Add it to your wishlist and we'll tell you the moment someone lists a copy, any edition."}</div>
+          <button class="btn ${wished ? "ghost" : "primary"}" data-act="wish" data-id="${esc(b.id)}">${wished ? "Remove from wishlist" : "Add to wishlist"}</button>
+          ${similarRail(b.id, "You can get these now", true)}`}
     `;
   }
 
@@ -1321,7 +1526,7 @@
     } else if (d.stage === "accepted") {
       main = `<p class="note">${esc(p)} accepted and has until ${fmtDay(x.shipBy)} to ship.</p>${creditLine}`;
     } else if (d.stage === "shipped") {
-      main = `<div class="card"><p class="eyebrow">Tracking</p><p class="mono">${esc(x.carrier)} ${esc(x.tracking)}</p><p class="lede">Shipped ${fmtDay(x.shippedAt)}. We check tracking automatically.</p></div>${creditLine}
+      main = `${trackingCard(x)}${creditLine}
         ${d.role === "recipient" ? `<p class="lede">Already have it in your hands? Confirm it now.</p>${confirmButtons}` : ""}`;
     } else if (d.stage === "delivered" && d.role === "recipient") {
       main = `<p class="note stamped">${esc(d.book.title)} was delivered. Does it match the listing (${COND[c.cond].label}${c.flags.length ? ", " + c.flags.map(esc).join(", ").toLowerCase() : ""})? It confirms automatically in ${left(x.deliveredAt + CONFIRM_WINDOW)}.</p>
@@ -1659,6 +1864,34 @@
   // The Wormy mark, traced from the hand-drawn original (brand/logo.svg). Drawn in the text color.
   const LOGO = `<svg class="logo" viewBox="0 0 885 671" role="img" aria-label="Wormy"><path d="M153 665C146 665 134 664 127 663C106 661 104 661 100 658C98 657 94 656 91 655C88 655 85 654 79 649C75 646 69 641 66 639C63 636 60 633 59 631C57 630 55 626 54 623C52 618 51 617 47 614C43 612 42 610 40 605C38 601 35 597 34 595C32 593 29 586 26 579C23 572 20 564 20 563C19 562 18 559 18 558C17 556 16 553 14 551C12 549 11 546 11 542C10 537 10 536 7 533C4 531 4 530 4 526C4 524 5 519 6 516C9 508 10 493 8 485C7 479 7 477 8 471C10 466 10 462 10 459C9 456 10 453 10 450C11 447 12 443 12 440C12 437 13 434 16 430C22 419 25 412 27 404C28 401 30 395 32 392C37 382 42 372 42 366C43 362 44 360 48 355C50 352 53 348 54 346C55 344 59 336 62 329C66 322 71 313 73 309C82 296 90 282 90 280C90 278 96 266 99 262C100 261 101 259 102 257C104 250 108 243 110 241C111 240 112 237 113 234C113 232 115 227 116 225C118 222 120 219 120 217C121 215 123 211 124 209C126 206 128 201 129 195C130 190 131 184 132 182C132 180 134 175 134 172C135 168 137 164 138 161C140 158 142 155 142 149C143 144 145 139 145 136C147 131 147 126 145 120C144 118 144 114 144 112C145 110 144 106 144 103C140 87 140 87 132 80C129 77 123 72 120 70C113 66 103 57 100 51L97 47L97 35L97 23L101 17C105 10 109 7 113 5C115 4 119 4 123 4C128 4 130 5 135 7C138 9 142 10 143 10C144 10 148 12 150 15C153 17 157 20 159 21C162 22 166 25 168 28C171 30 174 33 176 33C180 35 195 51 195 54C195 57 200 67 203 70C204 71 205 74 206 77C206 79 208 82 209 84C210 86 210 87 210 90C209 93 209 95 211 97C212 99 213 104 214 107C214 111 216 116 216 118C217 121 218 128 218 141L217 160L220 163C225 168 224 170 218 176C216 177 216 178 216 181C217 185 216 187 212 195C210 200 208 205 208 206C208 207 207 209 206 211C206 213 205 216 204 219C204 221 202 227 199 232C197 236 195 242 195 243C195 245 194 249 193 252C191 254 190 258 190 260C189 261 187 267 184 272C178 284 175 292 173 300C171 308 165 319 154 337C150 343 146 351 144 356C140 366 139 368 133 377C130 382 129 385 128 389C127 396 125 400 120 404C118 406 117 408 117 408C117 409 115 411 114 414C108 422 105 429 104 436C103 441 102 445 100 447C99 450 98 452 98 456C98 459 99 462 99 463C101 465 101 465 96 471C92 475 90 484 90 492C90 494 89 499 89 503C88 508 88 510 89 514C90 516 90 520 91 522C92 524 94 529 96 532C98 534 100 538 101 541C102 546 106 550 108 550C108 550 111 552 114 554C119 560 131 565 140 566C144 566 148 567 151 567C154 568 164 568 174 569C189 569 193 569 196 568C199 567 204 566 209 565C221 564 227 561 234 555C241 550 245 544 250 534C251 532 255 528 257 525C260 522 265 516 268 510C273 502 274 500 274 496C274 494 275 486 276 480C276 472 277 464 277 460C276 454 276 451 278 447C279 443 280 441 279 440C278 439 278 436 278 434C278 431 278 430 275 429C273 428 270 426 268 424L264 421L259 421C254 422 251 424 248 429C247 431 245 433 244 434C243 436 240 441 237 446L231 456L231 464C231 477 227 482 216 484C214 485 210 487 208 490C200 497 192 499 186 495C185 494 182 493 179 493C175 493 167 490 159 486C157 485 156 481 157 474C157 469 157 468 155 465C153 463 151 459 150 456C149 453 147 448 146 445C144 440 144 439 144 428C145 415 146 414 153 409C158 405 159 403 161 395C162 388 166 382 172 375C175 372 178 367 180 364C182 359 189 350 198 342C201 338 203 337 209 335C212 334 217 332 218 332C226 328 227 328 232 328C235 328 238 327 242 325C249 322 251 321 253 324C254 325 258 325 272 326C282 326 291 326 292 327C294 327 298 329 301 332C306 336 313 339 319 339C320 339 322 341 325 343C327 345 330 348 333 350C335 351 340 355 343 360C348 367 355 374 360 378C361 379 362 381 362 383C362 386 364 392 370 403C372 409 372 406 370 432C370 436 369 442 368 445C367 448 367 455 368 464C368 475 368 479 367 483C366 486 365 493 364 499C363 509 363 511 358 519C356 524 354 530 354 531C354 532 353 535 351 538C349 541 348 545 348 547C348 548 347 552 345 555C344 558 342 563 342 565C341 570 338 575 332 582C330 584 327 589 324 594C323 599 321 602 321 603C321 603 319 604 316 606C312 607 308 611 303 615C300 619 294 624 290 627C286 630 283 634 282 635C280 640 275 643 249 652C244 654 238 656 236 658C232 660 231 660 225 659C220 659 217 659 215 660C210 662 200 665 187 666C173 667 169 667 153 665ZM445 661C439 660 427 656 423 655C421 654 417 653 415 653C411 653 409 652 406 650C402 646 388 633 378 622C369 614 368 611 368 595L368 582L366 577C363 572 364 569 367 567C369 567 371 565 373 563C375 562 379 559 381 558C384 557 386 555 387 554C388 552 391 550 393 549C397 546 398 546 401 547C403 548 407 548 409 548C416 548 427 549 430 551C431 551 436 553 440 555C445 556 449 558 450 558C450 559 454 560 457 560L464 560L469 557C471 556 475 553 478 553C480 552 484 550 487 548C504 534 506 533 511 525C513 521 516 516 516 513C516 510 518 507 519 505C520 503 522 499 524 496C525 493 528 489 530 487L533 483L533 474L534 465L537 460C540 456 541 454 541 450C541 448 542 444 542 441C543 436 543 434 541 431L540 428L541 421C542 417 543 413 543 411C543 408 544 406 547 402L551 398L551 388C551 383 552 378 552 377C553 375 554 370 554 364C554 359 554 351 554 348C555 342 555 340 553 335C552 332 551 328 551 326C551 322 552 320 556 316L560 311L560 301C560 296 559 290 558 288L557 284L564 270C567 263 570 256 571 254C574 245 580 234 588 221L598 207L602 206C604 205 608 203 610 201L614 197L620 198C629 198 629 199 634 205C636 208 640 212 643 214C650 220 652 223 654 232C657 244 657 252 655 270C653 284 653 290 654 307C654 324 654 329 652 332C652 334 650 343 648 353C645 367 644 371 645 374C646 376 646 380 647 383C647 387 647 391 648 394C648 397 648 399 646 403C643 407 643 409 642 420C641 435 640 437 638 440C635 442 634 452 634 471L634 487L631 493C629 497 628 500 628 502C628 503 628 504 627 504C625 504 621 512 621 518C620 520 620 525 619 528C619 531 617 535 615 538C613 541 610 546 609 549C607 552 604 558 602 561C599 565 597 569 596 571C595 572 592 577 590 580C587 584 585 588 585 590C585 592 582 595 574 601C572 603 567 608 564 611C562 615 555 622 549 627C543 632 537 638 536 639C534 642 529 643 528 640C527 637 526 637 522 642C517 647 506 653 497 654C494 655 489 656 486 657C482 658 477 659 472 659C469 659 464 660 462 660C457 662 452 662 445 661ZM674 189C671 188 667 186 664 185C660 183 654 176 650 170C649 167 646 163 644 160C642 157 638 152 636 148C633 140 632 135 634 123C635 118 636 116 639 114C641 113 645 109 648 106C653 102 657 99 662 97C670 94 673 92 682 81C687 76 689 74 691 74C692 74 696 73 700 71C706 68 709 68 714 68L719 68L721 73C722 76 724 79 731 84C741 93 743 96 743 99C743 101 744 104 745 106C747 112 746 122 743 128C742 130 741 134 741 136C741 141 738 147 734 150C733 152 731 154 730 156C729 159 726 163 723 167C720 171 718 173 715 174C713 175 709 178 706 181C701 185 699 186 692 188C683 190 682 190 674 189ZM786 117C780 111 775 104 773 100C772 97 771 95 770 95C770 94 767 90 763 86C760 81 757 77 756 76C756 76 755 75 755 74C754 59 754 52 756 49C757 48 758 45 758 43C760 39 761 38 770 34C774 32 780 28 782 26C785 24 788 22 791 22C797 20 798 20 802 17C812 10 835 4 848 6C852 6 856 7 858 8C859 8 860 9 862 9C865 9 873 20 878 28L881 36L880 43C880 47 879 54 879 60C879 64 878 71 878 75L876 81L870 86C866 89 860 92 856 93C853 94 848 96 846 98C844 99 840 101 836 103C833 105 829 107 828 108C827 109 821 111 816 114C810 116 805 118 804 118C804 119 800 119 796 119C789 119 788 119 786 117Z"/></svg>`;
 
+  /* A redraw (a background refresh, a summary arriving) must never lose what someone is typing.
+     Form fields that aren't drawn from saved state get their text, focus and cursor back.
+     Search boxes and onboarding fields are drawn from state already, so they're left alone. */
+  function keepTyped() {
+    const values = {};
+    app.querySelectorAll("input[id], select[id], textarea[id]").forEach((el) => {
+      if (el.type === "file" || el.id === "q" || el.id === "scanq" || el.dataset.draft) return;
+      values[el.id] = el.type === "checkbox" || el.type === "radio" ? { checked: el.checked } : { value: el.value };
+    });
+    const a = document.activeElement;
+    const focus = a && a.id && app.contains(a) && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)
+      ? { id: a.id, start: a.selectionStart, end: a.selectionEnd } : null;
+    return { values, focus };
+  }
+  function putBackTyped({ values, focus }) {
+    for (const [id, v] of Object.entries(values)) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      if ("checked" in v) el.checked = v.checked;
+      else el.value = v.value;
+    }
+    const el = focus && document.getElementById(focus.id);
+    if (el && document.activeElement !== el) {
+      el.focus({ preventScroll: true });
+      try { if (focus.start != null) el.setSelectionRange(focus.start, focus.end); } catch (e) { /* not a text field */ }
+    }
+  }
+
   function render() {
     const signedOut = LIVE ? ui.screen === "signin" : !S.signedIn;
     const loading = ui.screen === "loading" && (LIVE || S.signedIn);
@@ -1685,6 +1918,7 @@
     screenNow = null;
     const body = signedOut ? viewSignIn() : loading ? viewLoading() : onboarding ? viewOnboarding() : views[ui.tab]();
     lastScreen = screenNow;
+    const typed = keepTyped();
     app.innerHTML = `
       <header class="top">
         <div class="brand"><h1>${LOGO}</h1></div>
@@ -1698,6 +1932,7 @@
       ${sheet}
       ${ui.toast ? `<div class="toast" role="status">${esc(ui.toast)}</div>` : ""}
     `;
+    putBackTyped(typed);
     if (prevScroll) {
       const sh = document.querySelector(".sheet");
       if (sh) sh.scrollTop = prevScroll;
@@ -1752,6 +1987,7 @@
   /* ---------------- scanning ---------------- */
 
   function addCopy(bookId) {
+    if (OUTSIDE_BY_ID()[bookId]) S.extraBooks[bookId] = OUTSIDE_BY_ID()[bookId]; // now it's on Wormy
     const c = { id: uid("c"), owner: "me", bookId, cond: ui.defCond, format: "Paperback", flags: [], addedAt: S.now };
     S.copies.push(c);
     listCopy(c);
@@ -1919,10 +2155,21 @@
     confirmDelete() { S = seed(true); ui.sheet = null; ui.tab = "discover"; clearToast(); commit("Account deleted"); },
 
     wish(d) {
-      const w = S.wishlist.me;
-      const on = w.includes(d.id);
-      S.wishlist.me = on ? w.filter((b) => b !== d.id) : w.concat(d.id);
+      const on = onWishlist(d.id);
+      if (!on && OUTSIDE_BY_ID()[d.id]) S.extraBooks[d.id] = OUTSIDE_BY_ID()[d.id]; // now it's on Wormy
+      S.wishlist.me = on ? S.wishlist.me.filter((b) => workOf(b) !== workOf(d.id)) : S.wishlist.me.concat(d.id);
       commit(on ? "Removed from wishlist" : "Added to wishlist. We'll alert you when a copy is listed.");
+    },
+    // Not on Wormy: search the wider world (Open Library) from the Scan tab, then Wish or Add.
+    lookUp() {
+      ui.scanQ = ui.q.trim();
+      ui.q = "";
+      ui.find = null;
+      ui.sheet = null;
+      ui.tab = "scan";
+      if (LIVE) liveSearch(ui.scanQ);
+      render();
+      setTimeout(() => { const f = document.getElementById("scanq"); if (f) f.scrollIntoView({ block: "center" }); });
     },
     wishSearch(d) { A.wish(d); },
 
@@ -2229,11 +2476,12 @@
   // standing for the signed-in reader.
   const photoUrl = (path) => (path ? sb.storage.from("avatars").getPublicUrl(path).data.publicUrl : null);
 
+  const userFrom = (id, u) => ({ id, name: u.name, handle: u.handle, city: u.city, rating: u.rating, avatar: photoUrl(u.avatar), condRated: u.condRated || 0, condAccurate: u.condAccurate || 0 });
   function fromServer(d) {
     ME_ID = d.me_id;
     const id = (x) => (x === ME_ID ? "me" : x);
     const users = { me: { id: "me", name: d.me.name || "You", handle: d.me.handle || "you", city: [d.me.city, d.me.state].filter(Boolean).join(", "), rating: null, avatar: photoUrl(d.me.photo) } };
-    for (const [uidKey, u] of Object.entries(d.users || {})) users[uidKey] = { id: uidKey, name: u.name, handle: u.handle, city: u.city, rating: u.rating, avatar: photoUrl(u.avatar), condRated: u.condRated || 0, condAccurate: u.condAccurate || 0 };
+    for (const [uidKey, u] of Object.entries(d.users || {})) users[uidKey] = userFrom(uidKey, u);
     USERS = users;
     const books = {};
     for (const b of Object.values(d.books || {})) books[b.isbn] = decorate(b);
@@ -2269,6 +2517,7 @@
     }
     const known = S.live ? new Set(S.ledger.map((e) => e.id)) : null;
     S = fromServer(data);
+    reapplyExtras();
     if (!S.me.onboarded) ui.obActive = true;
     // Celebrate credits that arrived since the last look.
     if (known) {
@@ -2390,8 +2639,11 @@
       render();
     },
     async wish(d) {
-      const r = await call("toggle_wish", { p_isbn: d.id });
-      if (!r.error) toast(r.data ? "Added to wishlist. We'll alert you when a copy is listed." : "Removed from wishlist"), render();
+      // Taking a book off the wishlist removes every edition of it that's on there.
+      const same = S.wishlist.me.filter((w) => workOf(w) === workOf(d.id));
+      let r;
+      for (const isbn of same.length ? same : [d.id]) r = await call("toggle_wish", { p_isbn: isbn });
+      if (!r.error) toast(same.length ? "Removed from wishlist" : "Added to wishlist. We'll alert you when a copy is listed."), render();
     },
     async wishSearch(d) {
       const found = await invoke("add-book", { isbn: d.id });
@@ -2576,6 +2828,7 @@
     }
     if (t.id === "q") {
       ui.q = t.value;
+      if (LIVE) liveFind(t.value);
       const r = document.getElementById("results");
       if (r) r.innerHTML = discoverResults();
     }

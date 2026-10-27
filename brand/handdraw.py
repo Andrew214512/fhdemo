@@ -174,8 +174,8 @@ for i in range(8):
 CSS["--m-stripes"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 26' preserveAspectRatio='none'>{rough(0.12, 2)}<path filter='url(#r)' fill='white' d='{''.join(st)}'/></svg>")
 CSS["--m-frame"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 150' preserveAspectRatio='none'><g fill='none' stroke='white' stroke-linecap='round'><path stroke-width='1.7' d='{outline([(8, 7), (93, 6.5), (93.4, 143), (8.5, 143.6)], 0.8, 801, over=0.08, tight=0.05)}'/><path stroke-width='0.8' d='{outline([(11.5, 10.5), (89.6, 10.2), (89.8, 139.6), (11.8, 139.9)], 0.6, 802, over=0.06, tight=0.05)}'/></g></svg>")
 
-# a loose pen loop drawn around something tappable (the credit counter); stretched to fit
-CSS["--m-loop"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' preserveAspectRatio='none'>{rough(0.18, 1.2)}<path filter='url(#r)' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' d='{loop(50, 20.5, 46.5, 16.5, 0.9, 901, start=-168, sweep=388, drift=0.05, step=14)}'/></svg>")
+# a thin pen underline for things you can tap (links, the credit counter); stretched to fit
+CSS["--m-underline"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'>{rough(0.2, 0.8)}<path filter='url(#r)' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' d='{line([(1.5, 4.8), (50, 3.9), (98.5, 3.2)], 0.9, 911)}'/></svg>")
 
 out = {"icons": {k: {"ink": v[0], "wash": v[1], "color": v[2]} for k, v in I.items()}, "heart": HEART, "atom": ATOM, "spines": SPINES, "burst": BURST, "corners": CORNERS, "css": CSS}
 print(json.dumps(out, indent=1))

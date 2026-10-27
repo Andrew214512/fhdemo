@@ -17,7 +17,7 @@ The app, database, payments, sign-in and server code are built and tested. What'
 | 5 | **Apple Developer Program** | "Continue with Apple" sign-in | $99 a year |
 | 6 | **Netlify** or **Cloudflare Pages** | Hosts the app from your GitHub repo | Free |
 | 7 | **Resend** (or Postmark) | Sends sign-in emails reliably. Supabase's built-in email is capped at a handful an hour | Free tier to start |
-| 8 | *Optional:* **EasyPost** | Marks books "delivered" automatically from tracking. Without it, readers tap "It arrived" | Small per-package fee |
+| 8 | *Optional:* **EasyPost** | Shows each carrier scan in the app (in transit, out for delivery, delivered, problems, expected date) and marks books delivered automatically. Without it, readers still get a "Track on USPS" link and tap "It arrived" | Small per-package fee |
 | 9 | A **support email** (like `help@yourdomain`) | Required on the Apple and Google sign-in screens and in the legal pages | Usually free with your email host |
 | 10 | *Optional:* **Anthropic** API account (console.anthropic.com) | Writes the short "About this book" summary on each book page. Without it, book pages simply skip the summary | Under a cent per book, once (each summary is saved and reused) |
 
@@ -54,7 +54,7 @@ These are written so you can follow along, or hand them to a developer. Do every
 ### 1. Supabase project
 
 1. Create a project. Pick a **US** region and save the database password somewhere safe.
-2. **Database → Extensions:** turn on **pg_cron**. It runs Wormy's hourly timers.
+2. **Database → Extensions:** turn on **pg_cron**. It runs Wormy's hourly timers. (Search uses **pg_trgm**; the migrations switch that on themselves.)
 3. Load the database. Either:
    - with the Supabase CLI: `supabase link --project-ref <your-ref>` then `supabase db push`, or
    - in **SQL Editor**: paste and run each file in `supabase/migrations/`, in name order.
@@ -147,9 +147,9 @@ They need PostgreSQL (set `PG_ADMIN_URL`, default `postgres://postgres:postgres@
 
 | Suite | What it proves |
 |---|---|
-| `db.test.mjs` (29) | No direct table access. Credits can't be minted, double-spent or duplicated, even with simultaneous requests. Address privacy, timers, disputes, strikes, refunds, account deletion, photo-path rules, condition ratings (only the recipient, once, after it arrives), summaries server-only |
-| `functions.test.mjs` (13) | Unsigned or tampered Stripe and EasyPost events are rejected. Replays count once. Rate limits work. Internal errors don't leak. Book summaries: only the title and author are sent to Claude, each book is summarized once, unknown books show nothing, outages retry later (against a stand-in for the Claude API, so no key is needed) |
-| `e2e.test.mjs` (49) | Sign-in (Google redirect with PKCE, email code), profile setup with photo, scanning, Stripe top-up via webhook, welcome credit, a book page with its summary, a full exchange both ways with a condition rating, tracking rules, the support queue, sign out, account deletion |
+| `db.test.mjs` (33) | No direct table access. Credits can't be minted, double-spent or duplicated, even with simultaneous requests. Address privacy, timers, disputes, strikes, refunds, account deletion, photo-path rules, condition ratings (only the recipient, once, after it arrives), summaries server-only, search (typos, ISBN-10, editions grouped, availability, wildcards), similar books, any-edition wishlists, tracking updates |
+| `functions.test.mjs` (13) | Unsigned or tampered Stripe and EasyPost events are rejected. Carrier scans are saved. Replays count once. Rate limits work. Internal errors don't leak. Book summaries: only the title and author are sent to Claude, each book is summarized once, unknown books show nothing, outages retry later (against a stand-in for the Claude API, so no key is needed) |
+| `e2e.test.mjs` (55) | Sign-in (Google redirect with PKCE, email code), profile setup with photo, scanning, Stripe top-up via webhook, welcome credit, search (typos, not on a shelf yet, not on Wormy at all), a book page with a summary arriving fresh, a full exchange both ways with a condition rating, tracking rules, the support queue, sign out, account deletion |
 
 ## Not built yet
 

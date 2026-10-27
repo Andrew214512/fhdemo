@@ -454,6 +454,69 @@ test("deleting an account: blocked during open exchanges, then anonymizes and fr
   assert.equal(discover.includes(copies.aBabel), false, "deleted reader's books leave Discover");
 });
 
+test("search: forgives typos, finds ISBN-10s, groups editions, and counts copies anyone can request now", async () => {
+  await rpc(db, "service", "upsert_book", { p_isbn: "9780000000101", p_title: "Pachinko: A Novel", p_author: "Author", p_year: 2018, p_genre: "Historical", p_cover_url: null, p_source: "test" });
+  const seller = await newReader("searchseller");
+  const buyer = await newReader("searchbuyer");
+  await rejects(rpc(db, "anon", "search_books", { p_q: "dune" }), /permission denied/);
+  const typo = await rpc(db, buyer.id, "search_books", { p_q: "pachnko" });
+  assert.equal(typo.results[0].work, "pachinko|author");
+  assert.equal(typo.results[0].editions, 2, "both editions are one result");
+  const byIsbn10 = await rpc(db, buyer.id, "search_books", { p_q: "0-441-17271-7" });
+  assert.equal(byIsbn10.results[0].isbn, ISBN.dune);
+  const dune = await rpc(db, buyer.id, "search_books", { p_q: "Dune" });
+  assert.ok(dune.results[0].available >= 1);
+  assert.ok(dune.copies.length >= 1 && dune.copies.every((c) => c.owner !== buyer.id), "your own copies aren't offered to you");
+  assert.ok(dune.copies.some((c) => c.owner === seller.id));
+  assert.ok(dune.users[seller.id].handle === "searchseller" && !("address" in dune.users[seller.id]));
+  assert.deepEqual((await rpc(db, buyer.id, "search_books", { p_q: "x" })).results, [], "one letter isn't a search");
+  assert.deepEqual((await rpc(db, buyer.id, "search_books", { p_q: "%_%" })).results, [], "wildcards are just characters");
+});
+
+test("similar books: only ones you can request now, never the same book", async () => {
+  const reader = await newReader("simreader");
+  const s = await rpc(db, reader.id, "similar_books", { p_isbn: ISBN.dune });
+  assert.ok(s.results.length > 0);
+  assert.ok(s.results.every((r) => r.work !== "dune|author" && r.available > 0));
+  const popular = await rpc(db, reader.id, "similar_books", {});
+  assert.ok(popular.results.length > 0 && popular.results.every((r) => r.available > 0));
+});
+
+test("a wishlist covers every edition: another edition's listing alerts, and receiving one clears it", async () => {
+  await rpc(db, "service", "upsert_book", { p_isbn: "9780000000118", p_title: "Educated: A Memoir", p_author: "Author", p_year: 2019, p_genre: "Nonfiction", p_cover_url: null, p_source: "test" });
+  const fan = await newReader("edfan");
+  await rpc(db, fan.id, "toggle_wish", { p_isbn: "9780000000118" });
+  const lister = await newReader("edlister"); // lists a different edition of Educated
+  const alert = (await state(fan.id)).notes.find((n) => n.title === "Educated is available");
+  assert.ok(alert, "listing another edition alerts the reader who wished for it");
+  const r = await rpc(db, fan.id, "request_book", { p_listing: await listingOf(lister.books[2]) });
+  await rpc(db, lister.id, "accept_request", { p_req: r });
+  await rpc(db, lister.id, "ship_exchange", { p_req: r, p_carrier: "USPS", p_tracking: "9400111899223456770001" });
+  await rpc(db, fan.id, "confirm_received", { p_req: r });
+  assert.deepEqual((await state(fan.id)).wishlist, [], "receiving any edition takes it off the wishlist");
+});
+
+test("tracking updates: server only; out for delivery and problems notify; delivered starts the confirm window", async () => {
+  const sender = await newReader("trksender");
+  const recipient = await newReader("trkrecipient");
+  const r = await rpc(db, recipient.id, "request_book", { p_listing: await listingOf(sender.books[1]) });
+  await rpc(db, sender.id, "accept_request", { p_req: r });
+  await rpc(db, sender.id, "ship_exchange", { p_req: r, p_carrier: "USPS", p_tracking: "9400111899223456770002" });
+  await rpc(db, "service", "set_tracker", { p_req: r, p_tracker: "trk_db_1" });
+  await rejects(rpc(db, sender.id, "set_tracking_status", { p_tracker: "trk_db_1", p_status: "delivered", p_detail: null, p_where: null, p_eta: null }), /permission denied/);
+  assert.equal(await rpc(db, "service", "set_tracking_status", { p_tracker: "nope", p_status: "in_transit", p_detail: null, p_where: null, p_eta: null }), false);
+  await rpc(db, "service", "set_tracking_status", { p_tracker: "trk_db_1", p_status: "in_transit", p_detail: "Arrived at USPS regional facility", p_where: "Memphis, TN", p_eta: new Date(Date.now() + 2 * 864e5).toISOString() });
+  let x = (await state(recipient.id)).exchanges.find((e) => e.requestId === r);
+  assert.deepEqual([x.status, x.trackStatus, x.trackWhere], ["shipped", "in_transit", "Memphis, TN"]);
+  assert.ok(x.trackEta > Date.now());
+  await rpc(db, "service", "set_tracking_status", { p_tracker: "trk_db_1", p_status: "out_for_delivery", p_detail: "Out for delivery", p_where: "Brooklyn, NY", p_eta: null });
+  assert.ok((await state(recipient.id)).notes.some((n) => n.title === "Circe is out for delivery"));
+  await rpc(db, "service", "set_tracking_status", { p_tracker: "trk_db_1", p_status: "delivered", p_detail: "Delivered, in mailbox", p_where: "Brooklyn, NY", p_eta: null });
+  x = (await state(recipient.id)).exchanges.find((e) => e.requestId === r);
+  assert.equal(x.status, "delivered");
+  assert.equal(x.trackStatus, "delivered");
+});
+
 test("every credit balance is consistent with the ledger and never negative", async () => {
   const rows = await sql(`select user_id,
       sum(case type when 'grant' then 1 when 'earn' then 1 when 'release' then 1 when 'reserve' then -1 when 'reverse' then -1 else 0 end) available,

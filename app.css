@@ -76,7 +76,7 @@
   --m-rays: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 165' preserveAspectRatio='none'%3E%3Cfilter id='r' x='-10%25' y='-10%25' width='120%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.06' numOctaves='2' seed='3'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='3' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Cpath filter='url(%23r)' fill='white' d='M94 116 142.1 118.6 190.1 124.4 190.5 113.5 142.3 112.8 94 115.2ZM93.7 117 142.4 136.4 193 149.2 195.5 140.4 143.8 131.6 94 116.2ZM93.2 117.9 134.8 142 173.9 170.4 178.1 163.4 137.1 138.2 93.6 117.2ZM92.3 118.8 124.8 157 153.5 198.4 160.6 192.4 128.6 153.8 92.9 118.3ZM91.1 119.4 103.7 166 122.6 210.2 132.2 206.3 108.9 164 91.9 119.1ZM90 119.5 93.3 168.6 94.5 217.9 104.7 217 98.8 168.1 90.8 119.4ZM89.1 119.4 83.5 166.3 72.2 212.5 82.6 213.8 89.1 167 89.9 119.5ZM87.8 118.9 61.9 161.9 38.6 206.2 45.6 209.8 65.7 163.9 88.5 119.2ZM87 118.2 51.6 154.3 16.8 190.8 23.6 196.9 55.3 157.6 87.6 118.8ZM86.5 117.4 43.1 142.7 1.4 170.5 6.5 178 45.8 146.7 86.9 118.1ZM86 116.2 35.2 124 -13.8 138.1 -10.7 149.5 36.9 130.1 86.3 117ZM86 115 39.1 109.8 -7.9 108.4 -8.1 118.4 39 115.2 86 115.8ZM86.3 114 36 97.7 -13.9 80.1 -16.4 88.6 34.7 102.3 86.1 114.7ZM86.9 112.9 50.6 83.5 11.5 58.3 7 65.1 48.1 87.3 86.4 113.6ZM87.6 112.3 54.3 77.7 26.6 38.2 20.2 43.8 50.8 80.8 87 112.8ZM88.7 111.7 66.1 65.7 49.7 16.7 39.6 21.5 60.6 68.3 87.9 112.1ZM89.8 111.5 84.9 66 81 20.4 69.4 22.2 78.7 67 89 111.6ZM91 111.6 98.5 66.6 109.5 22.1 100.2 20.7 93.4 65.8 90.2 111.5ZM92 112 113 65.9 136.7 21 128.8 17.4 108.7 64 91.3 111.7ZM92.9 112.7 126.1 77.6 157.1 40.7 151.1 35.7 122.8 74.9 92.2 112.2ZM93.6 113.8 141.8 90.9 186.1 61.8 182 55.1 139.5 87.2 93.2 113.1ZM93.9 114.6 142.5 99.6 191.7 86.5 188.6 77.3 140.8 94.6 93.7 113.9Z'/%3E%3C/svg%3E");
   --m-stripes: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 26' preserveAspectRatio='none'%3E%3Cfilter id='r' x='-10%25' y='-10%25' width='120%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.12' numOctaves='2' seed='3'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='2' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Cpath filter='url(%23r)' fill='white' d='M2.1 0.9C2.3 0.6 1.5 0.5 2.6 0.5C3.7 0.5 7.6 0.9 8.8 0.9C10 1 9.5 0.5 9.7 0.9C9.8 1.2 9.6 -1 9.7 2.8C9.9 6.5 10.2 19.7 10.3 23.5C10.5 27.2 10.8 24.8 10.7 25.2C10.7 25.5 11.4 25.4 10.2 25.4C9 25.5 4.9 25.3 3.6 25.4C2.4 25.5 2.9 26.3 2.8 26C2.7 25.7 3.2 27.5 3 23.6C2.8 19.6 1.8 6 1.6 2.3C1.5 -1.5 1.9 1.2 2.1 0.9ZM17.8 0.6C18 0.2 17.6 0.5 19 0.5C20.3 0.6 24.6 1.1 25.8 1C27.1 1 26.5 0 26.6 0.3C26.7 0.6 26.8 -1.1 26.4 2.8C26.1 6.6 24.8 19.6 24.4 23.5C24 27.3 24.4 25.5 24.2 25.8C23.9 26.1 24.6 25.5 23.1 25.4C21.7 25.4 17 25.6 15.7 25.6C14.5 25.5 15.6 25.7 15.6 25.4C15.6 25.1 15.3 27.3 15.7 23.6C16.1 19.8 17.6 6.7 18 2.9C18.4 -1 17.6 1 17.8 0.6ZM33.1 0.8C33.3 0.5 32.6 0.5 34.2 0.5C35.8 0.5 41.2 0.9 42.6 0.9C44 0.9 42.8 0.3 42.8 0.7C42.9 1 43.1 -1 42.9 2.8C42.6 6.6 41.9 19.7 41.6 23.5C41.2 27.3 41.1 25.2 40.9 25.5C40.6 25.8 41.7 25.4 40.2 25.4C38.7 25.4 33.5 25.2 32 25.3C30.5 25.4 31 26.3 31 26C30.9 25.7 31.2 27.5 31.6 23.6C31.9 19.7 32.7 6.3 33 2.5C33.2 -1.3 32.9 1.2 33.1 0.8ZM48 0.3C48.1 0 47.5 0.5 48.6 0.5C49.8 0.6 53.8 0.4 55 0.4C56.2 0.5 55.8 0.7 55.9 1.1C56 1.5 56.2 -1 55.7 2.8C55.3 6.5 53.6 19.8 53.2 23.7C52.9 27.5 53.6 25.6 53.6 25.9C53.5 26.2 54.2 25.4 52.9 25.4C51.6 25.4 47 26.1 45.8 26.1C44.7 26 46 25.6 46 25.2C46 24.8 45.5 27.4 45.8 23.6C46.2 19.8 47.9 6.3 48.2 2.4C48.6 -1.5 48 0.6 48 0.3ZM60.8 0.6C60.9 0.2 60.3 0.5 61.6 0.5C63 0.6 67.6 0.7 68.9 0.7C70.2 0.7 69.3 0.3 69.4 0.6C69.5 1 69.2 -1 69.5 2.8C69.8 6.6 71 19.6 71.3 23.4C71.5 27.1 70.9 25 70.8 25.4C70.7 25.7 71.8 25.3 70.6 25.4C69.4 25.5 64.8 25.9 63.6 25.9C62.3 26 63.3 26.2 63.1 25.8C63 25.4 63 27.4 62.7 23.6C62.4 19.7 61.5 6.6 61.2 2.7C60.9 -1.1 60.8 0.9 60.8 0.6ZM77.6 0.4C77.6 0.1 76.8 0.5 78.2 0.5C79.6 0.5 84.5 0.5 86 0.5C87.5 0.5 87 0.1 87.1 0.5C87.3 0.9 86.9 -1.1 86.8 2.8C86.8 6.6 86.9 19.9 87.1 23.6C87.3 27.3 87.9 24.7 87.8 25C87.8 25.3 88.2 25.4 86.6 25.4C85.1 25.4 79.8 25 78.4 25.1C76.9 25.1 78.1 26 78 25.8C77.9 25.5 78 27.5 78 23.6C78 19.7 78 6.4 78 2.5C77.9 -1.3 77.6 0.7 77.6 0.4ZM91.8 0.5C91.9 0.2 91.4 0.5 92.8 0.5C94.1 0.6 98.5 0.7 99.8 0.7C101.1 0.7 100.3 0.3 100.5 0.6C100.7 0.9 100.9 -1 101 2.8C101.1 6.5 101.3 19.4 101.2 23.2C101.2 27 100.9 25.2 100.7 25.6C100.6 26 101.7 25.4 100.3 25.4C98.9 25.4 93.7 25.5 92.4 25.4C91.1 25.4 92.6 25.4 92.5 25.1C92.5 24.8 92.1 27.4 92.1 23.6C92.1 19.8 92.4 6.2 92.4 2.4C92.4 -1.5 91.8 0.8 91.8 0.5ZM106.5 0.3C106.6 0 106 0.5 107.3 0.5C108.6 0.6 113.2 0.6 114.4 0.7C115.6 0.8 114.5 0.9 114.6 1.2C114.8 1.6 115 -0.9 115.1 2.8C115.2 6.4 115.3 19.5 115.4 23.3C115.5 27.1 115.8 25.2 115.7 25.6C115.6 25.9 116.1 25.5 114.8 25.4C113.5 25.3 108.9 25 107.7 25.1C106.4 25.2 107.4 26.3 107.3 26.1C107.1 25.8 107.1 27.6 107 23.6C106.8 19.6 106.4 5.9 106.3 2C106.2 -1.8 106.3 0.5 106.5 0.3Z'/%3E%3C/svg%3E");
   --m-frame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 150' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='white' stroke-linecap='round'%3E%3Cpath stroke-width='1.7' d='M8 7C8.7 7 5.2 7.1 12.2 7C19.3 6.8 37.7 6.2 50.5 6.1C63.2 6 81.7 6.5 88.8 6.5C95.8 6.6 92.3 5.4 93 6.5C93.7 7.6 92.9 2 93 13.3C93.1 24.7 93.4 54.3 93.4 74.7C93.5 95.2 93.4 124.8 93.4 136.2C93.4 147.6 94.1 141.9 93.4 143C92.7 144.1 96.2 143.1 89.2 143C82.1 143 63.7 142.7 50.9 142.8C38.2 142.9 19.8 143.4 12.7 143.6C5.7 143.7 9.2 144.7 8.5 143.6C7.8 142.5 8.5 148.2 8.5 136.8C8.4 125.4 8.3 95.8 8.2 75.3C8.2 54.8 6.9 25.1 8 13.8C9.1 2.5 13.7 8.5 14.8 7.5'/%3E%3Cpath stroke-width='0.8' d='M11.5 10.5C12.2 10.5 8.9 10.5 15.4 10.5C21.9 10.5 38.8 10.5 50.6 10.4C62.3 10.4 79.2 10.2 85.7 10.2C92.2 10.2 88.9 9.1 89.6 10.2C90.3 11.3 89.6 5.9 89.6 16.7C89.6 27.5 89.6 55.5 89.6 74.9C89.7 94.3 89.8 122.3 89.8 133.1C89.8 143.9 90.4 138.5 89.8 139.6C89.2 140.7 92.4 139.6 85.9 139.6C79.4 139.7 62.5 139.9 50.8 140C39.1 140 22.2 139.9 15.7 139.9C9.2 139.9 12.5 141 11.8 139.9C11.1 138.8 11.8 144.2 11.8 133.4C11.7 122.6 11.5 94.6 11.4 75.2C11.4 55.8 10.7 27.7 11.5 17C12.3 6.3 15.4 12 16.2 11'/%3E%3C/g%3E%3C/svg%3E");
-  --m-loop: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' preserveAspectRatio='none'%3E%3Cfilter id='r' x='-10%25' y='-10%25' width='120%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.18' numOctaves='2' seed='3'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='1.2' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Cpath filter='url(%23r)' fill='none' stroke='white' stroke-width='1.5' stroke-linecap='round' d='M4.3 17.1C5 16.4 6.5 14.4 8.2 13.1C10 11.9 12.2 10.8 14.8 9.7C17.3 8.7 20.3 7.8 23.5 7C26.7 6.3 30.2 5.6 33.8 5.2C37.4 4.7 41.3 4.4 45.1 4.2C48.9 4.1 52.8 4.1 56.6 4.3C60.4 4.5 64.2 4.8 67.8 5.3C71.3 5.8 74.8 6.5 77.9 7.3C81 8.2 83.9 9.1 86.3 10.2C88.6 11.3 90.7 12.5 92.2 13.7C93.8 15 94.8 16.3 95.4 17.7C96 19 96 20.4 95.7 21.8C95.3 23.1 94.3 24.5 93 25.7C91.7 27 89.9 28.2 87.8 29.3C85.7 30.4 83.1 31.4 80.3 32.3C77.5 33.1 74.3 33.9 71 34.5C67.7 35.1 64.1 35.6 60.5 35.8C57 36.1 53.2 36.3 49.5 36.2C45.8 36.2 42.1 36 38.5 35.7C35 35.3 31.5 34.8 28.3 34.1C25.1 33.5 22.1 32.7 19.5 31.8C16.8 30.9 14.4 29.9 12.4 28.8C10.5 27.7 8.8 26.5 7.7 25.2C6.5 24 5.8 22.7 5.6 21.4C5.3 20.1 5.6 18.7 6.3 17.4C7 16.1 8.3 14.8 9.9 13.7C11.5 12.5 15 10.9 16 10.4'/%3E%3C/svg%3E");
+  --m-underline: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'%3E%3Cfilter id='r' x='-10%25' y='-10%25' width='120%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.2' numOctaves='2' seed='3'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='0.8' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Cpath filter='url(%23r)' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' d='M1.5 4.8C4.3 4.7 13 4.5 18.5 4.4C24 4.3 29.2 4.4 34.5 4.3C39.7 4.3 44.6 3.9 50 3.9C55.4 3.9 61.5 4.3 67 4.3C72.5 4.3 77.7 3.9 83 3.8C88.2 3.6 95.9 3.3 98.5 3.2'/%3E%3C/svg%3E");
   --blob: 47% 53% 51% 49% / 54% 46% 55% 45%;
   --blob-2: 53% 47% 45% 55% / 47% 55% 45% 53%;
   --wash: 1;
@@ -253,35 +253,23 @@ p { margin: 0; }
   text-transform: uppercase;
   cursor: pointer;
 }
-/* The credit count reads like a highlighted word, circled in pen so it still looks tappable. */
+/* The credit count reads like a highlighted word with a pen underline, like a link. */
 .credit-pill {
   position: relative;
   display: inline-flex;
   align-items: baseline;
   gap: 5px;
   border: 0;
-  background: var(--mark-hl) center 62% / 100% 64% no-repeat;
+  background: var(--mark-hl) center 58% / 100% 60% no-repeat;
   color: var(--ink);
-  padding: 7px 15px 6px;
+  padding: 6px 10px 9px;
   cursor: pointer;
   font-size: var(--t-13);
   font-weight: 500;
   white-space: nowrap;
   transition: transform 0.15s var(--ease-out);
 }
-.credit-pill::before {
-  content: "";
-  position: absolute;
-  inset: -1px -3px;
-  background: var(--ink);
-  opacity: 0.5;
-  -webkit-mask: var(--m-loop) center / 100% 100% no-repeat;
-  mask: var(--m-loop) center / 100% 100% no-repeat;
-  pointer-events: none;
-  transition: opacity 0.2s;
-}
-@media (hover: hover) { .credit-pill:hover::before { opacity: 0.85; } }
-.credit-pill:active { transform: translateY(1px) rotate(-1deg); }
+.credit-pill:active { transform: translateY(1px); }
 .credit-pill b { font-family: var(--f-display); font-weight: 400; font-size: 1.2rem; line-height: 1; }
 .icon-btn {
   position: relative;
@@ -324,7 +312,10 @@ p { margin: 0; }
 }
 .lede { color: var(--muted); font-size: var(--t-13); }
 .link {
-  background: none; border: 0; padding: 0;
+  position: relative;
+  display: inline-block;
+  width: fit-content;
+  background: none; border: 0; padding: 0 0 4px;
   color: var(--primary);
   font-weight: 600;
   font-size: var(--t-13);
@@ -332,7 +323,21 @@ p { margin: 0; }
   text-align: left;
   text-decoration: none;
 }
-.link:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* Tappable words get a pen underline in their own color, darker on hover. */
+.link::after, .credit-pill::after {
+  content: "";
+  position: absolute;
+  left: -1px; right: -2px; bottom: 0;
+  height: 5px;
+  background: currentColor;
+  opacity: 0.45;
+  -webkit-mask: var(--m-underline) center / 100% 100% no-repeat;
+  mask: var(--m-underline) center / 100% 100% no-repeat;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.credit-pill::after { left: 9px; right: 8px; bottom: 3px; opacity: 0.7; }
+@media (hover: hover) { .link:hover::after, .credit-pill:hover::after { opacity: 1; } }
 #results { display: flex; flex-direction: column; gap: 30px; }
 .list { display: flex; flex-direction: column; gap: 12px; }
 .row { display: flex; align-items: center; gap: 12px; }
@@ -531,6 +536,12 @@ p { margin: 0; }
 .feature .by { color: var(--ink-2); font-size: var(--t-13); }
 .feature .meta { color: var(--muted); font-size: var(--t-12); }
 .feature .btn { margin-top: 8px; align-self: flex-start; position: relative; z-index: 2; }
+
+/* ---------- tracking ---------- */
+.card.track { gap: 6px; }
+.track-now { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+.track-now strong { font-size: var(--t-15); font-weight: 600; }
+.track-now span { font-size: var(--t-13); color: var(--ink-2); }
 
 /* ---------- book page: about, this copy's history ---------- */
 .about { display: flex; flex-direction: column; gap: 8px; }
@@ -791,24 +802,21 @@ img.avatar { object-fit: cover; }
 /* ---------- tab bar, with a raised Scan button ---------- */
 .tabbar {
   position: fixed;
-  left: 0; right: 0;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  left: 0; right: 0; bottom: 0;
   z-index: 25;
-  padding-left: max(14px, env(safe-area-inset-left, 0px));
-  padding-right: max(14px, env(safe-area-inset-right, 0px));
-  pointer-events: none;
-}
-.tabbar nav {
-  pointer-events: auto;
-  max-width: 440px; margin: 0 auto;
-  display: grid; grid-template-columns: repeat(5, 1fr);
-  height: var(--tabbar-h);
-  background: color-mix(in srgb, var(--raised) 93%, transparent);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  background: color-mix(in srgb, var(--raised) 94%, transparent);
   -webkit-backdrop-filter: saturate(1.3) blur(16px);
   backdrop-filter: saturate(1.3) blur(16px);
-  border: 1px solid var(--hair);
-  border-radius: 26px;
-  box-shadow: var(--shadow-md);
+  border-top: 1px solid var(--hair);
+  box-shadow: 0 -6px 20px rgba(60, 40, 20, 0.05);
+}
+.tabbar nav {
+  max-width: 480px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  height: var(--tabbar-h);
 }
 .tabbar button {
   border: 0; background: none; cursor: pointer;
@@ -826,7 +834,7 @@ img.avatar { object-fit: cover; }
   width: 56px; height: 56px; margin-top: -26px;
   border-radius: var(--blob);
   background: var(--primary); color: var(--on-primary);
-  box-shadow: 0 0 0 5px var(--paper), 0 8px 18px color-mix(in srgb, var(--primary) 40%, transparent);
+  box-shadow: 0 0 0 5px var(--raised), 0 8px 18px color-mix(in srgb, var(--primary) 40%, transparent);
 }
 .tabbar .scan-tab[aria-current="page"] .ti { color: var(--on-primary); transform: translateY(-2px); }
 .tabbar .badge { top: 6px; left: calc(50% + 6px); }

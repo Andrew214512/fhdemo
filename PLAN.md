@@ -14,7 +14,7 @@ Readers scan their books into a personal library, send books other readers reque
 | Fees | $1 to send + $1 to receive (pricing experiment B: recipient pays $2, sender $0) |
 | How fees are paid | Prepaid **fee balance**, topped up $5, $10 or $20 on **Stripe's hosted checkout** (Apple Pay, Google Pay, cards, Link). Wormy never sees or stores card numbers |
 | Deposit | **None.** The earlier $8 hold protected direct swaps. With credits, a recipient who never gets their book just has the credit returned |
-| Shipping | Sender buys postage (USPS Media Mail suggested) and **enters tracking**. Wormy checks tracking automatically (EasyPost), and recipients can confirm by hand. In-app labels come later |
+| Shipping | Sender buys postage (USPS Media Mail suggested) and **enters the tracking number**. It's real tracking, not a guess: every exchange links to the carrier's own tracking page, and with EasyPost set up each carrier scan (label created, in transit, out for delivery, delivered, problems) shows in the app with the expected date. "Delivered" starts the 2-day confirm window. Recipients can also confirm by hand. In-app labels come later |
 | When credits settle | When tracking shows delivered **and** the recipient confirms, or 2 days after delivery with no problem reported |
 | Welcome credit | 1 credit after listing **3 available books** and a **first top-up**. A card that already unlocked a welcome credit on another account can't unlock another (Stripe card fingerprint). Logged separately so it can be measured or switched off |
 | Sign-in | **Continue with Apple**, **Continue with Google**, or an **email link / 6-digit code**. No passwords |
@@ -121,7 +121,8 @@ The wallet should feel like a library card, not a bank account. Credits can't be
 | Fee-balance top-ups | **Stripe Checkout** (hosted page) plus a signed webhook. No Stripe Connect, since no money is paid out to readers | `supabase/functions/create-checkout`, `stripe-webhook` |
 | Book lookup and search | Open Library, then Google Books (server-side, so readers can't rename books) | `supabase/functions/add-book` |
 | Barcode scanning | Browser `BarcodeDetector` (Android), bundled ZXing (iPhone) | `app.js`, `vendor/` |
-| Tracking | Format checks and one-use rule in the database; **EasyPost** delivery updates via a signed webhook (optional) | `add-tracking`, `tracking-webhook` |
+| Tracking | Format checks and one-use rule in the database; carrier tracking links; **EasyPost** scan updates via a signed webhook (optional) | `add-tracking`, `tracking-webhook` |
+| Search | Typo-tolerant search over the whole catalog in Postgres (`pg_trgm`), editions grouped, live availability, similar-book suggestions | `search_books`, `similar_books` |
 | Book summaries | **Claude** (Anthropic API), once per book, saved and shared (optional) | `book-summary` |
 | Account deletion | Anonymizes the profile, removes photo and sign-in; keeps the ledgers | `delete-account` |
 | Alerts | In-app, refreshed every 30 seconds. **Push and email: not built yet** | |
@@ -138,9 +139,42 @@ Timers (48h accept, 24h ship reminder, 3-day ship, 2-day confirm, 10-day lost) r
 - **Fraud brakes.** A tracking number can prove only one shipment. One card can unlock only one welcome credit. A copy can be in only one exchange. 3 strikes in 6 months pause an account. There are limits on open requests, shelf size, wishlist size, and per-reader limits on the server functions.
 - **Photos.** Shrunk in the browser, which strips location data. Stored only in the reader's own folder, and saved as a path in Wormy's storage, never as an outside web address.
 - **Web page hardening.** A Content Security Policy allows scripts from Wormy only (libraries are bundled, not pulled from CDNs). Every reader-entered text is escaped. `_headers` adds clickjacking, sniffing and HSTS protection.
-- **Tests.** 91 automated checks, including attack attempts (see `SETUP.md`).
+- **Tests.** 101 automated checks, including attack attempts (see `SETUP.md`).
 
-## 7. Metrics
+## 7. Search and the book catalog
+
+**The catalog** is every book anyone on Wormy has scanned, wished for or looked up: one row per edition (ISBN) in `books`. It grows on its own. The first time a reader scans or looks up a book, the `add-book` function fetches it from Open Library (Google Books as backup) and saves it for everyone.
+
+**Searching** happens in the database, so it covers the whole catalog, not just what the app has loaded:
+
+- Title and author, forgiving typos ("pachnko" finds Pachinko), or an ISBN-10 or ISBN-13 typed any way (dashes and spaces are fine).
+- Editions are grouped: same title (ignoring "The", subtitles and series notes) and same author surname. "Dune" is one result with every copy of every edition behind it.
+- Each result says how many copies anyone could request right now. That means an open listing, not in an exchange, not yours, and from an account that still exists.
+- A few copies per book come back with their owners' public profiles, so book pages work even for books the app hadn't loaded.
+
+**What readers see:**
+
+| Situation | Screen |
+|---|---|
+| Copies are free | **Available now**, with the count |
+| On Wormy, nobody has one free | **Not on a shelf yet**: wishlist it, and see how many readers want it. Similar books you can get now are shown underneath |
+| Not on Wormy at all | **Not on anyone's shelf yet**, with **Look it up**, which searches Open Library from the Scan tab. Picking a result adds it to the catalog so it can be wished for or added to your shelf. Also shows **Popular right now** |
+| A book page with no copies | Wishlist button plus **You can get these now**: same author first, then same genre, then the most wanted |
+
+**Wishlists cover every edition.** Listing any edition alerts everyone who wished for any edition. Receiving any edition takes it off the wishlist. Book pages list copies of every edition and mark the ones that differ.
+
+**Edge cases handled:** typos; ISBN-10 vs 13; punctuation, "The", subtitles and series notes; "Herbert, Frank" vs "Frank Herbert"; wildcard characters typed into search; one-letter searches; your own copies never offered to you; books in an exchange not counted; deleted accounts' books hidden; books without a cover get a generated jacket; typed text is never lost when the screen refreshes.
+
+**Not handled yet (worth deciding later):**
+
+- Books with no ISBN (old or self-published). These need an "add by hand" form, ideally reviewed before they show to everyone.
+- Two different books with the same title and author surname would be grouped. This is rare.
+- Accents: "Garcia Marquez" finds "García Márquez" through fuzzy matching, but not perfectly. Postgres's `unaccent` extension would make it exact.
+- Translations and series aren't linked ("next in series", "same book in Spanish").
+- Searches that find nothing aren't recorded. Logging them would show which books readers want that nobody has yet, which is useful for growth.
+- Results aren't sorted by distance. With flat-rate Media Mail this matters less.
+
+## 8. Metrics
 
 **North star: completed exchanges per monthly active user.**
 
@@ -152,7 +186,7 @@ Timers (48h accept, 24h ship reminder, 3-day ship, 2-day confirm, 10-day lost) r
 | | Repeat exchanges per user | Contribution margin per exchange |
 | | Welcome credits granted vs. credits earned | |
 
-## 8. Still open
+## 9. Still open
 
 - Uneven trades: should a hardcover cost more than 1 credit? (MVP: 1 book = 1 credit.)
 - Photos: required for every listing, or only Good and Acceptable?

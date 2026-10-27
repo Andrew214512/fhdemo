@@ -259,6 +259,16 @@ test("add-tracking: only the sender, only valid numbers; tracking-webhook needs 
   res = await fetch(`${mock.url}/functions/v1/tracking-webhook`, { method: "POST", body });
   assert.equal(res.status, 401);
   assert.equal((await sql("select status from exchanges where request_id = $1", [req]))[0].status, "shipped");
+  // A scan on the way: saved for both readers to see, nothing else changes.
+  const scan = JSON.stringify({ description: "tracker.updated", result: { id: "trk_123", status: "in_transit", est_delivery_date: "2026-11-02T00:00:00Z",
+    tracking_details: [{ message: "Pre-Shipment Info Sent to USPS", tracking_location: { city: null, state: null } },
+                       { message: "Arrived at USPS Regional Facility", tracking_location: { city: "MEMPHIS", state: "TN" } }] } });
+  res = await fetch(`${mock.url}/functions/v1/tracking-webhook`, { method: "POST", body: scan, headers: { "X-Hmac-Signature": easypostSig(scan) } });
+  assert.equal(res.status, 200);
+  const saved = (await sql("select status, tracking_status, tracking_detail, tracking_where, tracking_eta from exchanges where request_id = $1", [req]))[0];
+  assert.deepEqual([saved.status, saved.tracking_status, saved.tracking_detail, saved.tracking_where],
+    ["shipped", "in_transit", "Arrived at USPS Regional Facility", "MEMPHIS, TN"]);
+  assert.equal(saved.tracking_eta.toISOString(), "2026-11-02T00:00:00.000Z");
   res = await fetch(`${mock.url}/functions/v1/tracking-webhook`, { method: "POST", body, headers: { "X-Hmac-Signature": easypostSig(body) } });
   assert.equal(res.status, 200);
   assert.equal((await sql("select status from exchanges where request_id = $1", [req]))[0].status, "delivered");

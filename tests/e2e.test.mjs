@@ -38,6 +38,7 @@ const BOOKS = {
   piranesi: ["9781635577808", "Piranesi", "Susanna Clarke"],
   klara: ["9780593318171", "Klara and the Sun", "Kazuo Ishiguro"],
   hamnet: ["9780525657606", "Hamnet", "Maggie O'Farrell"],
+  overstory: ["9780393356687", "The Overstory", "Richard Powers"], // on Wormy, but nobody has a copy
 };
 for (const [isbn, title, author] of Object.values(BOOKS)) {
   await rpc(db, "service", "upsert_book", { p_isbn: isbn, p_title: title, p_author: author, p_year: 2020, p_genre: "Literary", p_cover_url: null, p_source: "test" });
@@ -70,6 +71,8 @@ await new Promise((resolve, reject) => {
 
 // Plays Stripe: the app gets a checkout URL, and Stripe's signed webhook arrives shortly after.
 const fakeFunctions = {
+  // Plays Claude: a summary arrives the first time someone opens a book without one.
+  "book-summary": async ({ body }) => ({ body: { summary: body.isbn === BOOKS.overstory[0] ? "Nine strangers, each changed by trees, come together to defend old forests." : null } }),
   "create-checkout": async ({ claims, body }) => {
     const session = { id: "cs_e2e_" + crypto.randomUUID(), object: "checkout.session", currency: "usd", payment_status: "paid", amount_total: body.amount, client_reference_id: claims.sub, payment_intent: null, metadata: { kind: "topup" } };
     const payload = JSON.stringify({ id: "evt_" + crypto.randomUUID(), object: "event", type: "checkout.session.completed", data: { object: session } });
@@ -188,6 +191,28 @@ try {
   check("the URL is cleaned up after returning from Stripe", !page.url().includes("topup="));
   await shot("e2e-04-welcome");
   await tap('[data-act="close"].x');
+
+  console.log("Searching");
+  await page.fill("#q", "babbel");
+  await page.waitForSelector("#results .book", { timeout: 10000 });
+  check("search runs on the server, forgives typos, and counts copies available now",
+    /Babel/.test(await text("#results .book")) && /1 copy available/.test(await text("#results .b-meta")));
+  await page.fill("#q", "overstory");
+  await page.waitForFunction(() => /Not on a shelf yet/.test(document.getElementById("results").textContent), null, { timeout: 10000 });
+  check("a book nobody has free shows under Not on a shelf yet", true);
+  await tap('#results [data-act="openBook"]');
+  await page.waitForFunction(() => /Nine strangers/.test((document.querySelector(".sheet .about") || {}).textContent || ""), null, { timeout: 10000 });
+  check("a summary written just now appears without waiting for a refresh", true);
+  check("its page says it's not on anyone's shelf and offers the wishlist", /Not on anyone's shelf yet/.test(await text(".sheet .note")));
+  await tap('.sheet [data-act="wish"]');
+  await idle();
+  check("wishing for it saves", (await sql("select count(*)::int n from wishlist where user_id = $1 and isbn = $2", [JAMIE, BOOKS.overstory[0]]))[0].n === 1);
+  await tap('[data-act="close"].x');
+  await page.fill("#q", "qqzzxx");
+  await page.waitForFunction(() => /Not on anyone's shelf yet/.test(document.getElementById("results").textContent), null, { timeout: 10000 });
+  check("a book that isn't on Wormy at all offers Look it up", (await page.locator('#results [data-act="lookUp"]').count()) > 0);
+  await page.fill("#q", "");
+  await page.waitForTimeout(300);
 
   console.log("Requesting a book");
   await page.locator(".book", { hasText: "Babel" }).first().click();
