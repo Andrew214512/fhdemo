@@ -42,6 +42,8 @@
   --burst: 0.22;
   --glow: rgba(255, 255, 255, 0.35);
   --vignette: rgba(120, 85, 40, 0.07);
+  --mark-under: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 24' preserveAspectRatio='none'%3E%3Cfilter id='r' x='-5%25' y='-30%25' width='110%25' height='160%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' seed='4'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='1.8' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Cg filter='url(%23r)' fill='%23cf5628'%3E %3Cpath fill-opacity='.9' d='M3 15.5C38 12.4 86 10.6 132 10.2C158 10 180 9.2 196.4 7.6C199.4 7.3 200 11.8 197 12.5C176 15 146 15.6 112 16.3C76 17 40 18.6 7 20.4C2.6 20.6 0.4 15.8 3 15.5Z'/%3E %3Cpath fill-opacity='.35' d='M120 11.4C150 11 176 10 195 8.6C197 8.5 197.4 10.6 195.6 11C176 13.4 148 14.2 121 14.8Z'/%3E%3C/g%3E%3C/svg%3E");
+  --mark-hl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cfilter id='r' x='-5%25' y='-30%25' width='110%25' height='160%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' seed='4'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='1.8' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Cg filter='url(%23r)' fill='%23f2c14e'%3E %3Cpath fill-opacity='0.5' d='M5 6.5C62 4.6 132 3.6 196 3L199 37C134 37.4 64 38.2 1 39.2Z'/%3E %3Cpath fill-opacity='0.23' d='M5 6.5C62 4.6 132 3.6 196 3L196.3 6.4C132 7 62 8 4.6 9.8Z M1.4 35.8C64 34.8 134 34 198.7 33.6L199 37C134 37.4 64 38.2 1 39.2Z'/%3E %3Cpath fill-opacity='0.25' d='M170 3.3L196 3L199 37L174 37.2C176 26 172 14 170 3.3Z'/%3E%3C/g%3E%3C/svg%3E");
   /* Fine paper grain, drawn by the browser (no image file). */
   --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.32 0 0 0 0 0.25 0 0 0 0 0.16 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 
@@ -97,6 +99,8 @@
   --burst: 0.1;
   --glow: rgba(255, 236, 210, 0.035);
   --vignette: rgba(0, 0, 0, 0.25);
+  --mark-under: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 24' preserveAspectRatio='none'%3E%3Cfilter id='r' x='-5%25' y='-30%25' width='110%25' height='160%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' seed='4'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='1.8' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Cg filter='url(%23r)' fill='%23f08a5d'%3E %3Cpath fill-opacity='.9' d='M3 15.5C38 12.4 86 10.6 132 10.2C158 10 180 9.2 196.4 7.6C199.4 7.3 200 11.8 197 12.5C176 15 146 15.6 112 16.3C76 17 40 18.6 7 20.4C2.6 20.6 0.4 15.8 3 15.5Z'/%3E %3Cpath fill-opacity='.35' d='M120 11.4C150 11 176 10 195 8.6C197 8.5 197.4 10.6 195.6 11C176 13.4 148 14.2 121 14.8Z'/%3E%3C/g%3E%3C/svg%3E");
+  --mark-hl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cfilter id='r' x='-5%25' y='-30%25' width='110%25' height='160%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' seed='4'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='1.8' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Cg filter='url(%23r)' fill='%23f08a5d'%3E %3Cpath fill-opacity='0.2' d='M5 6.5C62 4.6 132 3.6 196 3L199 37C134 37.4 64 38.2 1 39.2Z'/%3E %3Cpath fill-opacity='0.09' d='M5 6.5C62 4.6 132 3.6 196 3L196.3 6.4C132 7 62 8 4.6 9.8Z M1.4 35.8C64 34.8 134 34 198.7 33.6L199 37C134 37.4 64 38.2 1 39.2Z'/%3E %3Cpath fill-opacity='0.1' d='M170 3.3L196 3L199 37L174 37.2C176 26 172 14 170 3.3Z'/%3E%3C/g%3E%3C/svg%3E");
   color-scheme: dark;
 }
 
@@ -155,6 +159,22 @@ p { margin: 0; }
   from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: none; }
 }
+/* ---------- hand-drawn marks ----------
+   A felt-tip underline and a highlighter swipe, like a reader marking up a favorite page.
+   Used sparingly. They draw on once when they first appear, then stay put. */
+.ink, .hl {
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  background-repeat: no-repeat;
+}
+.ink { background-image: var(--mark-under); background-size: 104% 0.36em; background-position: 30% 100%; padding-bottom: 0.1em; }
+.hl { background-image: var(--mark-hl); background-size: 100% 74%; background-position: 0 72%; padding: 0 0.16em; margin: 0 -0.16em; }
+[data-rv] .ink, .entering .ink, .enter .ink { animation: ink-draw 0.6s cubic-bezier(0.55, 0.05, 0.3, 1) calc(var(--rvd, 0ms) + 420ms) both; }
+[data-rv] .hl, .entering .hl, .enter .hl { animation: hl-draw 0.55s cubic-bezier(0.5, 0, 0.35, 1) calc(var(--rvd, 0ms) + 380ms) both; }
+@keyframes ink-draw { from { background-size: 0% 0.36em; } }
+@keyframes hl-draw { from { background-size: 0% 74%; } }
+.eyebrow .hl { color: var(--ink-2); }
+
 .cover .cover-img { opacity: 0; transition: opacity 0.55s ease, filter 0.7s ease; filter: saturate(0.5) blur(8px); }
 .cover .cover-img.loaded { opacity: 1; filter: none; }
 

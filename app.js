@@ -600,7 +600,7 @@
     const t = performance.now();
     if (!firstSeen.has(key)) firstSeen.set(key, t + Math.min(riseOrder++, 12) * 45);
     const delay = firstSeen.get(key) - t;
-    return delay < -RISE_MS ? "" : `data-rv style="animation-delay:${Math.round(delay)}ms"`;
+    return delay < -RISE_MS ? "" : `data-rv style="animation-delay:${Math.round(delay)}ms;--rvd:${Math.round(delay)}ms"`;
   }
   // Cover images fade in over their generated jacket once loaded, and only the first time.
   const loadedCovers = new Set();
@@ -693,7 +693,7 @@
     const sub = balances().available > 0
       ? `You have ${plural(balances().available, "credit")} to spend, and ${plural(n, "book")} ${n === 1 ? "is" : "are"} ready to request.`
       : `${plural(n, "book")} ${n === 1 ? "is" : "are"} ready to request. Send one of yours to earn a credit.`;
-    return `<div class="hello" ${rv("hello")}><h1 class="page-title">${part}${name ? ", " + esc(name) : ""}</h1><p class="lede">${sub}</p></div>`;
+    return `<div class="hello" ${rv("hello")}><h1 class="page-title">${part}${name ? `, <span class="ink">${esc(name)}</span>` : ""}</h1><p class="lede">${sub}</p></div>`;
   }
 
   function trendScore(bookId) {
@@ -769,7 +769,7 @@
       <button class="feature-hit" data-act="openListing" data-id="${esc(l.id)}" aria-label="${esc(b.title)} by ${esc(b.author)}"></button>
       ${cover(b, "lg")}
       <div class="who">
-        <span class="eyebrow">${esc(why)}</span>
+        <span class="eyebrow"><span class="hl">${esc(why)}</span></span>
         <h3>${esc(b.title)}</h3>
         <span class="by">${esc(b.author)}</span>
         <span class="meta">${COND[c.cond].label} · @${esc(o.handle)}${o.city ? " · " + esc(o.city) : ""}</span>
@@ -997,7 +997,7 @@
           <button class="btn ghost" type="submit">Email me a sign-in link</button>
         </form>`;
     return `<div class="signin ${entering("signin")}">
-      <div class="hero">${atomicDeco()}<h2>Your shelf is full of books <em>someone else wants.</em></h2>
+      <div class="hero">${atomicDeco()}<h2>Your shelf is full of books <em class="hl">someone else wants.</em></h2>
         <p class="lede">Send the books you've finished. Earn a credit for each one. Spend credits on your next read.</p></div>
       <div class="list">
         <button class="btn auth-btn apple" data-act="signIn" data-id="apple">${APPLE_LOGO} Continue with Apple</button>
@@ -1405,7 +1405,7 @@
     const b = balances();
     const avail = discoverPool().filter(requestable).length;
     const r = s.id ? req(s.id) : null;
-    const title = s.kind === "welcome" ? "Your welcome credit" : "You earned a credit";
+    const title = s.kind === "welcome" ? 'Your welcome <span class="ink">credit</span>' : 'You earned <span class="ink">a credit</span>';
     const body = s.kind === "welcome" || !r
       ? "You listed your first books, so your first request is on us."
       : esc(bk(r.bookId).title) + " reached " + esc(first(r.recipient)) + ". It's on their shelf now.";
