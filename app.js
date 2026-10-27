@@ -1,8 +1,16 @@
-/* Shelf Swap prototype. Everything is fake data kept in this browser.
-   Exchanges are one-way: a reader spends 1 credit to get a book, the sender earns 1 credit when it arrives.
-   The Demo panel (top right) plays the other readers and fast-forwards time. */
+/* Worm. Readers send books they've finished, earn a credit for each one that arrives,
+   and spend credits on any available book from any other reader.
+
+   Two modes share every screen:
+   - Live: config.js holds a Supabase project URL and public key. Sign-in, data, payments and
+     timers all run on the server (see supabase/). This file only draws screens and calls it.
+   - Demo: no config. Fake readers and data live in this browser, and the Demo panel plays
+     everyone else and moves the clock. */
 (function () {
   "use strict";
+
+  const CFG = window.WORM_CONFIG || {};
+  const LIVE = !!(CFG.supabaseUrl && CFG.supabaseAnonKey);
 
   const DAY = 864e5;
   const HOUR = 36e5;
@@ -16,7 +24,7 @@
     split: { label: "$1 + $1", sender: 1, recipient: 1 },
     recipient: { label: "Recipient pays $2", sender: 0, recipient: 2 },
   };
-  const STORE_KEY = "shelfswap-credits-v1";
+  const STORE_KEY = "worm-demo-v1";
 
   const CONDITIONS = [
     { id: "new", label: "New", short: "NEW", desc: "Unread. No marks, no wear." },
@@ -29,33 +37,34 @@
   const FLAGS = ["Highlighting or notes", "Dust jacket included", "Ex-library", "Signed", "Smoke-free home"];
   const GENRES = ["Literary", "Sci-fi & Fantasy", "Historical", "Mystery", "Romance", "Nonfiction"];
   const US_STATES = "AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY".split(" ");
+  const REPORT_REASONS = ["Condition is worse than listed", "Wrong book or edition", "Damaged in the mail", "Says delivered, but it isn't here"];
 
   // Cover colors are part of each book's identity, so they stay the same in light and dark.
   const CATALOG = [
-    ["b1", "Tomorrow, and Tomorrow, and Tomorrow", "Gabrielle Zevin", 2022, "9780593321201", "#f2c14e", "#1f2a44", 1, 0],
-    ["b2", "Project Hail Mary", "Andy Weir", 2021, "9780593135204", "#0f3b5f", "#f5d36b", 3, 1],
-    ["b3", "Circe", "Madeline Miller", 2018, "9780316556347", "#c9772c", "#1a1208", 1, 1],
-    ["b4", "The Overstory", "Richard Powers", 2018, "9780393356687", "#2f5d3a", "#e9efd8", 2, 0],
-    ["b5", "Piranesi", "Susanna Clarke", 2020, "9781635577808", "#1d2b4f", "#d9c38c", 3, 1],
-    ["b6", "Station Eleven", "Emily St. John Mandel", 2014, "9780804172448", "#e7e1d3", "#a3291f", 2, 1],
-    ["b7", "The Left Hand of Darkness", "Ursula K. Le Guin", 1969, "9780441478125", "#dfe7ea", "#18324a", 3, 1],
-    ["b8", "Lessons in Chemistry", "Bonnie Garmus", 2022, "9780385547345", "#e8573c", "#fff4e6", 1, 2],
+    ["b1", "Tomorrow, and Tomorrow, and Tomorrow", "Gabrielle Zevin", 2022, "9780593321201", "#e2a52b", "#2b1d14", 1, 0],
+    ["b2", "Project Hail Mary", "Andy Weir", 2021, "9780593135204", "#1f4f6e", "#f2bd4f", 3, 1],
+    ["b3", "Circe", "Madeline Miller", 2018, "9780316556347", "#cf5228", "#2b1d14", 1, 1],
+    ["b4", "The Overstory", "Richard Powers", 2018, "9780393356687", "#2f5d3a", "#f2e8d5", 2, 0],
+    ["b5", "Piranesi", "Susanna Clarke", 2020, "9781635577808", "#1d2b4f", "#e7c88c", 3, 1],
+    ["b6", "Station Eleven", "Emily St. John Mandel", 2014, "9780804172448", "#f2e8d5", "#a3291f", 2, 1],
+    ["b7", "The Left Hand of Darkness", "Ursula K. Le Guin", 1969, "9780441478125", "#a7c4bc", "#1f3b37", 3, 1],
+    ["b8", "Lessons in Chemistry", "Bonnie Garmus", 2022, "9780385547345", "#e7a39a", "#2b1d14", 1, 2],
     ["b9", "Pachinko", "Min Jin Lee", 2017, "9781455563920", "#7c1f2c", "#f3d9b8", 2, 2],
-    ["b10", "Demon Copperhead", "Barbara Kingsolver", 2022, "9780063251922", "#2a4a6b", "#f0b44c", 1, 0],
-    ["b11", "Klara and the Sun", "Kazuo Ishiguro", 2021, "9780593318171", "#f4b23c", "#3a2a10", 3, 1],
-    ["b12", "Babel", "R. F. Kuang", 2022, "9780063021426", "#efe9dc", "#7a1d1d", 2, 1],
-    ["b13", "The Song of Achilles", "Madeline Miller", 2012, "9780062060624", "#14141a", "#d7b46a", 1, 2],
-    ["b14", "Sea of Tranquility", "Emily St. John Mandel", 2022, "9780593321447", "#97c4d6", "#1d2f45", 3, 1],
-    ["b15", "Educated", "Tara Westover", 2018, "9780399590504", "#f1ede4", "#2b2b2b", 2, 5],
+    ["b10", "Demon Copperhead", "Barbara Kingsolver", 2022, "9780063251922", "#1f6e68", "#f2bd4f", 1, 0],
+    ["b11", "Klara and the Sun", "Kazuo Ishiguro", 2021, "9780593318171", "#f2bd4f", "#5b3a24", 3, 1],
+    ["b12", "Babel", "R. F. Kuang", 2022, "9780063021426", "#efe5d1", "#7a1d1d", 2, 1],
+    ["b13", "The Song of Achilles", "Madeline Miller", 2012, "9780062060624", "#1c1611", "#e2a52b", 1, 2],
+    ["b14", "Sea of Tranquility", "Emily St. John Mandel", 2022, "9780593321447", "#8fb9c7", "#1d2f45", 3, 1],
+    ["b15", "Educated", "Tara Westover", 2018, "9780399590504", "#f2e8d5", "#2b1d14", 2, 5],
     ["b16", "Remarkably Bright Creatures", "Shelby Van Pelt", 2022, "9780063204157", "#0f4c5c", "#f2c6a0", 1, 0],
-    ["b17", "The Remains of the Day", "Kazuo Ishiguro", 1989, "9780679731726", "#5e6b3a", "#f3ecd2", 2, 0],
+    ["b17", "The Remains of the Day", "Kazuo Ishiguro", 1989, "9780679731726", "#7e8c33", "#f8f1dc", 2, 0],
     ["b18", "Normal People", "Sally Rooney", 2018, "9781984822185", "#a8d5c2", "#18302a", 3, 0],
     ["b19", "The Midnight Library", "Matt Haig", 2020, "9780525559474", "#152a4a", "#f2d27a", 1, 0],
     ["b20", "A Gentleman in Moscow", "Amor Towles", 2016, "9780670026197", "#8a1c2b", "#efd9a7", 2, 2],
     ["b21", "Hamnet", "Maggie O'Farrell", 2020, "9780525657606", "#2d5a3c", "#f6e3c4", 3, 2],
-    ["b22", "The Name of the Wind", "Patrick Rothfuss", 2007, "9780756404741", "#3b2416", "#e6b25c", 1, 1],
+    ["b22", "The Name of the Wind", "Patrick Rothfuss", 2007, "9780756404741", "#5b3a24", "#e6b25c", 1, 1],
     ["b23", "Beloved", "Toni Morrison", 1987, "9781400033416", "#5a2340", "#f4dfe8", 2, 0],
-    ["b24", "Braiding Sweetgrass", "Robin Wall Kimmerer", 2013, "9781571313560", "#7a8f3c", "#fbf6e2", 3, 5],
+    ["b24", "Braiding Sweetgrass", "Robin Wall Kimmerer", 2013, "9781571313560", "#9aa53f", "#fbf6e2", 3, 5],
     ["b25", "Dune", "Frank Herbert", 1965, "9780441172719", "#d98b3a", "#2b1608", 3, 1],
     ["b26", "The Thursday Murder Club", "Richard Osman", 2020, "9781984880963", "#1f6f78", "#fbe7b5", 1, 3],
     ["b27", "Gone Girl", "Gillian Flynn", 2012, "9780307588371", "#101010", "#e9e3d8", 2, 3],
@@ -64,8 +73,10 @@
     ["b30", "Sapiens", "Yuval Noah Harari", 2015, "9780062316097", "#f0ece4", "#b3261e", 2, 5],
   ].map(([id, title, author, year, isbn, bg, fg, motif, g]) => ({ id, title, author, year, isbn, bg, fg, motif, genre: GENRES[g] }));
   const CATALOG_BY_ID = Object.fromEntries(CATALOG.map((b) => [b.id, b]));
+  // Jacket colors for real books that don't come with a cover image.
+  const PALETTE = [["#1f6e68", "#f2e8d5"], ["#cf5228", "#fff4e3"], ["#e2a52b", "#2b1d14"], ["#7e8c33", "#f8f1dc"], ["#5b3a24", "#f2bd4f"], ["#e7a39a", "#2b1d14"], ["#2b1d14", "#e2a52b"], ["#a7c4bc", "#1f3b37"]];
 
-  const USERS = {
+  const DEMO_USERS = {
     me: { id: "me", name: "Andrew P.", handle: "andrew.p", city: "Brooklyn, NY", rating: 5.0 },
     maya: { id: "maya", name: "Maya R.", handle: "mayareads", city: "Portland, OR", rating: 4.9 },
     jonah: { id: "jonah", name: "Jonah B.", handle: "jonahbinds", city: "Austin, TX", rating: 4.7 },
@@ -73,22 +84,25 @@
     theo: { id: "theo", name: "Theo T.", handle: "theo.t", city: "Denver, CO", rating: 4.8 },
     sam: { id: "sam", name: "Sam K.", handle: "samshelves", city: "Raleigh, NC", rating: 4.6 },
   };
+  let USERS = DEMO_USERS;
 
   /* ---------------- data ----------------
-     books     canonical metadata by ISBN (CATALOG + anything looked up from Open Library)
+     books     canonical metadata by ISBN
      copies    a physical book someone owns
      listings  a copy that is open for requests (closed when made unavailable or exchanged)
      requests  someone asking for a listing; holds 1 reserved credit
      exchanges fulfillment of an accepted request: ship, deliver, confirm
      ledger    append-only credit entries; balances are always computed from it
-     payments  money: fee balance top-ups and captured fees */
+     payments  money: fee balance top-ups and captured fees
+     In live mode the server sends exactly this shape (get_state), with "me" standing for the
+     signed-in reader, so every screen below works the same in both modes. */
 
   function blankState() {
     return {
-      now: START, nextId: 500, pricing: "split",
+      now: START, nextId: 500, pricing: "split", signedIn: false,
       extraBooks: {}, copies: [], listings: [], requests: [], exchanges: [], ledger: [], payments: [], notes: [],
       wishlist: { me: [], maya: ["b13", "b3"], priya: ["b1", "b4"], jonah: ["b2", "b9"], theo: ["b2", "b5", "b9"], sam: ["b4", "b25", "b9", "b10"] },
-      me: { name: "", photo: null, genres: [], address: null, card: null, strikes: 0, onboarded: false, welcome: "locked", ratings: {} },
+      me: { name: "", handle: "", photo: null, genres: [], city: "", state: "", address: null, strikes: 0, onboarded: false, welcome: "locked", ratings: {} },
     };
   }
 
@@ -96,12 +110,15 @@
   function seed(fresh) {
     const S = blankState();
     const t = START;
-    if (!fresh) S.me = {
-      name: "Andrew Penhollow", photo: null, genres: ["Literary", "Sci-fi & Fantasy"],
-      address: { name: "Andrew Penhollow", line1: "214 Kent Ave, Apt 3R", city: "Brooklyn", state: "NY", zip: "11249" },
-      card: { brand: "Visa", last4: "4242" }, strikes: 0, onboarded: true, welcome: "granted", ratings: {},
-    };
-    if (!fresh) S.wishlist.me = ["b7", "b9", "b10", "b11", "b23", "b25"];
+    if (!fresh) {
+      S.signedIn = true;
+      S.me = {
+        name: "Andrew Penhollow", handle: "andrew.p", photo: null, genres: ["Literary", "Sci-fi & Fantasy"], city: "Brooklyn", state: "NY",
+        address: { name: "Andrew Penhollow", line1: "214 Kent Ave, Apt 3R", city: "Brooklyn", state: "NY", zip: "11249" },
+        strikes: 0, onboarded: true, welcome: "granted", ratings: {},
+      };
+      S.wishlist.me = ["b7", "b9", "b10", "b11", "b23", "b25"];
+    }
     const C = (id, owner, bookId, cond, listed, format = "Paperback", flags = []) => {
       S.copies.push({ id, owner, bookId, cond, format, flags, addedAt: t - 25 * DAY });
       if (listed) S.listings.push({ id: "l" + id, copyId: id, openedAt: t - 20 * DAY + Number(id.slice(1)) * HOUR * 7, closedAt: null });
@@ -141,28 +158,28 @@
     const L = (user, type, requestId, at, note) => S.ledger.push({ id: "e" + S.ledger.length, user, type, requestId, at, note });
     const P = (user, kind, amount, at, requestId, note) => S.payments.push({ id: "p" + S.payments.length, user, kind, amount, at, requestId, note });
     const R = (o) => { S.requests.push(Object.assign({ fees: { sender: 1, recipient: 1 }, log: [] }, o)); };
-    const X = (o) => S.exchanges.push(Object.assign({ carrier: "USPS", tracking: null, shippedAt: null, deliveredAt: null, confirmedAt: null, completedAt: null }, o));
+    const X = (o) => S.exchanges.push(Object.assign({ carrier: "USPS", tracking: null, shippedAt: null, deliveredAt: null, completedAt: null }, o));
 
-    P("me", "topup", 10, t - 21 * DAY, null, "Added to fee balance (Visa 4242)");
+    P("me", "topup", 10, t - 21 * DAY, null, "Added to fee balance");
     L("me", "grant", null, t - 21 * DAY, "Welcome credit");
 
     // History: three finished exchanges.
     R({ id: "r0", listingId: "lc7x", copyId: "c7", bookId: "b15", sender: "sam", recipient: "me", at: t - 20 * DAY, status: "accepted",
       log: [{ at: t - 14 * DAY, text: "You confirmed Educated. Exchange complete." }] });
-    X({ id: "x0", requestId: "r0", sender: "sam", recipient: "me", copyId: "c7", status: "complete", acceptedAt: t - 19 * DAY, shipBy: t - 16 * DAY, tracking: "9400 1118 9922 1102 5531 20", shippedAt: t - 18 * DAY, deliveredAt: t - 15 * DAY, confirmedAt: t - 14 * DAY, completedAt: t - 14 * DAY, rated: 5 });
+    X({ id: "x0", requestId: "r0", sender: "sam", recipient: "me", copyId: "c7", status: "complete", acceptedAt: t - 19 * DAY, shipBy: t - 16 * DAY, tracking: "9400111899221102553120", shippedAt: t - 18 * DAY, deliveredAt: t - 15 * DAY, completedAt: t - 14 * DAY, rated: 5 });
     L("me", "reserve", "r0", t - 20 * DAY, "Requested Educated");
     L("me", "spend", "r0", t - 14 * DAY, "Received Educated from Sam");
     P("me", "fee", 1, t - 14 * DAY, "r0", "Fee for receiving Educated");
 
     R({ id: "r01", listingId: "lc40x", copyId: "c40", bookId: "b3", sender: "me", recipient: "jonah", at: t - 12 * DAY, status: "accepted",
       log: [{ at: t - 8 * DAY, text: "Jonah confirmed Circe. You earned 1 credit." }] });
-    X({ id: "x01", requestId: "r01", sender: "me", recipient: "jonah", copyId: "c40", status: "complete", acceptedAt: t - 12 * DAY, shipBy: t - 9 * DAY, tracking: "9400 1118 9922 4410 0072 20", shippedAt: t - 11 * DAY, deliveredAt: t - 9 * DAY, confirmedAt: t - 8 * DAY, completedAt: t - 8 * DAY, rated: 5 });
+    X({ id: "x01", requestId: "r01", sender: "me", recipient: "jonah", copyId: "c40", status: "complete", acceptedAt: t - 12 * DAY, shipBy: t - 9 * DAY, tracking: "9400111899224410007220", shippedAt: t - 11 * DAY, deliveredAt: t - 9 * DAY, completedAt: t - 8 * DAY, rated: 5 });
     L("me", "earn", "r01", t - 8 * DAY, "Sent Circe to Jonah");
     P("me", "fee", 1, t - 8 * DAY, "r01", "Fee for sending Circe");
 
     R({ id: "r02", listingId: "lc42x", copyId: "c42", bookId: "b8", sender: "me", recipient: "priya", at: t - 9 * DAY, status: "accepted",
       log: [{ at: t - 5 * DAY, text: "Priya confirmed Lessons in Chemistry. You earned 1 credit." }] });
-    X({ id: "x02", requestId: "r02", sender: "me", recipient: "priya", copyId: "c42", status: "complete", acceptedAt: t - 9 * DAY, shipBy: t - 6 * DAY, tracking: "9400 1118 9922 7781 3390 20", shippedAt: t - 8 * DAY, deliveredAt: t - 6 * DAY, confirmedAt: t - 5 * DAY, completedAt: t - 5 * DAY, rated: 4 });
+    X({ id: "x02", requestId: "r02", sender: "me", recipient: "priya", copyId: "c42", status: "complete", acceptedAt: t - 9 * DAY, shipBy: t - 6 * DAY, tracking: "9400111899227781339020", shippedAt: t - 8 * DAY, deliveredAt: t - 6 * DAY, completedAt: t - 5 * DAY, rated: 4 });
     L("me", "earn", "r02", t - 5 * DAY, "Sent Lessons in Chemistry to Priya");
     P("me", "fee", 1, t - 5 * DAY, "r02", "Fee for sending Lessons in Chemistry");
 
@@ -171,9 +188,9 @@
       log: [
         { at: t - 2 * DAY, text: "You requested Babel. 1 credit reserved." },
         { at: t - 1 * DAY, text: "Maya accepted and has 3 days to ship." },
-        { at: t - 3 * HOUR, text: "Maya added USPS tracking 9400 1118 9922 3456 7781 20." },
+        { at: t - 3 * HOUR, text: "Maya added USPS tracking 9400111899223456778120." },
       ] });
-    X({ id: "x1", requestId: "r1", sender: "maya", recipient: "me", copyId: "c21", status: "shipped", acceptedAt: t - 1 * DAY, shipBy: t + 2 * DAY, tracking: "9400 1118 9922 3456 7781 20", shippedAt: t - 3 * HOUR });
+    X({ id: "x1", requestId: "r1", sender: "maya", recipient: "me", copyId: "c21", status: "shipped", acceptedAt: t - 1 * DAY, shipBy: t + 2 * DAY, tracking: "9400111899223456778120", shippedAt: t - 3 * HOUR });
     L("me", "reserve", "r1", t - 2 * DAY, "Requested Babel");
 
     // Active: Theo wants my Project Hail Mary.
@@ -197,8 +214,12 @@
     return S;
   }
 
-  let S = load() || seed();
-  const ui = { tab: "discover", shelf: "available", xTab: "ship", q: "", genre: "All", cond: "all", showAll: false, sheet: null, sheetEnter: false, toast: null, ob: 0, scanQ: "", scanned: [], defCond: "vg", cam: null };
+  let S = LIVE ? blankState() : load() || seed();
+  const ui = {
+    tab: "discover", shelf: "available", xTab: "ship", q: "", genre: "All", cond: "all", showAll: false,
+    sheet: null, sheetEnter: false, toast: null, ob: 0, obActive: false, draft: {}, scanQ: "", scanned: [], searchHits: null,
+    defCond: "vg", cam: null, busy: 0, screen: LIVE ? "loading" : "app", otpEmail: null,
+  };
 
   function load() {
     try {
@@ -209,27 +230,42 @@
     }
   }
   function save() {
+    if (LIVE) return;
     try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) { /* storage blocked: demo still works for this visit */ }
   }
   const uid = (p) => p + S.nextId++;
 
   /* ---------------- lookups ---------------- */
 
-  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const money = (n) => "$" + n.toFixed(2);
-  const bk = (id) => CATALOG_BY_ID[id] || S.extraBooks[id] || CATALOG[0];
+  let skew = 0; // server clock minus this device's clock (live mode)
+  const now = () => (LIVE ? Date.now() + skew : S.now);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const money = (n) => "$" + Number(n).toFixed(2);
+  const UNKNOWN_BOOK = { id: "?", title: "Unknown book", author: "", year: "", isbn: "", bg: "#5b3a24", fg: "#f2e8d5", motif: 1, genre: "Other" };
+  const bk = (id) => CATALOG_BY_ID[id] || S.extraBooks[id] || UNKNOWN_BOOK;
   const copy = (id) => S.copies.find((c) => c.id === id);
   const listing = (id) => S.listings.find((l) => l.id === id);
   const openListing = (copyId) => S.listings.find((l) => l.copyId === copyId && !l.closedAt);
   const req = (id) => S.requests.find((r) => r.id === id);
   const exOf = (rid) => S.exchanges.find((x) => x.requestId === rid);
-  const user = (id) => USERS[id];
+  const user = (id) => USERS[id] || { id, name: "A reader", handle: "reader", city: "", rating: null };
   const first = (id) => (id === "me" ? "You" : user(id).name.split(" ")[0]);
+  const stars = (u) => (u && u.rating != null ? "★ " + Number(u.rating).toFixed(1) : "New reader");
   const onWishlist = (bookId) => S.wishlist.me.includes(bookId);
   const ACTIVE_X = ["accepted", "shipped", "delivered", "disputed"];
   const activeExchange = (copyId) => S.exchanges.find((x) => x.copyId === copyId && ACTIVE_X.includes(x.status));
   const isOpenReq = (r) => r.status === "pending" || (r.status === "accepted" && ACTIVE_X.includes((exOf(r.id) || {}).status));
-  const requestable = (l) => l && !l.closedAt && !activeExchange(l.copyId);
+  const requestable = (l) => l && !l.closedAt && copy(l.copyId) && !activeExchange(l.copyId);
+  const fees = () => S.fees || PRICING[S.pricing];
+  const topupAmounts = () => S.topupAmounts || [5, 10, 20];
+  const welcomeListings = () => S.welcomeListings || WELCOME_LISTINGS;
+  const hash = (s) => [...String(s)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
+  // Gives a book from the server (or a search result) a generated jacket to show until its cover loads.
+  function decorate(b) {
+    const h = hash(b.isbn || b.title);
+    const [bg, fg] = PALETTE[h % PALETTE.length];
+    return Object.assign({ bg, fg, motif: (h % 3) + 1, genre: "Other" }, b, { id: b.id || b.isbn });
+  }
 
   /* ---------------- credit ledger ----------------
      Each entry moves exactly one credit. Balances are derived, never stored. */
@@ -243,8 +279,7 @@
     return { available, reserved, pending };
   }
 
-  // Guards against double-spending and duplicate awards: each request can reserve once,
-  // then release OR spend once; each request can earn once.
+  // Demo only: the same guards the database enforces (supabase/migrations, _post).
   function post(u, type, requestId, note) {
     const has = (tp) => S.ledger.some((e) => e.user === u && e.requestId === requestId && e.type === tp);
     if (type === "reserve" && has("reserve")) return false;
@@ -266,8 +301,7 @@
     return S.requests.filter((r) => isOpenReq(r) && (r.recipient === "me" || (r.sender === "me" && r.status === "accepted")))
       .reduce((s, r) => s + (r.recipient === "me" ? r.fees.recipient : r.fees.sender), 0);
   }
-  const feeFree = () => feeBalance() - feesHeld();
-  const fees = () => PRICING[S.pricing];
+  const feeFree = () => Math.round((feeBalance() - feesHeld()) * 100) / 100;
 
   /* ---------------- helpers ---------------- */
 
@@ -279,18 +313,19 @@
     return { day: d.toLocaleDateString("en-US", { month: "short" }).toUpperCase() + " " + d.getDate(), wd: d.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase() };
   }
   function ago(ms) {
-    const d = S.now - ms;
+    const d = now() - ms;
     if (d < HOUR) return Math.max(1, Math.round(d / 60e3)) + "m";
     if (d < DAY) return Math.round(d / HOUR) + "h";
     return Math.round(d / DAY) + "d";
   }
   function left(ms) {
-    const d = ms - S.now;
+    const d = ms - now();
     if (d <= 0) return "no time";
-    if (d < DAY) return Math.round(d / HOUR) + " hours";
-    const days = Math.floor(d / DAY);
-    const hrs = Math.round((d - days * DAY) / HOUR);
-    return days + (days === 1 ? " day" : " days") + (hrs ? " " + hrs + "h" : "");
+    const hours = Math.max(1, Math.round(d / HOUR));
+    if (hours < 24) return plural(hours, "hour");
+    const days = Math.floor(hours / 24);
+    const hrs = hours % 24;
+    return plural(days, "day") + (hrs ? " " + hrs + "h" : "");
   }
   const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
   function notify(title, body, go) {
@@ -299,24 +334,36 @@
   function log(r, text) {
     r.log.push({ at: S.now, text });
   }
+  function clearToast() {
+    ui.toast = null;
+    clearTimeout(toast.timer);
+  }
   function toast(msg) {
     ui.toast = msg;
     clearTimeout(toast.timer);
-    toast.timer = setTimeout(() => { ui.toast = null; render(); }, 2600);
+    toast.timer = setTimeout(() => { ui.toast = null; render(); }, 3200);
   }
-  const fakeTracking = () => "9400 1118 99" + String(Math.floor(Math.random() * 1e8)).padStart(8, "0").replace(/(\d{2})(\d{4})(\d{2})/, "$1 $2 $3") + " 20";
+  const fakeTracking = () => "94001118992" + String(Math.floor(Math.random() * 1e11)).padStart(11, "0");
+  // Same rules as the database (_normalize_tracking), so the demo rejects the same typos.
+  function normalizeTracking(carrier, raw) {
+    const t = String(raw || "").replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+    if (carrier === "USPS" && /^(\d{20,22}|\d{26}|[A-Z]{2}\d{9}US)$/.test(t)) return t;
+    if (carrier === "UPS" && /^1Z[0-9A-Z]{16}$/.test(t)) return t;
+    if (carrier === "FedEx" && /^(\d{12}|\d{15}|\d{20}|\d{22})$/.test(t)) return t;
+    return null;
+  }
 
   /* ---------------- welcome credit ----------------
-     A controlled experiment: one credit, only after 3 available listings and a card on file. */
+     A controlled experiment: one credit, after 3 available listings and a first top-up. */
 
   function welcomeProgress() {
-    const listed = S.listings.filter((l) => !l.closedAt && copy(l.copyId).owner === "me").length;
-    return { listed: Math.min(listed, WELCOME_LISTINGS), card: !!S.me.card };
+    const listed = S.listings.filter((l) => !l.closedAt && copy(l.copyId) && copy(l.copyId).owner === "me").length;
+    return { listed: Math.min(listed, welcomeListings()), paid: S.payments.some((p) => p.user === "me" && p.kind === "topup") };
   }
   function checkWelcome() {
-    if (S.me.welcome !== "locked") return;
+    if (LIVE || S.me.welcome !== "locked") return;
     const p = welcomeProgress();
-    if (p.listed >= WELCOME_LISTINGS && p.card && post("me", "grant", null, "Welcome credit")) {
+    if (p.listed >= welcomeListings() && p.paid && post("me", "grant", null, "Welcome credit")) {
       S.me.welcome = "granted";
       notify("Your welcome credit is ready", "Spend it on any available book.", { wallet: true });
       ui.sheet = { type: "celebrate", kind: "welcome" };
@@ -332,7 +379,7 @@
     const role = r.sender === "me" ? "sender" : "recipient";
     const other = role === "sender" ? r.recipient : r.sender;
     const stage = x ? x.status : r.status;
-    return { r, x, role, other, stage, book: bk(r.bookId), copy: copy(r.copyId) };
+    return { r, x, role, other, stage, book: bk(r.bookId), copy: copy(r.copyId) || { cond: "vg", format: "Paperback", flags: [] } };
   }
   const rated = (d) => S.me.ratings[d.r.id] || (d.x && d.x.rated);
 
@@ -342,7 +389,7 @@
     switch (d.stage) {
       case "pending": return s ? { cls: "s-act", text: p + " requested this" } : { cls: "", text: "Waiting on " + p + " to accept" };
       case "accepted": return s ? { cls: "s-warn", text: "Ship in " + left(d.x.shipBy) } : { cls: "", text: p + " is packing it" };
-      case "shipped": return s ? { cls: "", text: "In the mail" } : { cls: "", text: "On its way to you" };
+      case "shipped": return s ? { cls: "", text: "In the mail" } : { cls: "s-act", text: "On its way to you" };
       case "delivered": return s ? { cls: "", text: "Delivered. Waiting on " + p } : { cls: "s-act", text: "Confirm it arrived" };
       case "disputed": return { cls: "s-warn", text: "Problem reported" };
       case "complete":
@@ -387,7 +434,7 @@
   function acceptRequest(r) {
     if (r.status !== "pending" || activeExchange(r.copyId)) return null;
     r.status = "accepted";
-    const x = { id: uid("x"), requestId: r.id, sender: r.sender, recipient: r.recipient, copyId: r.copyId, status: "accepted", acceptedAt: S.now, shipBy: S.now + SHIP_WINDOW, carrier: "USPS", tracking: null, shippedAt: null, deliveredAt: null, confirmedAt: null, completedAt: null };
+    const x = { id: uid("x"), requestId: r.id, sender: r.sender, recipient: r.recipient, copyId: r.copyId, status: "accepted", acceptedAt: S.now, shipBy: S.now + SHIP_WINDOW, carrier: "USPS", tracking: null, shippedAt: null, deliveredAt: null, completedAt: null };
     S.exchanges.push(x);
     log(r, (r.sender === "me" ? "You" : first(r.sender)) + " accepted. Ship by " + fmtDay(x.shipBy) + ".");
     // One copy, one exchange: other pending requests for the same copy are declined.
@@ -417,7 +464,7 @@
     if (x.status === "complete") return;
     const r = req(x.requestId);
     x.status = "complete";
-    x.confirmedAt = S.now;
+    x.deliveredAt = x.deliveredAt || S.now;
     x.completedAt = S.now;
     const title = bk(r.bookId).title;
     log(r, how);
@@ -447,7 +494,8 @@
     if (x.recipient === "me") post("me", "release", r.id, "Credit returned: " + bk(r.bookId).title);
   }
 
-  // Runs every hour of demo time: expiries, reminders, missed ship windows, lost packages, auto-confirm.
+  // Demo only (the server runs worm_tick() every hour): expiries, reminders, missed ship
+  // windows, lost packages, auto-confirm.
   function tick() {
     S.requests.forEach((r) => {
       if (r.status === "pending" && S.now >= r.at + REQUEST_TTL) {
@@ -474,7 +522,7 @@
         }
       }
       if (x.status === "shipped" && S.now >= x.shippedAt + LOST_AFTER) {
-        const outcome = "Tracking hasn't shown a delivery in 10 days, so we've marked this lost. " + (x.recipient === "me" ? "Your credit is back." : "No credit was earned. If you bought insurance, file a claim with the carrier.");
+        const outcome = "Tracking hasn't shown a delivery in 10 days, so this exchange is marked lost. " + (x.recipient === "me" ? "Your credit is back." : "No credit was earned. If you bought insurance, file a claim with the carrier.");
         cancelExchange(x, "Cancelled: lost in the mail.", outcome);
         notify(title + " looks lost", outcome, { request: r.id });
       }
@@ -496,15 +544,53 @@
     search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
     x: '<path d="M6 6l12 12M18 6 6 18"/>',
     arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
-    credit: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+    credit: '<circle cx="12" cy="12" r="8.5"/><path d="M9 9.5h6M9 12.5h6M9 15.5h3.5"/>',
   };
-  const icon = (n, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
+  const icon = (n, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
+
+  // The Worm bookworm: a segmented body and round reading glasses.
+  function mascot(cls = "mascot") {
+    return `<svg class="${cls}" viewBox="0 0 160 110" role="img" aria-label="Worm, a bookworm in round glasses">
+      <circle class="seg-a outline" cx="22" cy="80" r="14"/>
+      <circle class="seg-b outline" cx="46" cy="70" r="16"/>
+      <circle class="seg-c outline" cx="72" cy="76" r="17"/>
+      <circle class="seg-d outline" cx="98" cy="66" r="18"/>
+      <circle class="head outline" cx="124" cy="46" r="26"/>
+      <circle class="lens" cx="114" cy="44" r="9"/>
+      <circle class="lens" cx="136" cy="44" r="9"/>
+      <path class="line" stroke-width="2.5" d="M123 44h4M105 42l-6-3"/>
+      <circle class="eye" cx="116" cy="45" r="2.6"/>
+      <circle class="eye" cx="138" cy="45" r="2.6"/>
+      <path class="line" stroke-width="2.5" stroke-linecap="round" d="M118 60q8 6 16 0"/>
+      <path class="line" stroke-width="2.5" stroke-linecap="round" d="M120 21q-4-12 4-14M130 21q6-10 14-8"/>
+    </svg>`;
+  }
+  function starburst(points = 14, cls = "burst-fill") {
+    const pts = [];
+    for (let i = 0; i < points * 2; i++) {
+      const r = i % 2 ? 38 : 50;
+      const a = (Math.PI * i) / points - Math.PI / 2;
+      pts.push((50 + r * Math.cos(a)).toFixed(1) + "," + (50 + r * Math.sin(a)).toFixed(1));
+    }
+    return `<svg viewBox="-2 -2 104 104" aria-hidden="true"><polygon class="${cls}" points="${pts.join(" ")}"/></svg>`;
+  }
+  // A scatter of atomic-age shapes behind the sign-in screen.
+  function atomicDeco() {
+    return `<svg class="deco" viewBox="0 0 120 120" aria-hidden="true">
+      <ellipse cx="60" cy="60" rx="52" ry="18" fill="none" stroke="var(--teal)" stroke-width="3" transform="rotate(30 60 60)"/>
+      <ellipse cx="60" cy="60" rx="52" ry="18" fill="none" stroke="var(--tangerine)" stroke-width="3" transform="rotate(-30 60 60)"/>
+      <ellipse cx="60" cy="60" rx="52" ry="18" fill="none" stroke="var(--mustard)" stroke-width="3" transform="rotate(90 60 60)"/>
+      <circle cx="60" cy="60" r="9" fill="var(--avocado)" stroke="var(--hard)" stroke-width="2.5"/>
+    </svg>`;
+  }
 
   function cover(b, cls = "") {
-    return `<div class="cover-wrap"><div class="cover m${b.motif} ${cls}" style="background:${b.bg};color:${b.fg}" role="img" aria-label="Cover of ${esc(b.title)}">
+    const img = LIVE && b.cover ? `<img class="cover-img" src="${esc(b.cover)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : "";
+    return `<div class="cover-wrap"><div class="cover m${b.motif || 1} ${cls}" style="background:${esc(b.bg)};color:${esc(b.fg)}" role="img" aria-label="Cover of ${esc(b.title)}">
       <span class="c-mark"></span>
       <span class="c-title">${esc(b.title)}</span>
       <span class="c-author">${esc(b.author)}</span>
+      ${img}
     </div></div>`;
   }
 
@@ -516,7 +602,7 @@
     if (busy) tags.push('<span class="cond off">IN AN EXCHANGE</span>');
     else if (onWishlist(b.id) && c.owner !== "me") tags.push('<span class="cond wish">WISHLIST</span>');
     const owner = c.owner === "me" ? "" : `<span>@${esc(user(c.owner).handle)}</span>`;
-    return `<button class="book ${busy ? "dim" : ""}" data-act="openListing" data-id="${l.id}">
+    return `<button class="book ${busy ? "dim" : ""}" data-act="openListing" data-id="${esc(l.id)}">
       <div class="book-cover-box">${cover(b)}</div>
       <span class="b-title">${esc(b.title)}</span>
       <span class="b-meta">${tags.join("")}${owner}</span>
@@ -526,7 +612,7 @@
   function copyTile(c) {
     const b = bk(c.bookId);
     const busy = activeExchange(c.id);
-    return `<button class="book" data-act="openCopy" data-id="${c.id}">
+    return `<button class="book" data-act="openCopy" data-id="${esc(c.id)}">
       <div class="book-cover-box">${cover(b)}</div>
       <span class="b-title">${esc(b.title)}</span>
       <span class="b-meta"><span class="cond">${COND[c.cond].short}</span>${busy ? '<span class="cond wish">IN AN EXCHANGE</span>' : ""}</span>
@@ -536,7 +622,7 @@
   function wishTile(bookId) {
     const b = bk(bookId);
     const avail = S.listings.filter((l) => requestable(l) && copy(l.copyId).bookId === bookId && copy(l.copyId).owner !== "me").length;
-    return `<button class="book" data-act="openBook" data-id="${bookId}">
+    return `<button class="book" data-act="openBook" data-id="${esc(bookId)}">
       <div class="book-cover-box">${cover(b)}</div>
       <span class="b-title">${esc(b.title)}</span>
       <span class="b-meta">${avail ? `<span class="cond wish">${avail} AVAILABLE</span>` : "<span>Watching</span>"}</span>
@@ -545,17 +631,17 @@
 
   function stampHTML(ms, label = "SHIP BY") {
     const s = fmtStamp(ms);
-    return `<span class="stamp ${ms - S.now < DAY ? "late" : ""}"><small>${label}</small><b>${s.day}</b><small>${s.wd}</small></span>`;
+    return `<span class="stamp ${ms - now() < DAY ? "late" : ""}"><small>${label}</small><b>${s.day}</b><small>${s.wd}</small></span>`;
   }
 
   function dealCard(d) {
     const st = stageInfo(d);
     const dir = d.role === "sender" ? `To ${esc(user(d.other).name)}` : `From ${esc(user(d.other).name)}`;
     const stamp = d.stage === "accepted" && d.role === "sender" ? stampHTML(d.x.shipBy) : "";
-    return `<button class="card tap ${needsMe(d) ? "attn" : ""}" data-act="openDeal" data-id="${d.r.id}">
+    return `<button class="card tap ${needsMe(d) ? "attn" : ""}" data-act="openDeal" data-id="${esc(d.r.id)}">
       <div class="deal-row">
         ${cover(d.book)}
-        <div class="who"><strong>${esc(d.book.title)}</strong><span>${dir} · ★ ${user(d.other).rating.toFixed(1)}</span><span class="status ${st.cls}">${esc(st.text)}</span></div>
+        <div class="who"><strong>${esc(d.book.title)}</strong><span>${dir} · ${stars(user(d.other))}</span><span class="status ${st.cls}">${esc(st.text)}</span></div>
         ${stamp}
       </div>
     </button>`;
@@ -563,12 +649,17 @@
 
   function creditPill() {
     const b = balances();
-    return `<button class="credit-pill" data-act="wallet" aria-label="${plural(b.available, "credit")} available">${icon("credit", 16)}<b>${b.available}</b><span>${b.available === 1 ? "credit" : "credits"}</span></button>`;
+    return `<button class="credit-pill" data-act="wallet" aria-label="${plural(b.available, "credit")} available">${icon("credit", 18)}<b>${b.available}</b><span>${b.available === 1 ? "credit" : "credits"}</span></button>`;
+  }
+
+  function avatar(cls = "", photo = S.me.photo, name = S.me.name) {
+    const initial = ((name || "?").trim()[0] || "?").toUpperCase();
+    return photo ? `<img class="avatar ${cls}" src="${esc(photo)}" alt="">` : `<div class="avatar ${cls}">${esc(initial)}</div>`;
   }
 
   /* ---------------- views ---------------- */
 
-  const discoverPool = () => S.listings.filter((l) => !l.closedAt && copy(l.copyId).owner !== "me");
+  const discoverPool = () => S.listings.filter((l) => !l.closedAt && copy(l.copyId) && copy(l.copyId).owner !== "me");
 
   function viewDiscover() {
     return `<div class="view">
@@ -578,8 +669,9 @@
   }
 
   function trendScore(bookId) {
+    if (S.trend) return S.trend[bookId] || 0;
     const wants = Object.values(S.wishlist).filter((w) => w.includes(bookId)).length;
-    const asks = S.requests.filter((r) => r.bookId === bookId && S.now - r.at < 14 * DAY).length;
+    const asks = S.requests.filter((r) => r.bookId === bookId && now() - r.at < 14 * DAY).length;
     return wants * 2 + asks;
   }
 
@@ -593,13 +685,16 @@
         return (b.title + " " + b.author + " " + b.isbn).toLowerCase().includes(q);
       });
       return `<div class="section"><p class="eyebrow">${hits.length} found</p>${
-        hits.length ? `<div class="grid">${hits.map(listingTile).join("")}</div>` : `<div class="empty"><h3>Nobody has listed that yet</h3><p>Find it under Scan and add it to your wishlist. We'll tell you the moment someone lists it.</p><button class="btn ghost sm" data-act="tab" data-id="scan">Search all books</button></div>`
+        hits.length ? `<div class="grid">${hits.map(listingTile).join("")}</div>` : `<div class="empty">${mascot()}<h3>Nobody has listed that yet</h3><p>Find it under Scan and add it to your wishlist. We'll tell you the moment someone lists it.</p><button class="btn ghost sm" data-act="tab" data-id="scan">Search all books</button></div>`
       }</div>`;
     }
     let html = welcomeBanner();
     const b = balances();
     if (b.available > 0) {
       html += `<p class="ready">You have ${plural(b.available, "credit")}. ${plural(avail.length, "book")} ${avail.length === 1 ? "is" : "are"} ready for you to discover.</p>`;
+    }
+    if (!pool.length) {
+      return html + `<div class="empty">${mascot()}<h3>The shelves are filling up</h3><p>No one near you has listed books yet. Scan yours so the first readers find them.</p><button class="btn primary sm" data-act="tab" data-id="scan">Scan my books</button></div>`;
     }
     const wished = avail.filter((l) => onWishlist(copy(l.copyId).bookId));
     if (wished.length) {
@@ -609,10 +704,12 @@
       </div>`;
     }
     const trending = avail.slice().sort((a, z) => trendScore(copy(z.copyId).bookId) - trendScore(copy(a.copyId).bookId)).slice(0, 6);
-    html += `<div class="section">
-      <div class="section-head"><h2>Trending</h2><span class="eyebrow">Most wanted</span></div>
-      <div class="rail">${trending.map(listingTile).join("")}</div>
-    </div>`;
+    if (trending.length) {
+      html += `<div class="section">
+        <div class="section-head"><h2>Trending</h2><span class="eyebrow">Most wanted</span></div>
+        <div class="rail">${trending.map(listingTile).join("")}</div>
+      </div>`;
+    }
     const genres = ["All"].concat(GENRES);
     const conds = ["all", "ln", "vg", "good"];
     let recent = (ui.showAll ? pool : avail).slice().sort((a, z) => z.openedAt - a.openedAt);
@@ -636,12 +733,13 @@
   function welcomeBanner() {
     if (S.me.welcome !== "locked") return "";
     const p = welcomeProgress();
-    return `<button class="card tap welcome" data-act="${p.listed < WELCOME_LISTINGS ? "tab" : "addCard"}" data-id="scan">
-      <p class="eyebrow">Your first book is on us</p>
-      <strong>List ${WELCOME_LISTINGS} books and add a card to get a welcome credit.</strong>
+    const next = p.listed < welcomeListings() ? 'data-act="tab" data-id="scan"' : 'data-act="topup"';
+    return `<button class="card tap welcome" ${next}>
+      <span class="eyebrow">Your first book is on us</span>
+      <strong>List ${welcomeListings()} books and add to your fee balance to get a welcome credit.</strong>
       <span class="checks">
-        <span class="${p.listed >= WELCOME_LISTINGS ? "done" : ""}">${p.listed}/${WELCOME_LISTINGS} books available</span>
-        <span class="${p.card ? "done" : ""}">${p.card ? "Card added" : "Add a card"}</span>
+        <span class="${p.listed >= welcomeListings() ? "done" : ""}">${p.listed}/${welcomeListings()} books available</span>
+        <span class="${p.paid ? "done" : ""}">${p.paid ? "Fee balance added" : "Add to fee balance"}</span>
       </span>
     </button>`;
   }
@@ -656,7 +754,7 @@
     if (ui.shelf === "available") {
       body = avail.length
         ? `<p class="lede">Anyone can request these. You earn 1 credit for each one that reaches its new reader.</p><div class="grid">${avail.map(copyTile).join("")}</div>`
-        : `<div class="empty"><h3>Nothing available yet</h3><p>Scan the books you've finished. Each one you send earns a credit.</p><button class="btn primary sm" data-act="tab" data-id="scan">Scan books</button></div>`;
+        : `<div class="empty">${mascot()}<h3>Nothing available yet</h3><p>Scan the books you've finished. Each one you send earns a credit.</p><button class="btn primary sm" data-act="tab" data-id="scan">Scan books</button></div>`;
     } else if (ui.shelf === "unavailable") {
       body = unavail.length
         ? `<p class="lede">Your library. Hidden from Discover until you make them available.</p><div class="grid">${unavail.map(copyTile).join("")}</div>`
@@ -664,7 +762,7 @@
     } else {
       body = wish.length
         ? `<p class="lede">You get an alert the moment someone lists one of these.</p><div class="grid">${wish.map(wishTile).join("")}</div>`
-        : `<div class="empty"><h3>Your wishlist is empty</h3><p>Tap any book in Discover and add it.</p></div>`;
+        : `<div class="empty"><h3>Your wishlist is empty</h3><p>Tap any book in Discover, or search under Scan, and add it.</p></div>`;
     }
     return `<div class="view">
       <div class="section-head"><h2 class="page-title">My Shelf</h2><button class="btn primary sm" data-act="tab" data-id="scan">Add books</button></div>
@@ -676,27 +774,41 @@
   function scanMatches(raw) {
     const q = raw.trim().toLowerCase();
     const digits = q.replace(/[^0-9x]/g, "");
+    const isbn = /^(97[89])?\d{9}[\dx]$/.test(digits) ? digits : null;
+    if (LIVE) {
+      if (isbn) return scanResults([], isbn);
+      if (ui.searchHits === "busy") return '<p class="lede">Searching…</p>';
+      if (ui.searchHits === "error") return '<p class="lede">Search isn\'t answering right now. Try again, or type the ISBN.</p>';
+      if (Array.isArray(ui.searchHits) && q.length >= 2) {
+        return ui.searchHits.length ? scanResults(ui.searchHits.map(decorate)) : '<p class="lede">No matches. Try the author\'s name too, or type the ISBN.</p>';
+      }
+      return "";
+    }
     const hits = q ? CATALOG.filter((b) => (b.title + " " + b.author + " " + b.isbn).toLowerCase().includes(q)).slice(0, 6) : [];
-    const isbn = /^(97[89])?\d{9}[\dx]$/.test(digits) && !hits.length ? digits : null;
-    return scanResults(hits, isbn);
+    return scanResults(hits, isbn && !hits.length ? isbn : null);
   }
 
   function viewScan() {
-    const camMsg = ui.cam === "unsupported" || ui.cam === "denied" ? "Camera isn't available here. Tap to simulate a scan." : "Tap to start scanning";
+    const camMsg = ui.cam === "unsupported" || ui.cam === "denied"
+      ? (LIVE ? "Camera unavailable. Type the ISBN below." : "No camera here. Tap to simulate a scan.")
+      : "Tap to start scanning";
     return `<div class="view">
       <h2 class="page-title">Scan</h2>
       <button class="viewfinder" data-act="camera" aria-label="Scan a barcode">
-        <span class="corners"></span>
-        <span class="beam"></span>
-        <span class="vf-text"><strong>Point at the barcode on the back cover</strong><small>${camMsg}</small></span>
+        <span class="screen">
+          <span class="corners"></span>
+          <span class="beam"></span>
+          <span class="vf-text"><strong>Point at the barcode</strong><small>${camMsg}</small></span>
+        </span>
+        <span class="knobs"><i></i><i></i><i></i></span>
       </button>
       <div class="section">
         <p class="eyebrow">New scans start as</p>
         <div class="chips">${CONDITIONS.map((c) => `<button class="chip sm" data-act="defCond" data-id="${c.id}" aria-pressed="${ui.defCond === c.id}">${c.label}</button>`).join("")}</div>
-        <p class="lede">Every scan goes straight onto your shelf as available. Change any condition below.</p>
+        <p class="lede">Every scan goes straight onto your shelf as available. Fix any condition below.</p>
       </div>
       ${ui.scanned.length ? `<div class="section">
-        <div class="section-head"><h2>Just added</h2><span class="eyebrow">${ui.scanned.length} books</span></div>
+        <div class="section-head"><h2>Just added</h2><span class="eyebrow">${plural(ui.scanned.length, "book")}</span></div>
         <div class="list">${ui.scanned.map(scanRow).join("")}</div>
       </div>` : ""}
       <div class="section">
@@ -708,7 +820,10 @@
   }
   function scanResults(hits, isbn) {
     if (isbn) return `<button class="btn ghost" data-act="lookupIsbn" data-id="${esc(isbn)}">Look up ISBN ${esc(isbn)}</button>`;
-    return hits.map((b) => `<div class="result-row"><div class="mini">${cover(b)}</div><div class="grow"><strong>${esc(b.title)}</strong><p class="lede">${esc(b.author)}, ${b.year}</p></div><button class="btn ghost sm" data-act="addFromSearch" data-id="${b.id}">Add</button><button class="btn ghost sm" data-act="wish" data-id="${b.id}">${onWishlist(b.id) ? "Wished ✓" : "Wish"}</button></div>`).join("");
+    return hits.map((b) => {
+      const key = LIVE ? b.isbn : b.id;
+      return `<div class="result-row"><div class="mini">${cover(b)}</div><div class="grow"><strong>${esc(b.title)}</strong><p class="lede">${esc(b.author)}${b.year ? ", " + b.year : ""}</p></div><button class="btn ghost sm" data-act="addFromSearch" data-id="${esc(key)}">Add</button><button class="btn ghost sm" data-act="wishSearch" data-id="${esc(key)}">${onWishlist(key) ? "Wished ✓" : "Wish"}</button></div>`;
+    }).join("");
   }
   function scanRow(cid) {
     const c = copy(cid);
@@ -719,9 +834,9 @@
       <div class="mini">${cover(b)}</div>
       <div class="grow">
         <strong>${esc(b.title)}</strong>
-        <div class="cond-pick">${CONDITIONS.map((k) => `<button data-act="setCond" data-id="${c.id}" data-c="${k.id}" aria-pressed="${c.cond === k.id}">${k.short}</button>`).join("")}</div>
+        <div class="cond-pick">${CONDITIONS.map((k) => `<button data-act="setCond" data-id="${esc(c.id)}" data-c="${k.id}" aria-pressed="${c.cond === k.id}">${k.short}</button>`).join("")}</div>
       </div>
-      <button class="toggle" data-act="toggleListing" data-id="${c.id}" aria-pressed="${on}" aria-label="Available for exchange"><span></span></button>
+      <button class="toggle" data-act="toggleListing" data-id="${esc(c.id)}" aria-pressed="${on}" aria-label="Available for exchange"><span></span></button>
     </div>`;
   }
 
@@ -746,7 +861,7 @@
         <button data-act="xTab" data-id="incoming" aria-pressed="${ui.xTab === "incoming"}">Coming to me<span class="count">${lists.incoming.length}</span></button>
         <button data-act="xTab" data-id="past" aria-pressed="${ui.xTab === "past"}">History<span class="count">${lists.past.length}</span></button>
       </div>
-      ${list.length ? `<div class="list">${list.map(dealCard).join("")}</div>` : `<div class="empty"><h3>${empty[0]}</h3><p>${empty[1]}</p></div>`}
+      ${list.length ? `<div class="list">${list.map(dealCard).join("")}</div>` : `<div class="empty">${mascot()}<h3>${empty[0]}</h3><p>${empty[1]}</p></div>`}
     </div>`;
   }
 
@@ -755,11 +870,13 @@
     const b = balances();
     const mineDone = S.exchanges.filter((x) => x.status === "complete" && (x.sender === "me" || x.recipient === "me"));
     const sent = mineDone.filter((x) => x.sender === "me").length;
+    const place = [S.me.city, S.me.state].filter(Boolean).join(", ");
     return `<div class="view">
       <div class="profile-head">
         ${avatar()}
-        <div><h2 class="page-title" style="font-size:var(--t-xl)">${esc(S.me.name || "New reader")}</h2><p class="lede">@${esc(USERS.me.handle)} · ★ 5.0${S.me.genres.length ? " · " + S.me.genres.map(esc).join(", ") : ""}</p></div>
+        <div class="grow"><h2 class="page-title" style="font-size:var(--t-xl)">${esc(S.me.name || "New reader")}</h2><p class="lede">@${esc(S.me.handle || "you")}${place ? " · " + esc(place) : ""}${S.me.genres.length ? " · " + S.me.genres.map(esc).join(", ") : ""}</p></div>
       </div>
+      <button class="link" data-act="editProfile">Edit profile</button>
       <button class="card tap wallet-card" data-act="wallet">
         <span class="row"><span class="grow"><span class="eyebrow">Book credits</span><span class="big-num">${b.available}</span></span>${icon("arrow", 20)}</span>
         <span class="mini-stats"><span><b>${b.reserved}</b> reserved</span><span><b>${b.pending}</b> pending</span><span><b>${mineDone.length}</b> exchanges</span></span>
@@ -773,51 +890,100 @@
       <div class="section">
         <p class="eyebrow">Shipping address</p>
         <div class="card">
-          ${a ? `<p>${esc(a.name)}<br>${esc(a.line1)}<br>${esc(a.city)}, ${esc(a.state)} ${esc(a.zip)}</p>` : '<p class="lede">No address yet. You\'ll add one the first time you request a book.</p>'}
-          <p class="lede">Only shared with a reader while one of you is sending the other a book.</p>
+          ${a ? `<p>${esc(a.name)}<br>${esc(a.line1)}${a.line2 ? "<br>" + esc(a.line2) : ""}<br>${esc(a.city)}, ${esc(a.state)} ${esc(a.zip)}</p>` : '<p class="lede">No address yet. You\'ll add one the first time you request a book.</p>'}
+          <p class="lede">Only shown to the one reader shipping you a book, and only until they ship it.</p>
           <button class="btn ghost sm" data-act="editAddress">${a ? "Edit address" : "Add address"}</button>
         </div>
       </div>
       <div class="section">
-        <p class="eyebrow">Payment</p>
+        <p class="eyebrow">Payments</p>
         <div class="card">
           <div class="kv">
-            <div><span class="k">Card</span><span class="v">${S.me.card ? esc(S.me.card.brand) + " ending " + esc(S.me.card.last4) : "None"}</span></div>
             <div><span class="k">Fee to receive a book</span><span class="v">${money(fees().recipient)}</span></div>
             <div><span class="k">Fee to send a book</span><span class="v">${money(fees().sender)} + your postage</span></div>
+            <div><span class="k">Fee balance</span><span class="v">${money(feeFree())}</span></div>
           </div>
-          <div class="btns">${S.me.card ? `<button class="btn ghost sm" data-act="topup">Add to fee balance</button>` : `<button class="btn primary sm" data-act="addCard">Add a card</button>`}</div>
-          <p class="lede">Payments go through Stripe in the real app. This demo charges nothing.</p>
+          <div class="pay-methods"><span>APPLE PAY</span><span>GOOGLE PAY</span><span>CARDS</span><span>LINK</span></div>
+          <p class="lede">Payments happen on Stripe's secure page. Worm never sees or stores your card number.</p>
+          <button class="btn ghost sm" data-act="topup">Add to fee balance</button>
         </div>
       </div>
       <div class="section">
         <p class="eyebrow">Help</p>
         <div class="card">
-          <button class="link" data-act="how">How Shelf Swap works</button>
+          <button class="link" data-act="how">How Worm works</button>
           <button class="link" data-act="shipping">How to ship a book</button>
           <button class="link" data-act="conditions">Condition guide</button>
-          <button class="link" data-act="replayOnboarding">Replay onboarding</button>
+          <a class="link" href="legal/terms.html" target="_blank" rel="noopener">Terms</a>
+          <a class="link" href="legal/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>
         </div>
+      </div>
+      <div class="btns">
+        <button class="btn ghost" data-act="signOut">Sign out</button>
+        <button class="btn danger" data-act="deleteAccount">Delete account</button>
       </div>
     </div>`;
   }
 
-  function avatar(cls = "") {
-    const initial = ((S.me.name || "?").trim()[0] || "?").toUpperCase();
-    return S.me.photo ? `<img class="avatar ${cls}" src="${S.me.photo}" alt="">` : `<div class="avatar ${cls}">${esc(initial)}</div>`;
+  /* ---------------- sign in ---------------- */
+
+  // Brand marks for the sign-in buttons. Apple logo path: Font Awesome Free (CC BY 4.0).
+  const APPLE_LOGO = '<svg viewBox="0 0 384 512" aria-hidden="true"><path fill="currentColor" d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>';
+  const GOOGLE_LOGO = '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+
+  function viewSignIn() {
+    const codeStep = ui.otpEmail
+      ? `<form id="otpForm" class="list">
+          <p class="lede">We emailed a sign-in link and a 6-digit code to <strong>${esc(ui.otpEmail)}</strong>. Tap the link, or type the code here.</p>
+          <div class="field"><label for="si-code">6-digit code</label><input id="si-code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></div>
+          <button class="btn primary" type="submit">Sign in</button>
+          <button class="link" type="button" data-act="otpBack">Use a different email</button>
+        </form>`
+      : `<form id="emailForm" class="list">
+          <div class="field"><label for="si-email">Email</label><input id="si-email" name="email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
+          <button class="btn ghost" type="submit">Email me a sign-in link</button>
+        </form>`;
+    return `<div class="signin">
+      <div class="hero">${atomicDeco()}${mascot()}<h2>Your shelf is full of books <em>someone else wants.</em></h2>
+        <p class="lede">Send the books you've finished. Earn a credit for each one. Spend credits on your next read.</p></div>
+      <div class="list">
+        <button class="btn auth-btn apple" data-act="signIn" data-id="apple">${APPLE_LOGO} Continue with Apple</button>
+        <button class="btn auth-btn google" data-act="signIn" data-id="google">${GOOGLE_LOGO} Continue with Google</button>
+      </div>
+      <div class="or">or</div>
+      ${codeStep}
+      <p class="fine">No passwords to remember. By continuing you agree to Worm's <a href="legal/terms.html" target="_blank" rel="noopener">Terms</a> and <a href="legal/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>. Worm is for readers 18 and over in the US.</p>
+    </div>`;
+  }
+
+  function viewLoading() {
+    return `<div class="signin" style="align-items:center;text-align:center">${mascot()}<p class="lede">Opening your shelf…</p></div>`;
   }
 
   /* ---------------- onboarding ---------------- */
+
+  const draft = (k, fallback) => (ui.draft[k] !== undefined ? ui.draft[k] : fallback);
+
+  function profileFields() {
+    const handle = draft("handle", S.me.handle || "");
+    const hint = ui.handleHint || "3 to 20 letters, numbers, dots or underscores.";
+    return `<div class="row">${avatar("lg", draft("photo", S.me.photo), draft("name", S.me.name))}<label class="btn ghost sm" for="photo">${draft("photo", S.me.photo) ? "Change photo" : "Add a photo"}</label><input id="photo" type="file" accept="image/*" hidden></div>
+      <div class="field"><label for="ob-name">Your name</label><input id="ob-name" data-draft="name" value="${esc(draft("name", S.me.name))}" autocomplete="name" placeholder="First and last name" maxlength="60"></div>
+      <div class="field"><label for="ob-handle">Handle</label><div class="prefix"><span>@</span><input id="ob-handle" data-draft="handle" value="${esc(handle)}" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="20" placeholder="bookworm"></div><span class="hint ${ui.handleOk === false ? "bad" : ui.handleOk ? "good" : ""}" id="handleHint">${esc(hint)}</span></div>
+      <div class="fields-city">
+        <div class="field"><label for="ob-city">City</label><input id="ob-city" data-draft="city" value="${esc(draft("city", S.me.city || ""))}" autocomplete="address-level2" maxlength="60"></div>
+        <div class="field"><label for="ob-state">State</label><select id="ob-state" data-draft="state" autocomplete="address-level1"><option value="">–</option>${US_STATES.map((st) => `<option ${st === draft("state", S.me.state) ? "selected" : ""}>${st}</option>`).join("")}</select></div>
+      </div>
+      <p class="lede">Other readers see your name, handle, photo and city. Your street address stays private.</p>`;
+  }
 
   function viewOnboarding() {
     const step = ui.ob;
     const dots = `<div class="ob-dots" aria-label="Step ${step + 1} of 4">${[0, 1, 2, 3].map((i) => `<span class="${i <= step ? "on" : ""}"></span>`).join("")}</div>`;
     let body = "";
     if (step === 0) {
-      body = `<h1 class="ob-title">Your bookshelf is full of books someone else wants.</h1>
-        <p class="ob-lede">Shelf Swap turns them into your next great read.</p>
-        <div class="row">${avatar("lg")}<label class="btn ghost sm" for="photo">Add a photo</label><input id="photo" type="file" accept="image/*" hidden></div>
-        <div class="field"><label for="ob-name">Your name</label><input id="ob-name" value="${esc(S.me.name)}" autocomplete="name" placeholder="First and last name"></div>
+      body = `<h1 class="ob-title">Set up your reader profile</h1>
+        ${profileFields()}
         <button class="btn primary" data-act="obNext">Continue</button>`;
     } else if (step === 1) {
       body = `<h1 class="ob-title">What do you like to read?</h1>
@@ -825,10 +991,12 @@
         <div class="chips">${GENRES.map((g) => `<button class="chip" data-act="obGenre" data-id="${esc(g)}" aria-pressed="${S.me.genres.includes(g)}">${esc(g)}</button>`).join("")}</div>
         <button class="btn primary" data-act="obNext">Continue</button>`;
     } else if (step === 2) {
-      const picks = CATALOG.filter((b) => !S.me.genres.length || S.me.genres.includes(b.genre)).slice(0, 9);
+      const source = LIVE ? Object.values(S.extraBooks) : CATALOG;
+      const picks = source.filter((b) => !S.me.genres.length || S.me.genres.includes(b.genre)).slice(0, 9);
+      const list = picks.length ? picks : source.slice(0, 9);
       body = `<h1 class="ob-title">Any books you're hoping to read?</h1>
         <p class="ob-lede">Tap a few. We'll alert you when someone lists one.</p>
-        <div class="pick">${picks.map((b) => `<button class="book" data-act="obWish" data-id="${b.id}" aria-pressed="${onWishlist(b.id)}"><div class="book-cover-box">${cover(b)}</div><span class="b-title">${esc(b.title)}</span></button>`).join("")}</div>
+        ${list.length ? `<div class="pick">${list.map((b) => `<button class="book" data-act="obWish" data-id="${esc(b.id)}" aria-pressed="${onWishlist(b.id)}"><div class="book-cover-box">${cover(b)}</div><span class="b-title">${esc(b.title)}</span></button>`).join("")}</div>` : '<p class="note">Nobody has listed books yet. You can add wishes any time from Scan → search.</p>'}
         <button class="btn primary" data-act="obNext">Continue</button>`;
     } else {
       const steps = [
@@ -837,9 +1005,9 @@
         ["Discover", "Browse books from readers across the US."],
         ["Request", "Spend 1 credit + " + money(fees().recipient) + " on any available book, from anyone. You never need to want each other's books."],
       ];
-      body = `<h1 class="ob-title">How it works</h1>
+      body = `<h1 class="ob-title">How Worm works</h1>
         <ol class="loop">${steps.map(([h, p]) => `<li><strong>${h}</strong><span>${p}</span></li>`).join("")}</ol>
-        <p class="note stamped">List ${WELCOME_LISTINGS} books and add a card, and your first credit is on us.</p>
+        <p class="note stamped">List ${welcomeListings()} books and make your first fee-balance top-up, and your first credit is on us.</p>
         <button class="btn primary" data-act="obDone">Scan my first books</button>`;
     }
     return `<div class="view onboarding">${dots}${body}${step > 0 ? '<button class="link" data-act="obBack">Back</button>' : ""}</div>`;
@@ -856,6 +1024,7 @@
 
   function sheetListing(s) {
     const l = listing(s.id);
+    if (!l || !copy(l.copyId)) return '<p class="lede">This book is no longer listed.</p>';
     const c = copy(l.copyId);
     const b = bk(c.bookId);
     const bal = balances();
@@ -864,12 +1033,12 @@
     const o = mine ? null : user(c.owner);
     const already = S.requests.some((r) => r.listingId === l.id && r.recipient === "me" && r.status === "pending");
     let cta;
-    if (mine) cta = `<button class="btn ghost" data-act="openCopy" data-id="${c.id}">Manage this copy</button>`;
+    if (mine) cta = `<button class="btn ghost" data-act="openCopy" data-id="${esc(c.id)}">Manage this copy</button>`;
     else if (l.closedAt) cta = `<button class="btn primary" disabled>No longer available</button>`;
     else if (busy) cta = `<button class="btn primary" disabled>In an exchange right now</button>`;
     else if (already) cta = `<button class="btn primary" disabled>Requested. Waiting on ${esc(first(c.owner))}</button>`;
-    else if (bal.available < 1) cta = `<button class="btn primary" disabled>You need 1 credit</button><p class="lede">Send a book from your shelf to earn one.${S.me.welcome === "locked" ? " Or list " + WELCOME_LISTINGS + " books and add a card for a welcome credit." : ""}</p>`;
-    else cta = `<button class="btn primary" data-act="request" data-id="${l.id}">Request this book</button>`;
+    else if (bal.available < 1) cta = `<button class="btn primary" disabled>You need 1 credit</button><p class="lede">Send a book from your shelf to earn one.${S.me.welcome === "locked" ? " Or list " + welcomeListings() + " books and add to your fee balance for a welcome credit." : ""}</p>`;
+    else cta = `<button class="btn primary" data-act="request" data-id="${esc(l.id)}">Request this book</button>`;
     return `
       <div class="detail">
         ${cover(b, "lg")}
@@ -881,15 +1050,15 @@
             <div><span>Format</span> ${esc(c.format)}</div>
             ${c.flags.length ? `<div><span>Notes</span> ${c.flags.map(esc).join(", ")}</div>` : ""}
             <div><span>Genre</span> ${esc(b.genre)}</div>
-            <div class="isbn">ISBN ${b.isbn}</div>
+            <div class="isbn">ISBN ${esc(b.isbn)}</div>
           </div>
         </div>
       </div>
       <p class="note">${COND[c.cond].label}: ${COND[c.cond].desc}</p>
-      ${o ? `<div class="row"><div class="avatar sm">${o.name[0]}</div><div class="grow"><strong>${esc(o.name)}</strong> <span class="lede">@${esc(o.handle)}</span><p class="lede">★ ${o.rating.toFixed(1)} · ships from ${esc(o.city)}</p></div></div>` : ""}
+      ${o ? `<div class="row">${avatar("sm", o.avatar, o.name)}<div class="grow"><strong>${esc(o.name)}</strong> <span class="lede">@${esc(o.handle)}</span><p class="lede">${stars(o)}${o.city ? " · ships from " + esc(o.city) : ""}</p></div></div>` : ""}
       ${o ? costBox(c) : ""}
       ${cta}
-      ${o ? `<button class="btn ghost" data-act="wish" data-id="${b.id}">${onWishlist(b.id) ? "On your wishlist ✓" : "Add to wishlist"}</button>` : ""}
+      ${o ? `<button class="btn ghost" data-act="wish" data-id="${esc(b.id)}">${onWishlist(b.id) ? "On your wishlist ✓" : "Add to wishlist"}</button>` : ""}
     `;
   }
 
@@ -899,17 +1068,18 @@
     return `
       <div class="detail">
         ${cover(b, "lg")}
-        <div><h3>${esc(b.title)}</h3><p class="by">${esc(b.author)}${b.year ? ", " + b.year : ""}</p><p class="isbn" style="margin-top:8px">ISBN ${b.isbn}</p></div>
+        <div><h3>${esc(b.title)}</h3><p class="by">${esc(b.author)}${b.year ? ", " + b.year : ""}</p><p class="isbn" style="margin-top:8px">ISBN ${esc(b.isbn)}</p></div>
       </div>
       ${avail.length
-        ? `<div class="section"><p class="eyebrow">Available copies</p><div class="list">${avail.map((l) => { const c = copy(l.copyId); return `<button class="card tap" data-act="openListing" data-id="${l.id}"><span class="row"><span class="cond">${COND[c.cond].short}</span><span class="grow">${esc(c.format)} · @${esc(user(c.owner).handle)}</span><span class="lede">★ ${user(c.owner).rating.toFixed(1)}</span></span></button>`; }).join("")}</div></div>`
+        ? `<div class="section"><p class="eyebrow">Available copies</p><div class="list">${avail.map((l) => { const c = copy(l.copyId); return `<button class="card tap" data-act="openListing" data-id="${esc(l.id)}"><span class="row"><span class="cond">${COND[c.cond].short}</span><span class="grow">${esc(c.format)} · @${esc(user(c.owner).handle)}</span><span class="lede">${stars(user(c.owner))}</span></span></button>`; }).join("")}</div></div>`
         : `<p class="note">Nobody has listed this yet. You'll get an alert when someone does.</p>`}
-      <button class="btn ghost" data-act="wish" data-id="${b.id}">${onWishlist(b.id) ? "Remove from wishlist" : "Add to wishlist"}</button>
+      <button class="btn ghost" data-act="wish" data-id="${esc(b.id)}">${onWishlist(b.id) ? "Remove from wishlist" : "Add to wishlist"}</button>
     `;
   }
 
   function sheetRequest(s) {
     const l = listing(s.id);
+    if (!requestable(l)) return '<p class="lede">This book is no longer available.</p>';
     const c = copy(l.copyId);
     const b = bk(c.bookId);
     const bal = balances();
@@ -924,11 +1094,11 @@
           <div><span class="k">Marketplace fee</span><span class="v">${money(fee)} from your fee balance (${money(feeFree())})</span></div>
           <div><span class="k">Ship to</span><span class="v">${a ? `${esc(a.name)}<br>${esc(a.line1)}, ${esc(a.city)} ${esc(a.state)} ${esc(a.zip)}` : "No address yet"}</span></div>
         </div>
-        <button class="link" data-act="editAddress" data-back="${l.id}">${a ? "Change address" : "Add a US shipping address"}</button>
+        <button class="link" data-act="editAddress" data-back="${esc(l.id)}">${a ? "Change address" : "Add a US shipping address"}</button>
       </div>
-      ${!feeOk ? `<p class="note warn">Your fee balance is ${money(feeFree())}. Add ${S.me.card ? "funds" : "a card"} to cover the ${money(fee)} fee.</p><button class="btn ghost" data-act="${S.me.card ? "topup" : "addCard"}" data-back="${l.id}">${S.me.card ? "Add to fee balance" : "Add a card"}</button>` : ""}
+      ${!feeOk ? `<p class="note warn">Your fee balance is ${money(feeFree())}. Add to it to cover the ${money(fee)} fee.</p><button class="btn ghost" data-act="topup" data-back="${esc(l.id)}">Add to fee balance</button>` : ""}
       <p class="lede">${esc(first(c.owner))} has 48 hours to accept, then 3 days to ship. If either doesn't happen, your credit comes straight back. The fee is only taken when the book arrives.</p>
-      <button class="btn primary" data-act="sendRequest" data-id="${l.id}" ${a && feeOk ? "" : "disabled"}>Request for 1 credit</button>
+      <button class="btn primary" data-act="sendRequest" data-id="${esc(l.id)}" ${a && feeOk ? "" : "disabled"}>Request for 1 credit</button>
     `;
   }
 
@@ -939,47 +1109,56 @@
     return `<ol class="progress">${steps.map((s, i) => `<li class="${i <= at ? "on" : ""}${i === at ? " now" : ""}"><span></span>${s}</li>`).join("")}</ol>`;
   }
 
+  function shipToCard(d) {
+    const a = d.x.shipTo;
+    if (a) return `<div class="card"><p class="eyebrow">Ship to</p><p>${esc(a.name)}<br>${esc(a.line1)}${a.line2 ? "<br>" + esc(a.line2) : ""}<br>${esc(a.city)}, ${esc(a.state)} ${esc(a.zip)}</p><p class="lede">This address disappears once you add tracking.</p></div>`;
+    return `<div class="card"><p class="eyebrow">Ship to</p><p>${esc(user(d.other).name)}<br>${esc(user(d.other).city)}</p><p class="lede">The full street address shows here while you're shipping to them.</p></div>`;
+  }
+
   function sheetDeal(s) {
     const r = req(s.id);
+    if (!r) return '<p class="lede">We couldn\'t find that exchange.</p>';
     const d = deal(r);
     const x = d.x;
     const p = first(d.other);
     const st = stageInfo(d);
     const c = d.copy;
     const creditLine = d.role === "sender"
-      ? `<p class="credit-line">${icon("credit", 16)} You earn 1 credit when ${esc(p)} confirms it arrived.</p>`
-      : `<p class="credit-line">${icon("credit", 16)} 1 credit reserved. It's spent when the book arrives.</p>`;
+      ? `<p class="credit-line">${icon("credit", 18)} You earn 1 credit when ${esc(p)} confirms it arrived.</p>`
+      : `<p class="credit-line">${icon("credit", 18)} 1 credit reserved. It's spent when the book arrives.</p>`;
+    const confirmButtons = `<div class="btns"><button class="btn primary" data-act="confirmBook" data-id="${esc(r.id)}">It arrived. Looks right</button><button class="btn ghost" data-act="report" data-id="${esc(r.id)}">Report a problem</button></div>`;
     let main;
 
     if (d.stage === "pending" && d.role === "sender") {
       main = `<p class="note stamped">${esc(p)} wants your ${COND[c.cond].label} copy of <strong>${esc(d.book.title)}</strong>. Accept within ${left(r.at + REQUEST_TTL)}, then ship within 3 days.</p>
         ${creditLine}
-        <div class="btns"><button class="btn primary" data-act="accept" data-id="${r.id}">Accept</button><button class="btn ghost" data-act="decline" data-id="${r.id}">Decline</button></div>
+        <div class="btns"><button class="btn primary" data-act="accept" data-id="${esc(r.id)}">Accept</button><button class="btn ghost" data-act="decline" data-id="${esc(r.id)}">Decline</button></div>
         <p class="lede">You pay the postage (about $4 to $5 with USPS Media Mail)${r.fees.sender ? " and a " + money(r.fees.sender) + " fee once it arrives" : ""}.</p>`;
     } else if (d.stage === "pending") {
       main = `<p class="note">Waiting on ${esc(p)}. They have ${left(r.at + REQUEST_TTL)} to accept.</p>${creditLine}
-        <button class="btn danger" data-act="withdraw" data-id="${r.id}">Cancel request</button>`;
+        <button class="btn danger" data-act="withdraw" data-id="${esc(r.id)}">Cancel request</button>`;
     } else if (d.stage === "accepted" && d.role === "sender") {
       main = `<div class="row"><div class="grow"><strong>Ship it to ${esc(p)}</strong><p class="lede">${left(x.shipBy)} left to add tracking.</p></div>${stampHTML(x.shipBy)}</div>
         ${creditLine}
-        <div class="card"><p class="eyebrow">Ship to</p><p>${esc(user(d.other).name)}<br>${esc(user(d.other).city)}</p><p class="lede">The full street address shows here in the real app, only while you're shipping to them.</p></div>
-        <button class="btn primary" data-act="addTracking" data-id="${r.id}">I've shipped it: add tracking</button>
+        ${shipToCard(d)}
+        <button class="btn primary" data-act="addTracking" data-id="${esc(r.id)}">I've shipped it: add tracking</button>
         <button class="link" data-act="shipping">How to ship a book</button>`;
     } else if (d.stage === "accepted") {
       main = `<p class="note">${esc(p)} accepted and has until ${fmtDay(x.shipBy)} to ship.</p>${creditLine}`;
     } else if (d.stage === "shipped") {
-      main = `<div class="card"><p class="eyebrow">Tracking</p><p class="mono">${esc(x.carrier)} ${esc(x.tracking)}</p><p class="lede">Shipped ${fmtDay(x.shippedAt)}. We check tracking automatically.</p></div>${creditLine}`;
+      main = `<div class="card"><p class="eyebrow">Tracking</p><p class="mono">${esc(x.carrier)} ${esc(x.tracking)}</p><p class="lede">Shipped ${fmtDay(x.shippedAt)}. We check tracking automatically.</p></div>${creditLine}
+        ${d.role === "recipient" ? `<p class="lede">Already have it in your hands? Confirm it now.</p>${confirmButtons}` : ""}`;
     } else if (d.stage === "delivered" && d.role === "recipient") {
       main = `<p class="note stamped">${esc(d.book.title)} was delivered. Does it match the listing (${COND[c.cond].label}${c.flags.length ? ", " + c.flags.map(esc).join(", ").toLowerCase() : ""})? It confirms automatically in ${left(x.deliveredAt + CONFIRM_WINDOW)}.</p>
-        <div class="btns"><button class="btn primary" data-act="confirmBook" data-id="${r.id}">It arrived. Looks right</button><button class="btn ghost" data-act="report" data-id="${r.id}">Report a problem</button></div>`;
+        ${confirmButtons}`;
     } else if (d.stage === "delivered") {
       main = `<p class="note">Delivered ${fmtDay(x.deliveredAt)}. ${esc(p)} has until ${fmtDay(x.deliveredAt + CONFIRM_WINDOW)} to report a problem, then your credit arrives.</p>${creditLine}`;
     } else if (d.stage === "disputed") {
-      main = `<p class="note warn"><strong>Problem reported: ${esc(x.dispute)}.</strong> Support reviews photos within 1 business day. If the listing was wrong, the recipient's credit goes back to them, the sender earns nothing and gets a strike.</p>`;
+      main = `<p class="note warn"><strong>Problem reported: ${esc(x.dispute)}.</strong> Support reviews photos within 1 business day. If the listing was wrong, the recipient's credit goes back to them, and the sender earns nothing and gets a strike.</p>`;
     } else if (d.stage === "complete") {
-      const stars = rated(d);
+      const stars5 = rated(d);
       main = `<p class="note">${d.role === "sender" ? "You earned 1 credit for sending this book." : esc(d.book.title) + " is on your shelf under Not available. Make it available when you're done reading."}</p>
-        ${stars ? `<p class="lede">You rated ${esc(p)} ${stars} stars.</p>` : `<div class="section"><p class="eyebrow">Rate ${esc(p)}</p><div class="stars">${[1, 2, 3, 4, 5].map((n) => `<button data-act="rate" data-id="${r.id}" data-n="${n}" aria-label="${n} stars">★</button>`).join("")}</div></div>`}`;
+        ${stars5 ? `<p class="lede">You rated ${esc(p)} ${stars5} stars.</p>` : `<div class="section"><p class="eyebrow">Rate ${esc(p)}</p><div class="stars">${[1, 2, 3, 4, 5].map((n) => `<button data-act="rate" data-id="${esc(r.id)}" data-n="${n}" aria-label="${n} stars">★</button>`).join("")}</div></div>`}`;
     } else if (d.stage === "cancelled") {
       main = `<p class="note warn">${esc(x.outcome)}</p>`;
     } else {
@@ -1006,57 +1185,56 @@
 
   function sheetTracking(s) {
     const r = req(s.id);
-    return `<form id="trackForm" class="section" data-id="${r.id}">
+    return `<form id="trackForm" class="section" data-id="${esc(r.id)}">
       <p class="lede">Ship ${esc(bk(r.bookId).title)} to ${esc(first(r.recipient))}, then enter the tracking number from your receipt.</p>
       <div class="field"><label for="t-carrier">Carrier</label><select id="t-carrier" name="carrier">${["USPS", "UPS", "FedEx"].map((c) => `<option>${c}</option>`).join("")}</select></div>
-      <div class="field"><label for="t-num">Tracking number</label><input id="t-num" name="tracking" required autocomplete="off" placeholder="9400 1118 9922 ..." pattern="[A-Za-z0-9 ]{10,40}"></div>
-      <button type="button" class="link" data-act="sampleTracking">Demo: fill in a sample number</button>
-      <p class="note">Your credit arrives when tracking shows delivered and ${esc(first(r.recipient))} confirms, not when you add tracking.</p>
+      <div class="field"><label for="t-num">Tracking number</label><input id="t-num" name="tracking" required autocomplete="off" placeholder="9400 1118 9922 ..." maxlength="40"></div>
+      ${LIVE ? "" : '<button type="button" class="link" data-act="sampleTracking">Demo: fill in a sample number</button>'}
+      <p class="note">Your credit arrives when the book is delivered and ${esc(first(r.recipient))} confirms it, not when you add tracking. Each tracking number can only be used once.</p>
       <button class="btn primary" type="submit">Save tracking</button>
     </form>`;
   }
 
   function sheetReport(s) {
-    const reasons = ["Condition is worse than listed", "Wrong book or edition", "Damaged in the mail", "Says delivered, but it isn't here"];
     return `
-      <p class="lede">Tell us what's wrong. You'll add photos next. Keep the book and packaging until this is resolved.</p>
-      <div class="options">${reasons.map((r) => `<button class="option" data-act="pickReason" data-id="${esc(r)}" aria-pressed="${s.reason === r}"><span class="radio"></span><span><strong>${esc(r)}</strong></span></button>`).join("")}</div>
-      <button class="btn primary" data-act="submitReport" data-id="${s.id}" ${s.reason ? "" : "disabled"}>Report problem</button>
+      <p class="lede">Tell us what's wrong. Keep the book and packaging until this is resolved; support may ask for photos.</p>
+      <div class="options">${REPORT_REASONS.map((r) => `<button class="option" data-act="pickReason" data-id="${esc(r)}" aria-pressed="${s.reason === r}"><span class="radio"></span><span><strong>${esc(r)}</strong></span></button>`).join("")}</div>
+      <button class="btn primary" data-act="submitReport" data-id="${esc(s.id)}" ${s.reason ? "" : "disabled"}>Report problem</button>
     `;
   }
 
   function sheetCopy(s) {
     const c = copy(s.id);
+    if (!c) return '<p class="lede">This book is no longer on your shelf.</p>';
     const b = bk(c.bookId);
     const l = openListing(c.id);
     const busy = activeExchange(c.id);
     const dis = busy ? "disabled" : "";
     return `
-      <div class="detail" style="grid-template-columns:96px minmax(0,1fr)">${cover(b)}<div><h3>${esc(b.title)}</h3><p class="by">${esc(b.author)}</p><p class="isbn">ISBN ${b.isbn}</p></div></div>
+      <div class="detail" style="grid-template-columns:96px minmax(0,1fr)">${cover(b)}<div><h3>${esc(b.title)}</h3><p class="by">${esc(b.author)}</p><p class="isbn">ISBN ${esc(b.isbn)}</p></div></div>
       <div class="row"><div class="grow"><strong>Available for exchange</strong><p class="lede">${l ? "Anyone can request it." : "Hidden from Discover."}</p></div>
-        <button class="toggle" data-act="toggleListing" data-id="${c.id}" aria-pressed="${!!l}" ${dis} aria-label="Available for exchange"><span></span></button></div>
+        <button class="toggle" data-act="toggleListing" data-id="${esc(c.id)}" aria-pressed="${!!l}" ${dis} aria-label="Available for exchange"><span></span></button></div>
       ${busy ? '<p class="note">This copy is in an exchange, so it can\'t be changed right now.</p>' : ""}
       <div class="section"><p class="eyebrow">Condition</p>
-        <div class="options">${CONDITIONS.map((k) => `<button class="option" data-act="setCond" data-id="${c.id}" data-c="${k.id}" aria-pressed="${c.cond === k.id}" ${dis}><span class="radio"></span><span><strong>${k.label}</strong><span>${k.desc}</span></span></button>`).join("")}</div>
+        <div class="options">${CONDITIONS.map((k) => `<button class="option" data-act="setCond" data-id="${esc(c.id)}" data-c="${k.id}" aria-pressed="${c.cond === k.id}" ${dis}><span class="radio"></span><span><strong>${k.label}</strong><span>${k.desc}</span></span></button>`).join("")}</div>
       </div>
       <div class="section"><p class="eyebrow">Format</p>
-        <div class="chips">${["Hardcover", "Paperback", "Mass market"].map((f) => `<button class="chip" data-act="setFormat" data-id="${c.id}" data-f="${f}" aria-pressed="${c.format === f}" ${dis}>${f}</button>`).join("")}</div>
+        <div class="chips">${["Hardcover", "Paperback", "Mass market"].map((f) => `<button class="chip" data-act="setFormat" data-id="${esc(c.id)}" data-f="${f}" aria-pressed="${c.format === f}" ${dis}>${f}</button>`).join("")}</div>
       </div>
       <div class="section"><p class="eyebrow">Anything to disclose?</p>
-        <div class="chips">${FLAGS.map((f) => `<button class="chip" data-act="setFlag" data-id="${c.id}" data-f="${esc(f)}" aria-pressed="${c.flags.includes(f)}" ${dis}>${esc(f)}</button>`).join("")}</div>
-        ${["good", "acc"].includes(c.cond) ? '<p class="note">Photos are required for Good and Acceptable copies. In the real app you\'d add 1 to 4 here.</p>' : ""}
+        <div class="chips">${FLAGS.map((f) => `<button class="chip" data-act="setFlag" data-id="${esc(c.id)}" data-f="${esc(f)}" aria-pressed="${c.flags.includes(f)}" ${dis}>${esc(f)}</button>`).join("")}</div>
       </div>
-      <button class="btn danger" data-act="removeCopy" data-id="${c.id}" ${dis}>Remove from my shelf</button>
+      <button class="btn danger" data-act="removeCopy" data-id="${esc(c.id)}" ${dis}>Remove from my shelf</button>
     `;
   }
 
   function sheetWallet() {
     const b = balances();
     const avail = discoverPool().filter(requestable).length;
-    // Newest first; entries made at the same moment keep their real order.
     const mine = S.ledger.filter((e) => e.user === "me").reverse().sort((a, z) => z.at - a.at);
     const label = { grant: ["Welcome credit", "+1"], earn: ["Earned", "+1"], reserve: ["Reserved", "held"], release: ["Returned", "+1"], spend: ["Spent", "used"], reverse: ["Reversed", "−1"] };
     const pays = S.payments.filter((p) => p.user === "me").reverse().sort((a, z) => z.at - a.at);
+    const payLabel = { topup: ["Added", "+"], fee: ["Fee", "−"], refund: ["Refunded", "−"] };
     return `
       <div class="wallet-hero">
         <span class="big-num">${b.available}</span>
@@ -1073,52 +1251,73 @@
         ${mine.length ? `<div class="ledger-list">${mine.map((e) => `<div><span class="grow"><strong>${label[e.type][0]}</strong><span class="lede">${esc(e.note || "")}</span></span><span class="amt ${e.type}">${label[e.type][1]}</span><time>${fmtDay(e.at)}</time></div>`).join("")}</div>` : '<p class="lede">No credit activity yet.</p>'}
       </div>
       <div class="section"><p class="eyebrow">Fee balance: ${money(feeBalance())}${feesHeld() ? " (" + money(feesHeld()) + " set aside for open exchanges)" : ""}</p>
-        ${pays.length ? `<div class="ledger-list">${pays.map((p) => `<div><span class="grow"><strong>${p.kind === "topup" ? "Added" : "Fee"}</strong><span class="lede">${esc(p.note)}</span></span><span class="amt">${p.kind === "topup" ? "+" : "−"}${money(p.amount)}</span><time>${fmtDay(p.at)}</time></div>`).join("")}</div>` : '<p class="lede">No payments yet.</p>'}
-        <button class="btn ghost sm" data-act="${S.me.card ? "topup" : "addCard"}">${S.me.card ? "Add to fee balance" : "Add a card"}</button>
+        ${pays.length ? `<div class="ledger-list">${pays.map((p) => `<div><span class="grow"><strong>${payLabel[p.kind][0]}</strong><span class="lede">${esc(p.note)}</span></span><span class="amt">${payLabel[p.kind][1]}${money(p.amount)}</span><time>${fmtDay(p.at)}</time></div>`).join("")}</div>` : '<p class="lede">No payments yet.</p>'}
+        <button class="btn ghost sm" data-act="topup">Add to fee balance</button>
         <p class="lede">Fees come out of a prepaid balance, so card processing doesn't eat a third of every $1.</p>
       </div>`;
   }
 
   function sheetTopup(s) {
-    const amt = s.amount || 5;
+    const amounts = topupAmounts();
+    const amt = s.amount || amounts[0];
     return `
-      <p class="lede">One card charge covers several exchanges. Fees are only taken when a book arrives.</p>
-      <div class="options">${[5, 10, 20].map((n) => `<button class="option" data-act="pickTopup" data-id="${n}" aria-pressed="${amt === n}"><span class="radio"></span><span><strong>${money(n)}</strong><span>Covers ${Math.floor(n / Math.max(fees().recipient, 1))} books received</span></span></button>`).join("")}</div>
-      <p class="lede">Charged to ${esc(S.me.card.brand)} ending ${esc(S.me.card.last4)}.</p>
-      <button class="btn primary" data-act="confirmTopup" data-back="${s.back || ""}">Add ${money(amt)}</button>`;
+      <p class="lede">One payment covers several exchanges. Fees are only taken when a book arrives.</p>
+      <div class="options">${amounts.map((n) => `<button class="option" data-act="pickTopup" data-id="${n}" aria-pressed="${amt === n}"><span class="radio"></span><span><strong>${money(n)}</strong><span>Covers ${Math.floor(n / Math.max(fees().recipient, 1))} books received</span></span></button>`).join("")}</div>
+      <div class="pay-methods"><span>APPLE PAY</span><span>GOOGLE PAY</span><span>CARDS</span><span>LINK</span></div>
+      <p class="lede">You'll finish on Stripe's secure checkout page. Worm never sees or stores your card number.</p>
+      <button class="btn primary" data-act="confirmTopup" data-back="${esc(s.back || "")}">Continue to pay ${money(amt)}</button>`;
   }
 
-  function sheetCard(s) {
-    return `<form id="cardForm" class="section" data-back="${s.back || ""}">
-      <p class="lede">In the real app this is Stripe's secure card form, with Apple Pay and Google Pay. This one is filled with a test card.</p>
-      <div class="field"><label for="cc-num">Card number</label><input id="cc-num" name="num" value="4242 4242 4242 4242" inputmode="numeric" autocomplete="cc-number" required></div>
-      <div class="fields-2" style="grid-template-columns:1fr 1fr">
-        <div class="field"><label for="cc-exp">Expires</label><input id="cc-exp" name="exp" value="12 / 29" autocomplete="cc-exp" required></div>
-        <div class="field"><label for="cc-cvc">CVC</label><input id="cc-cvc" name="cvc" value="123" inputmode="numeric" autocomplete="cc-csc" required></div>
+  // Demo only: stands in for Stripe's hosted checkout page.
+  function sheetStripe(s) {
+    return `
+      <p class="note">In the real app you'd be on Stripe's own page now, at checkout.stripe.com. This preview stands in for it.</p>
+      <div class="card">
+        <div class="kv">
+          <div><span class="k">Worm fee balance</span><span class="v">${money(s.amount)}</span></div>
+        </div>
+        <button class="btn auth-btn apple" data-act="demoPay" data-back="${esc(s.back || "")}">${APPLE_LOGO} Pay</button>
+        <button class="btn ghost" data-act="demoPay" data-back="${esc(s.back || "")}">Pay with card</button>
       </div>
-      <button class="btn primary" type="submit">Save card</button>
-    </form>`;
+      <button class="link" data-act="close">Cancel and go back to Worm</button>`;
   }
 
   function sheetAddress(s) {
-    const a = S.me.address || { name: S.me.name, line1: "", city: "", state: "NY", zip: "" };
-    return `<form id="addrForm" class="section" data-back="${s.back || ""}">
-      <div class="field"><label for="a-name">Full name</label><input id="a-name" name="name" value="${esc(a.name)}" required autocomplete="name"></div>
-      <div class="field"><label for="a-line1">Street address</label><input id="a-line1" name="line1" value="${esc(a.line1)}" required autocomplete="address-line1"></div>
+    const a = S.me.address || { name: S.me.name, line1: "", line2: "", city: S.me.city || "", state: S.me.state || "NY", zip: "" };
+    return `<form id="addrForm" class="section" data-back="${esc(s.back || "")}">
+      <div class="field"><label for="a-name">Full name</label><input id="a-name" name="name" value="${esc(a.name)}" required autocomplete="name" maxlength="80"></div>
+      <div class="field"><label for="a-line1">Street address</label><input id="a-line1" name="line1" value="${esc(a.line1)}" required autocomplete="address-line1" maxlength="100"></div>
+      <div class="field"><label for="a-line2">Apartment, suite (optional)</label><input id="a-line2" name="line2" value="${esc(a.line2 || "")}" autocomplete="address-line2" maxlength="100"></div>
       <div class="fields-2">
-        <div class="field"><label for="a-city">City</label><input id="a-city" name="city" value="${esc(a.city)}" required autocomplete="address-level2"></div>
+        <div class="field"><label for="a-city">City</label><input id="a-city" name="city" value="${esc(a.city)}" required autocomplete="address-level2" maxlength="60"></div>
         <div class="field"><label for="a-state">State</label><select id="a-state" name="state" required autocomplete="address-level1">${US_STATES.map((st) => `<option ${st === a.state ? "selected" : ""}>${st}</option>`).join("")}</select></div>
-        <div class="field"><label for="a-zip">ZIP</label><input id="a-zip" name="zip" value="${esc(a.zip)}" required inputmode="numeric" pattern="[0-9]{5}" autocomplete="postal-code"></div>
+        <div class="field"><label for="a-zip">ZIP</label><input id="a-zip" name="zip" value="${esc(a.zip)}" required inputmode="numeric" pattern="[0-9]{5}" autocomplete="postal-code" maxlength="10"></div>
       </div>
-      <p class="lede">Shelf Swap ships within the US only. The real app checks this address with USPS.</p>
+      <p class="lede">Worm ships within the US only. Only the reader sending you a book sees this, and only until they ship.</p>
       <button class="btn primary" type="submit">Save address</button>
     </form>`;
+  }
+
+  function sheetEditProfile() {
+    return `${profileFields()}
+      <div class="section"><p class="eyebrow">Favorite genres</p>
+        <div class="chips">${GENRES.map((g) => `<button class="chip" data-act="obGenre" data-id="${esc(g)}" aria-pressed="${S.me.genres.includes(g)}">${esc(g)}</button>`).join("")}</div>
+      </div>
+      <button class="btn primary" data-act="saveProfile">Save profile</button>`;
+  }
+
+  function sheetDeleteAccount() {
+    return `
+      <p>Deleting your account removes your profile, photo, address, wishlist and alerts, takes your books off Worm, and signs you out everywhere.</p>
+      <p class="lede">Unspent credits and fee balance can't be recovered. A record of past exchanges and payments is kept, without your name, because the law requires it.</p>
+      <p class="note warn">If you're in the middle of an exchange, finish it first.</p>
+      <button class="btn danger" data-act="confirmDelete">Delete my account</button>`;
   }
 
   function sheetAlerts() {
     if (!S.notes.length) return '<p class="lede">No alerts yet.</p>';
     return `${S.notes.some((n) => !n.read) ? '<button class="link" data-act="readAll">Mark all read</button>' : ""}
-      <div>${S.notes.map((n) => `<button class="alert ${n.read ? "" : "unread"}" data-act="openNote" data-id="${n.id}">
+      <div>${S.notes.map((n) => `<button class="alert ${n.read ? "" : "unread"}" data-act="openNote" data-id="${esc(n.id)}">
         <span class="dot"></span>
         <span><strong>${esc(n.title)}</strong><p>${esc(n.body)}</p></span>
         <time>${ago(n.at)}</time>
@@ -1130,15 +1329,15 @@
     const avail = discoverPool().filter(requestable).length;
     const r = s.id ? req(s.id) : null;
     const title = s.kind === "welcome" ? "Your welcome credit" : "You earned a credit";
-    const body = s.kind === "welcome"
+    const body = s.kind === "welcome" || !r
       ? "You listed your first books, so your first request is on us."
       : esc(bk(r.bookId).title) + " reached " + esc(first(r.recipient)) + ". It's on their shelf now.";
     return `<div class="celebrate">
-      <span class="credit-stamp"><small>Shelf Swap</small><b>+1</b><small>credit</small></span>
+      <span class="burst">${starburst()}<b>+1</b><small>credit</small></span>
       <h3>${title}</h3>
       <p>${body}</p>
       <p class="lede">You have ${plural(b.available, "credit")}. ${plural(avail, "book")} ${avail === 1 ? "is" : "are"} ready for you to discover.</p>
-      <button class="btn primary" data-act="tab" data-id="discover">Find my next book</button>
+      <button class="btn pop" data-act="tab" data-id="discover">Find my next book</button>
     </div>`;
   }
 
@@ -1146,7 +1345,7 @@
     const steps = [
       ["List", "Scan your books and mark the ones you're done with as available."],
       ["Someone requests one", "Accept within 48 hours. Ship within 3 days with any carrier (USPS Media Mail is cheapest) and add tracking."],
-      ["Earn a credit", "When tracking shows delivered and the reader confirms (or 2 days pass), you get 1 credit."],
+      ["Earn a credit", "When the book is delivered and the reader confirms (or 2 days pass), you get 1 credit."],
       ["Request any book", "Spend 1 credit + " + money(fees().recipient) + " on any available book from any reader. You never need to want each other's books."],
       ["If something goes wrong", "Not accepted, not shipped, or lost in the mail: your credit comes back. Wrong or misdescribed book: report it within 2 days."],
     ];
@@ -1159,9 +1358,9 @@
       <li><strong>Pack it</strong><br>Use a padded mailer, or wrap the book in a paper bag or bubble wrap so it can't slide around.</li>
       <li><strong>Choose USPS Media Mail</strong><br>Usually $4 to $5 for one book, and 2 to 8 days to arrive. Books only, so no letters or bookmarks with ads.</li>
       <li><strong>Get a receipt with tracking</strong><br>At the post office counter, or buy a label online at usps.com.</li>
-      <li><strong>Add tracking in Shelf Swap</strong><br>Within 3 days of accepting. We check it automatically from there.</li>
+      <li><strong>Add tracking in Worm</strong><br>Within 3 days of accepting. We check it automatically from there.</li>
     </ol>
-    <p class="note">Coming later: buy a prepaid label right inside Shelf Swap.</p>`;
+    <p class="note">Coming later: buy a prepaid label right inside Worm.</p>`;
   }
 
   function sheetConditions() {
@@ -1210,7 +1409,7 @@
           <div><span class="k">Completed exchanges</span><span class="v">${done.length}</span></div>
           <div><span class="k">Platform fees earned</span><span class="v">${money(revenue)}</span></div>
           <div><span class="k">Fees per exchange</span><span class="v">${done.length ? money(revenue / done.length) : "–"}</span></div>
-          <div><span class="k">Your card top-ups (Stripe cost)</span><span class="v">${topups.length} (${money(cardCost)})</span></div>
+          <div><span class="k">Your top-ups (Stripe cost)</span><span class="v">${topups.length} (${money(cardCost)})</span></div>
         </div>
       </div>
       <div class="btns">
@@ -1224,9 +1423,10 @@
     listing: [sheetListing, "Book"], book: [sheetBook, "Book"], request: [sheetRequest, "Request this book"],
     deal: [sheetDeal, "Exchange"], tracking: [sheetTracking, "Add tracking"], report: [sheetReport, "Report a problem"],
     copy: [sheetCopy, "My copy"], wallet: [sheetWallet, "Your credits"], topup: [sheetTopup, "Add to fee balance"],
-    card: [sheetCard, "Add a card"], address: [sheetAddress, "Shipping address"], alerts: [sheetAlerts, "Alerts"],
-    celebrate: [sheetCelebrate, ""], how: [sheetHow, "How Shelf Swap works"], shipping: [sheetShipping, "How to ship a book"],
+    stripe: [sheetStripe, "Checkout"], address: [sheetAddress, "Shipping address"], alerts: [sheetAlerts, "Alerts"],
+    celebrate: [sheetCelebrate, ""], how: [sheetHow, "How Worm works"], shipping: [sheetShipping, "How to ship a book"],
     conditions: [sheetConditions, "Condition guide"], demo: [sheetDemo, "Demo controls"],
+    editProfile: [sheetEditProfile, "Edit profile"], deleteAccount: [sheetDeleteAccount, "Delete account"],
   };
 
   /* ---------------- render ---------------- */
@@ -1234,12 +1434,16 @@
   const app = document.getElementById("app");
 
   function render() {
+    const signedOut = LIVE ? ui.screen === "signin" : !S.signedIn;
+    const loading = LIVE && ui.screen === "loading";
+    const onboarding = !signedOut && !loading && (!S.me.onboarded || ui.obActive);
+    const inApp = !signedOut && !loading && !onboarding;
     const unread = S.notes.filter((n) => !n.read).length;
-    const todo = myDeals().filter(needsMe).length;
+    const todo = inApp ? myDeals().filter(needsMe).length : 0;
     const views = { discover: viewDiscover, shelf: viewShelf, scan: viewScan, exchanges: viewExchanges, profile: viewProfile };
     const tabs = [["discover", "Discover", 0], ["shelf", "My Shelf", 0], ["scan", "Scan", 0], ["exchanges", "Exchanges", todo], ["profile", "Profile", 0]];
     let sheet = "";
-    if (ui.sheet) {
+    if (ui.sheet && SHEETS[ui.sheet.type]) {
       const [fn, title] = SHEETS[ui.sheet.type];
       const enter = ui.sheetEnter ? " enter" : "";
       sheet = `<div class="scrim${enter}" data-act="close"></div>
@@ -1251,16 +1455,17 @@
       ui.sheetEnter = false;
     }
     const prevScroll = document.querySelector(".sheet")?.scrollTop;
-    const onboarding = !S.me.onboarded;
+    const body = signedOut ? viewSignIn() : loading ? viewLoading() : onboarding ? viewOnboarding() : views[ui.tab]();
     app.innerHTML = `
       <header class="top">
-        <div class="brand"><h1>Shelf Swap</h1></div>
-        ${onboarding ? "" : creditPill()}
-        ${onboarding ? "" : `<button class="icon-btn" data-act="alerts" aria-label="Alerts${unread ? ", " + unread + " unread" : ""}">${icon("bell", 22)}${unread ? `<span class="badge">${unread}</span>` : ""}</button>`}
-        <button class="demo-btn" data-act="demo">Demo</button>
+        <div class="brand">${signedOut ? "" : mascot("mascot")}<h1>worm</h1></div>
+        ${inApp ? creditPill() : ""}
+        ${inApp ? `<button class="icon-btn" data-act="alerts" aria-label="Alerts${unread ? ", " + unread + " unread" : ""}">${icon("bell", 22)}${unread ? `<span class="badge">${unread}</span>` : ""}</button>` : ""}
+        ${LIVE ? "" : '<button class="demo-btn" data-act="demo">Demo</button>'}
+        ${ui.busy ? '<span class="busy-bar" role="progressbar" aria-label="Working"></span>' : ""}
       </header>
-      ${onboarding ? viewOnboarding() : views[ui.tab]()}
-      ${onboarding ? "" : `<div class="tabbar"><nav>${tabs.map(([id, label, n]) => `<button class="${id === "scan" ? "scan-tab" : ""}" data-act="tab" data-id="${id}" ${ui.tab === id ? 'aria-current="page"' : ""}><span class="ti">${icon(id)}</span>${label}${n ? `<span class="badge">${n}</span>` : ""}</button>`).join("")}</nav></div>`}
+      ${body}
+      ${inApp ? `<div class="tabbar"><nav>${tabs.map(([id, label, n]) => `<button class="${id === "scan" ? "scan-tab" : ""}" data-act="tab" data-id="${id}" ${ui.tab === id ? 'aria-current="page"' : ""}><span class="ti">${icon(id)}</span>${label}${n ? `<span class="badge">${n}</span>` : ""}</button>`).join("")}</nav></div>` : ""}
       ${sheet}
       ${ui.toast ? `<div class="toast" role="status">${esc(ui.toast)}</div>` : ""}
     `;
@@ -1295,6 +1500,26 @@
     else closeSheet();
   }
 
+  /* ---------------- photos ---------------- */
+
+  // Shrinks a photo to a 320px square JPEG. Redrawing it also drops the location data (EXIF)
+  // that phones attach to pictures.
+  function shrinkPhoto(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const cv = document.createElement("canvas");
+        cv.width = cv.height = 320;
+        const s = Math.min(img.width, img.height);
+        cv.getContext("2d").drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 320, 320);
+        URL.revokeObjectURL(img.src);
+        cv.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Couldn't read that photo."))), "image/jpeg", 0.85);
+      };
+      img.onerror = () => reject(new Error("Couldn't read that photo."));
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
   /* ---------------- scanning ---------------- */
 
   function addCopy(bookId) {
@@ -1318,17 +1543,15 @@
     commit("Added " + next.title);
   }
 
-  const PALETTE = [["#264653", "#f1e3c8"], ["#8a3b2e", "#f6e7d0"], ["#e9c46a", "#2a2a1a"], ["#3d405b", "#f4f1de"], ["#6d597a", "#f6e9f0"], ["#2a9d8f", "#0f2622"]];
-  async function lookupIsbn(isbn) {
+  // Demo mode on a real phone: look the ISBN up straight from Open Library.
+  async function demoLookupIsbn(isbn) {
     const local = CATALOG.find((b) => b.isbn === isbn) || Object.values(S.extraBooks).find((b) => b.isbn === isbn);
     if (local) return local;
     try {
       const res = await fetch("https://openlibrary.org/api/books?bibkeys=ISBN:" + isbn + "&format=json&jscmd=data");
       const d = (await res.json())["ISBN:" + isbn];
       if (!d) return null;
-      const h = [...isbn].reduce((s, ch) => s + ch.charCodeAt(0), 0);
-      const [bg, fg] = PALETTE[h % PALETTE.length];
-      const b = { id: "x" + isbn, title: d.title, author: (d.authors || []).map((a) => a.name).join(", ") || "Unknown author", year: parseInt(d.publish_date, 10) || "", isbn, bg, fg, motif: (h % 3) + 1, genre: "Other" };
+      const b = decorate({ id: "x" + isbn, isbn, title: d.title, author: (d.authors || []).map((a) => a.name).join(", ") || "Unknown author", year: parseInt(d.publish_date, 10) || "" });
       S.extraBooks[b.id] = b;
       return b;
     } catch (e) {
@@ -1337,9 +1560,10 @@
   }
 
   async function addByIsbn(isbn) {
+    if (LIVE) return liveAddByIsbn(isbn);
     toast("Looking up " + isbn + "…");
     render();
-    const b = await lookupIsbn(isbn);
+    const b = await demoLookupIsbn(isbn);
     if (!b) return toast("Couldn't find ISBN " + isbn + ". Try searching by title."), render();
     const c = addCopy(b.id);
     ui.scanned.unshift(c.id);
@@ -1347,50 +1571,85 @@
     commit("Added " + b.title);
   }
 
-  // Real camera scanning where the browser supports it (Chrome on Android, for example).
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      if (document.querySelector(`script[src="${src}"]`)) return resolve();
+      const s = document.createElement("script");
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error("Couldn't load " + src));
+      document.head.appendChild(s);
+    });
+  }
+
+  // Camera scanning. Uses the browser's own barcode reader where there is one (Chrome on
+  // Android), and the bundled ZXing reader elsewhere (Safari on iPhone).
   async function startCamera() {
-    if (!("BarcodeDetector" in window) || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       ui.cam = "unsupported";
-      return simulateScan();
-    }
-    let detector, stream;
-    try {
-      detector = new window.BarcodeDetector({ formats: ["ean_13"] });
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-    } catch (e) {
-      ui.cam = "denied";
-      return simulateScan();
+      return LIVE ? (toast("This browser can't use the camera. Type the ISBN below."), render()) : simulateScan();
     }
     const wrap = document.createElement("div");
     wrap.className = "camera";
-    wrap.innerHTML = `<video playsinline muted></video><span class="cam-frame"></span><p class="cam-hint">Hold a barcode inside the frame</p><button class="btn primary cam-done">Done</button>`;
-    document.body.appendChild(wrap);
+    wrap.innerHTML = `<video playsinline muted></video><span class="cam-frame"></span><p class="cam-hint">Hold a barcode inside the frame</p><p class="cam-count" aria-live="polite"></p><button class="btn primary cam-done">Done</button>`;
     const video = wrap.querySelector("video");
-    video.srcObject = stream;
-    await video.play();
+    const count = wrap.querySelector(".cam-count");
     const seen = new Set();
-    wrap.querySelector(".cam-done").addEventListener("click", () => {
-      stream.getTracks().forEach((tr) => tr.stop());
+    let added = 0;
+    let stopReader = () => {};
+    const onCode = async (code) => {
+      if (!/^97[89]\d{10}$/.test(code) || seen.has(code)) return;
+      seen.add(code);
+      if (navigator.vibrate) navigator.vibrate(40);
+      count.textContent = "Looking up " + code + "…";
+      await addByIsbn(code);
+      added++;
+      count.textContent = plural(added, "book") + " added";
+    };
+    const stop = () => {
+      stopReader();
+      if (video.srcObject) video.srcObject.getTracks().forEach((tr) => tr.stop());
       wrap.remove();
       render();
-    });
-    const loop = async () => {
-      if (!wrap.isConnected) return;
-      try {
-        const codes = await detector.detect(video);
-        const code = codes.map((c) => c.rawValue).find((v) => /^97[89]\d{10}$/.test(v));
-        if (code && !seen.has(code)) {
-          seen.add(code);
-          if (navigator.vibrate) navigator.vibrate(40);
-          await addByIsbn(code);
-        }
-      } catch (e) { /* keep scanning */ }
-      setTimeout(loop, 250);
     };
-    loop();
+    wrap.querySelector(".cam-done").addEventListener("click", stop);
+    try {
+      if ("BarcodeDetector" in window) {
+        const detector = new window.BarcodeDetector({ formats: ["ean_13"] });
+        video.srcObject = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        document.body.appendChild(wrap);
+        await video.play();
+        let running = true;
+        stopReader = () => { running = false; };
+        const loop = async () => {
+          if (!running) return;
+          try {
+            const codes = await detector.detect(video);
+            for (const c of codes) await onCode(c.rawValue);
+          } catch (e) { /* keep scanning */ }
+          setTimeout(loop, 250);
+        };
+        loop();
+      } else {
+        await loadScript("vendor/zxing.min.js");
+        const hints = new Map([[window.ZXing.DecodeHintType.POSSIBLE_FORMATS, [window.ZXing.BarcodeFormat.EAN_13]]]);
+        const reader = new window.ZXing.BrowserMultiFormatReader(hints, 300);
+        document.body.appendChild(wrap);
+        stopReader = () => reader.reset();
+        await reader.decodeFromVideoDevice(undefined, video, (result) => { if (result) onCode(result.getText()); });
+      }
+    } catch (e) {
+      wrap.remove();
+      ui.cam = "denied";
+      if (LIVE) {
+        toast("Camera blocked. Allow camera access in your browser settings, or type the ISBN below.");
+        return render();
+      }
+      return simulateScan();
+    }
   }
 
-  /* ---------------- actions ---------------- */
+  /* ---------------- demo actions ---------------- */
 
   const A = {
     tab(d) {
@@ -1415,6 +1674,13 @@
     openBook(d) { openSheet("book", { id: d.id }); },
     openCopy(d) { openSheet("copy", { id: d.id }); },
     openDeal(d) { openSheet("deal", { id: d.id }); },
+    editProfile() { ui.draft = {}; ui.handleOk = null; ui.handleHint = null; openSheet("editProfile"); },
+    deleteAccount() { openSheet("deleteAccount"); },
+
+    signIn() { S.signedIn = true; commit(); },
+    otpBack() { ui.otpEmail = null; render(); },
+    signOut() { S.signedIn = false; ui.sheet = null; clearToast(); commit("Signed out"); },
+    confirmDelete() { S = seed(true); ui.sheet = null; ui.tab = "discover"; clearToast(); commit("Account deleted"); },
 
     wish(d) {
       const w = S.wishlist.me;
@@ -1422,6 +1688,7 @@
       S.wishlist.me = on ? w.filter((b) => b !== d.id) : w.concat(d.id);
       commit(on ? "Removed from wishlist" : "Added to wishlist. We'll alert you when a copy is listed.");
     },
+    wishSearch(d) { A.wish(d); },
 
     request(d) { openSheet("request", { id: d.id }); },
     sendRequest(d) {
@@ -1443,7 +1710,7 @@
       const r = req(d.id);
       if (feeFree() < r.fees.sender) {
         toast("Add to your fee balance to cover the " + money(r.fees.sender) + " sending fee.");
-        return openSheet(S.me.card ? "topup" : "card", {});
+        return openSheet("topup", {});
       }
       const x = acceptRequest(r);
       if (!x) return commit("This copy is already in another exchange.");
@@ -1479,7 +1746,7 @@
     },
     rate(d) {
       S.me.ratings[d.id] = Number(d.n);
-      log(req(d.id), "You rated " + first(deal(req(d.id)).other) + " " + d.n + " stars.");
+      log(req(d.id), "You left a rating.");
       commit("Thanks. Rating saved.");
     },
 
@@ -1521,19 +1788,21 @@
     lookupIsbn(d) { addByIsbn(d.id); },
 
     editAddress(d) { openSheet("address", { back: d.back }); },
-    addCard(d) { openSheet("card", { back: d.back }); },
-    topup(d) { openSheet("topup", { back: d.back, amount: 5 }); },
+    topup(d) { openSheet("topup", { back: d.back, amount: topupAmounts()[0] }); },
     pickTopup(d) { ui.sheet.amount = Number(d.id); render(); },
-    confirmTopup(d) {
-      const amt = ui.sheet.amount || 5;
-      S.payments.push({ id: uid("p"), user: "me", kind: "topup", amount: amt, at: S.now, requestId: null, note: "Added to fee balance (" + S.me.card.brand + " " + S.me.card.last4 + ")" });
-      backTo(d.back);
+    confirmTopup(d) { openSheet("stripe", { back: d.back, amount: ui.sheet.amount || topupAmounts()[0] }); },
+    demoPay(d) {
+      const amt = ui.sheet.amount;
+      S.payments.push({ id: uid("p"), user: "me", kind: "topup", amount: amt, at: S.now, requestId: null, note: "Added to fee balance" });
+      ui.sheet = null;
+      checkWelcome();
+      if (!ui.sheet) backTo(d.back);
       commit(money(amt) + " added to your fee balance");
     },
 
     readAll() { S.notes.forEach((n) => (n.read = true)); commit(); },
     openNote(d) {
-      const n = S.notes.find((x) => x.id === d.id);
+      const n = S.notes.find((x) => String(x.id) === String(d.id));
       n.read = true;
       save();
       if (n.go && n.go.request) return openSheet("deal", { id: n.go.request });
@@ -1542,12 +1811,12 @@
       render();
     },
 
-    /* onboarding */
+    /* onboarding and profile */
     obNext() {
       if (ui.ob === 0) {
-        const v = (document.getElementById("ob-name") || {}).value || "";
-        if (!v.trim()) return toast("Add your name to continue."), render();
-        S.me.name = v.trim();
+        const err = profileError();
+        if (err) return toast(err), render();
+        applyDraft();
       }
       ui.ob++;
       commit();
@@ -1569,7 +1838,13 @@
       ui.tab = "scan";
       commit("Scan a few books to get started");
     },
-    replayOnboarding() { S.me.onboarded = false; ui.ob = 0; ui.sheet = null; commit(); },
+    saveProfile() {
+      const err = profileError();
+      if (err) return toast(err), render();
+      applyDraft();
+      closeSheet();
+      commit("Profile saved");
+    },
 
     /* demo: every other reader */
     dAccept() {
@@ -1649,10 +1924,13 @@
     dPricing(d) { S.pricing = d.id; commit("New requests use: " + PRICING[d.id].label); },
     dNewUser() {
       S = seed(true);
+      clearToast();
       ui.sheet = null;
       ui.tab = "discover";
       ui.ob = 0;
       ui.scanned = [];
+      ui.draft = {};
+      ui.otpEmail = null;
       commit();
     },
     dReset() {
@@ -1665,66 +1943,501 @@
     },
   };
 
+  function profileError() {
+    const name = String(draft("name", S.me.name) || "").trim();
+    const handle = String(draft("handle", S.me.handle) || "").trim().toLowerCase();
+    if (!name) return "Add your name to continue.";
+    if (!/^[a-z0-9_.]{3,20}$/.test(handle)) return "Handles are 3 to 20 characters: letters, numbers, dots and underscores.";
+    if (ui.handleOk === false) return "That handle is taken. Try another.";
+    if (!LIVE && Object.values(DEMO_USERS).some((u) => u.id !== "me" && u.handle === handle)) return "That handle is taken. Try another.";
+    return null;
+  }
+  function applyDraft() {
+    S.me.name = String(draft("name", S.me.name)).trim();
+    S.me.handle = String(draft("handle", S.me.handle)).trim().toLowerCase();
+    S.me.city = String(draft("city", S.me.city) || "").trim();
+    S.me.state = draft("state", S.me.state) || "";
+    S.me.photo = draft("photo", S.me.photo);
+    ui.draft = {};
+  }
+
+  /* ============================================================================
+     Live mode: the same screens, backed by Supabase.
+     ============================================================================ */
+
+  let sb = null;
+  let session = null;
+  let ME_ID = null;
+  const appUrl = () => location.origin + location.pathname;
+
+  function friendly(error) {
+    if (!error) return "Something went wrong. Try again.";
+    if (error.code === "P0001" && error.message) return error.message;
+    if (/JWT|sign in/i.test(error.message || "")) return "Please sign in again.";
+    console.error(error);
+    return "Something went wrong. Check your connection and try again.";
+  }
+
+  // Turns the server's get_state() answer into the same shape the demo uses, with "me"
+  // standing for the signed-in reader.
+  function fromServer(d) {
+    ME_ID = d.me_id;
+    const id = (x) => (x === ME_ID ? "me" : x);
+    const users = { me: { id: "me", name: d.me.name || "You", handle: d.me.handle || "you", city: [d.me.city, d.me.state].filter(Boolean).join(", "), rating: null, avatar: d.me.photo } };
+    for (const [uidKey, u] of Object.entries(d.users || {})) users[uidKey] = { id: uidKey, name: u.name, handle: u.handle, city: u.city, rating: u.rating, avatar: u.avatar };
+    USERS = users;
+    const books = {};
+    for (const b of Object.values(d.books || {})) books[b.isbn] = decorate(b);
+    skew = d.now - Date.now();
+    return {
+      live: true, now: d.now, nextId: 1, signedIn: true,
+      fees: d.fees, topupAmounts: (d.topupAmounts || []).map((c) => c / 100), welcomeListings: d.welcomeListings,
+      extraBooks: books,
+      copies: d.copies.map((c) => Object.assign({}, c, { owner: id(c.owner) })),
+      listings: d.listings,
+      requests: d.requests.map((r) => Object.assign({}, r, { sender: id(r.sender), recipient: id(r.recipient) })),
+      exchanges: d.exchanges.map((x) => Object.assign({}, x, { sender: id(x.sender), recipient: id(x.recipient) })),
+      ledger: d.ledger.map((e) => Object.assign({}, e, { user: "me" })),
+      payments: d.payments.map((p) => Object.assign({}, p, { user: "me" })),
+      notes: d.notes,
+      wishlist: { me: d.wishlist || [] },
+      trend: d.trend || {},
+      me: {
+        onboarded: !!d.me.onboarded, name: d.me.name || "", handle: d.me.handle || "", photo: d.me.photo || null,
+        genres: d.me.genres || [], city: d.me.city || "", state: d.me.state || "", address: d.me.address || null,
+        strikes: d.me.strikes || 0, paused: !!d.me.paused, welcome: d.me.welcome || "locked", ratings: {},
+      },
+    };
+  }
+
+  async function pull() {
+    const { data, error } = await sb.rpc("get_state");
+    if (error) {
+      if (/JWT|expired/i.test(error.message || "")) return signedOutLocally();
+      toast(friendly(error));
+      return false;
+    }
+    const known = S.live ? new Set(S.ledger.map((e) => e.id)) : null;
+    S = fromServer(data);
+    if (!S.me.onboarded) ui.obActive = true;
+    // Celebrate credits that arrived since the last look.
+    if (known) {
+      const fresh = S.ledger.filter((e) => !known.has(e.id));
+      const earned = fresh.find((e) => e.type === "earn");
+      const grant = fresh.find((e) => e.type === "grant");
+      if (earned) { ui.sheet = { type: "celebrate", kind: "earn", id: earned.requestId }; ui.sheetEnter = true; }
+      else if (grant) { ui.sheet = { type: "celebrate", kind: "welcome" }; ui.sheetEnter = true; }
+    }
+    return true;
+  }
+
+  // Calls one database function as the signed-in reader, then refreshes.
+  async function call(name, args = {}, okMsg = null) {
+    ui.busy++;
+    render();
+    const { data, error } = await sb.rpc(name, args);
+    if (error) {
+      ui.busy--;
+      toast(friendly(error));
+      render();
+      return { error };
+    }
+    await pull();
+    ui.busy--;
+    if (okMsg) toast(okMsg);
+    render();
+    return { data };
+  }
+
+  // Calls one edge function. Their errors carry a reader-friendly { error } body.
+  async function invoke(name, body, { quiet = false } = {}) {
+    if (!quiet) { ui.busy++; render(); }
+    const { data, error } = await sb.functions.invoke(name, { body });
+    if (!quiet) ui.busy--;
+    if (error) {
+      let msg = "Something went wrong. Check your connection and try again.";
+      try { msg = (await error.context.json()).error || msg; } catch (e) { /* not JSON */ }
+      return { error: msg };
+    }
+    return { data };
+  }
+
+  async function liveAddByIsbn(isbn) {
+    const found = await invoke("add-book", { isbn });
+    if (found.error) return toast(found.error), render();
+    const added = await call("add_copy", { p_isbn: found.data.book.isbn, p_condition: ui.defCond, p_format: "Paperback" });
+    if (added.error) return;
+    ui.scanned.unshift(added.data);
+    ui.scanQ = "";
+    ui.searchHits = null;
+    toast("Added " + found.data.book.title);
+    render();
+  }
+
+  let searchTimer = null;
+  function liveSearch(q) {
+    clearTimeout(searchTimer);
+    const digits = q.replace(/[^0-9xX]/g, "");
+    if (q.trim().length < 2 || /^(97[89])?\d{9}[\dxX]$/.test(digits)) {
+      ui.searchHits = null;
+      return;
+    }
+    ui.searchHits = "busy";
+    searchTimer = setTimeout(async () => {
+      const res = await invoke("add-book", { q: q.trim() }, { quiet: true });
+      if (ui.scanQ !== q) return;
+      ui.searchHits = res.error ? "error" : res.data.results;
+      const box = document.getElementById("scanResults");
+      if (box) box.innerHTML = scanMatches(ui.scanQ);
+    }, 450);
+  }
+
+  function signedOutLocally() {
+    session = null;
+    ME_ID = null;
+    S = blankState();
+    USERS = { me: DEMO_USERS.me };
+    ui.screen = "signin";
+    ui.sheet = null;
+    ui.obActive = false;
+    ui.ob = 0;
+    render();
+    return false;
+  }
+
+  async function saveLiveProfile() {
+    const err = profileError();
+    if (err) return toast(err), render(), false;
+    const r = await call("save_profile", {
+      p_handle: String(draft("handle", S.me.handle)).trim().toLowerCase(),
+      p_display_name: String(draft("name", S.me.name)).trim(),
+      p_city: String(draft("city", S.me.city) || "").trim(),
+      p_state: draft("state", S.me.state) || null,
+      p_genres: S.me.genres,
+      p_avatar_url: draft("photo", S.me.photo) || null,
+    });
+    if (r.error) return false;
+    ui.draft = {};
+    return true;
+  }
+
+  const LIVE_ACTIONS = {
+    async signIn(d) {
+      const { error } = await sb.auth.signInWithOAuth({ provider: d.id, options: { redirectTo: appUrl() } });
+      if (error) toast("Couldn't start sign-in with " + (d.id === "apple" ? "Apple" : "Google") + ". Try email instead."), render();
+    },
+    async signOut() {
+      await sb.auth.signOut();
+      signedOutLocally();
+      toast("Signed out");
+    },
+    async confirmDelete() {
+      const res = await invoke("delete-account", {});
+      if (res.error) return toast(res.error), render();
+      await sb.auth.signOut({ scope: "local" });
+      signedOutLocally();
+      toast("Your account was deleted.");
+      render();
+    },
+    async wish(d) {
+      const r = await call("toggle_wish", { p_isbn: d.id });
+      if (!r.error) toast(r.data ? "Added to wishlist. We'll alert you when a copy is listed." : "Removed from wishlist"), render();
+    },
+    async wishSearch(d) {
+      const found = await invoke("add-book", { isbn: d.id });
+      if (found.error) return toast(found.error), render();
+      await LIVE_ACTIONS.wish({ id: found.data.book.isbn });
+    },
+    async sendRequest(d) {
+      const r = await call("request_book", { p_listing: d.id }, "Requested. 1 credit reserved.");
+      if (r.error) return;
+      ui.tab = "exchanges";
+      ui.xTab = "incoming";
+      openSheet("deal", { id: r.data });
+    },
+    async withdraw(d) { await call("withdraw_request", { p_req: d.id }, "Request cancelled. Your credit is back."); },
+    async accept(d) {
+      const r = await call("accept_request", { p_req: d.id }, "Accepted. Ship within 3 days.");
+      if (r.error && /fee balance/.test(friendly(r.error))) openSheet("topup", {});
+    },
+    async decline(d) {
+      const r = await call("decline_request", { p_req: d.id }, "Request declined");
+      if (!r.error) closeSheet();
+    },
+    async confirmBook(d) { await call("confirm_received", { p_req: d.id }, "Confirmed. Thanks for reading with Worm."); },
+    async submitReport(d) {
+      const r = await call("report_problem", { p_req: d.id, p_reason: ui.sheet.reason }, "Problem reported. Support replies within 1 business day.");
+      if (!r.error) openSheet("deal", { id: d.id });
+    },
+    async rate(d) { await call("rate_exchange", { p_req: d.id, p_stars: Number(d.n) }, "Thanks. Rating saved."); },
+    async toggleListing(d) {
+      const on = !!openListing(d.id);
+      await call("set_available", { p_copy: d.id, p_available: !on }, on ? "Hidden from Discover" : "Available for exchange");
+    },
+    async setCond(d) { const c = copy(d.id); await call("update_copy", { p_copy: c.id, p_condition: d.c, p_format: c.format, p_flags: c.flags }); },
+    async setFormat(d) { const c = copy(d.id); await call("update_copy", { p_copy: c.id, p_condition: c.cond, p_format: d.f, p_flags: c.flags }); },
+    async setFlag(d) {
+      const c = copy(d.id);
+      const flags = c.flags.includes(d.f) ? c.flags.filter((x) => x !== d.f) : c.flags.concat(d.f);
+      await call("update_copy", { p_copy: c.id, p_condition: c.cond, p_format: c.format, p_flags: flags });
+    },
+    async removeCopy(d) {
+      const r = await call("remove_copy", { p_copy: d.id }, "Removed from your shelf");
+      if (!r.error) closeSheet();
+    },
+    async addFromSearch(d) { await liveAddByIsbn(d.id); },
+    async confirmTopup() {
+      const cents = Math.round((ui.sheet.amount || topupAmounts()[0]) * 100);
+      const res = await invoke("create-checkout", { amount: cents });
+      if (res.error) return toast(res.error), render();
+      location.assign(res.data.url);
+    },
+    async readAll() { await call("mark_read", { p_ids: null }); },
+    async openNote(d) {
+      const n = S.notes.find((x) => String(x.id) === String(d.id));
+      if (n && !n.read) { n.read = true; sb.rpc("mark_read", { p_ids: [n.id] }); }
+      if (n && n.go && n.go.request) return openSheet("deal", { id: n.go.request });
+      if (n && n.go && n.go.listing && listing(n.go.listing)) return openSheet("listing", { id: n.go.listing });
+      if (n && n.go && n.go.wallet) return openSheet("wallet");
+      render();
+    },
+    async obNext() {
+      if (ui.ob === 0 && !(await saveLiveProfile())) return;
+      if (ui.ob === 1 && !(await saveLiveProfile())) return;
+      ui.ob++;
+      render();
+    },
+    async obWish(d) {
+      const w = S.wishlist.me;
+      S.wishlist.me = w.includes(d.id) ? w.filter((x) => x !== d.id) : w.concat(d.id);
+      render();
+      const { error } = await sb.rpc("toggle_wish", { p_isbn: d.id });
+      if (error) toast(friendly(error));
+    },
+    async obDone() {
+      ui.obActive = false;
+      ui.ob = 0;
+      ui.tab = "scan";
+      await pull();
+      toast("Scan a few books to get started");
+      render();
+    },
+    async saveProfile() {
+      if (await saveLiveProfile()) { closeSheet(); toast("Profile saved"); render(); }
+    },
+  };
+  // Actions that change data. While one is running, further taps on these are ignored.
+  const MUTATING = new Set(Object.keys(LIVE_ACTIONS).concat(["camera", "lookupIsbn"]));
+  if (LIVE) Object.assign(A, LIVE_ACTIONS);
+
+  async function bootLive() {
+    try {
+      await loadScript("vendor/supabase.js");
+    } catch (e) {
+      app.innerHTML = '<div class="signin"><p>Worm couldn\'t load. Check your connection and refresh.</p></div>';
+      return;
+    }
+    sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, {
+      auth: { flowType: "pkce", persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    });
+    const params = new URLSearchParams(location.search);
+    const { data } = await sb.auth.getSession();
+    session = data.session;
+    if (params.has("code") || params.has("error_description")) {
+      if (params.get("error_description")) toast(params.get("error_description"));
+      params.delete("code"); params.delete("error"); params.delete("error_description");
+      history.replaceState(null, "", location.pathname + (params.toString() ? "?" + params : ""));
+    }
+    sb.auth.onAuthStateChange((event, s) => {
+      // Don't call Supabase from inside this callback; defer to the next tick.
+      setTimeout(async () => {
+        if (event === "SIGNED_OUT") return signedOutLocally();
+        if (event === "SIGNED_IN" && !session && s) {
+          session = s;
+          ui.screen = "loading";
+          render();
+          await pull();
+          ui.screen = "app";
+          render();
+        }
+        session = s;
+      }, 0);
+    });
+    if (!session) {
+      ui.screen = "signin";
+      return render();
+    }
+    await pull();
+    ui.screen = "app";
+    render();
+    // Back from Stripe: the webhook credits the balance, usually within a few seconds.
+    const topup = params.get("topup");
+    if (topup) {
+      params.delete("topup");
+      history.replaceState(null, "", location.pathname + (params.toString() ? "?" + params : ""));
+      if (topup === "success") {
+        const before = feeBalance();
+        toast("Payment received. Updating your balance…");
+        render();
+        for (let i = 0; i < 8 && feeBalance() === before; i++) {
+          await new Promise((r) => setTimeout(r, 1500));
+          await pull();
+        }
+        toast(feeBalance() > before ? "Your fee balance is now " + money(feeBalance()) : "Payment received. Your balance updates in a minute.");
+        render();
+      } else {
+        toast("Checkout cancelled. Nothing was charged.");
+        render();
+      }
+    }
+    // Pick up other readers' moves: every 30 seconds while open, and on return to the app.
+    const refresh = async () => {
+      if (!session || ui.busy || document.visibilityState !== "visible") return;
+      const typing = document.activeElement && /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName);
+      if (typing || (ui.sheet && ["tracking", "address", "topup", "editProfile", "report", "deleteAccount"].includes(ui.sheet.type))) return;
+      if (await pull()) render();
+    };
+    setInterval(refresh, 30000);
+    document.addEventListener("visibilitychange", refresh);
+  }
+
+  /* ---------------- events ---------------- */
+
   document.addEventListener("click", (e) => {
     const el = e.target.closest("[data-act]");
     if (!el || el.disabled) return;
-    const fn = A[el.dataset.act];
-    if (fn) { e.preventDefault(); fn(el.dataset, el); }
+    const name = el.dataset.act;
+    const fn = A[name];
+    if (!fn) return;
+    e.preventDefault();
+    if (LIVE && ui.busy && MUTATING.has(name)) return;
+    fn(el.dataset, el);
   });
 
   document.addEventListener("input", (e) => {
-    if (e.target.id === "q") {
-      ui.q = e.target.value;
+    const t = e.target;
+    if (t.dataset && t.dataset.draft) {
+      ui.draft[t.dataset.draft] = t.value;
+      if (t.dataset.draft === "handle") { ui.handleOk = null; ui.handleHint = null; }
+    }
+    if (t.id === "q") {
+      ui.q = t.value;
       const r = document.getElementById("results");
       if (r) r.innerHTML = discoverResults();
     }
-    if (e.target.id === "scanq") {
-      ui.scanQ = e.target.value;
+    if (t.id === "scanq") {
+      ui.scanQ = t.value;
+      if (LIVE) liveSearch(t.value);
       const r = document.getElementById("scanResults");
       if (r) r.innerHTML = scanMatches(ui.scanQ);
     }
   });
 
-  document.addEventListener("change", (e) => {
-    if (e.target.id !== "photo" || !e.target.files[0]) return;
-    const img = new Image();
-    img.onload = () => {
-      const cv = document.createElement("canvas");
-      cv.width = cv.height = 160;
-      const s = Math.min(img.width, img.height);
-      cv.getContext("2d").drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 160, 160);
-      S.me.photo = cv.toDataURL("image/jpeg", 0.8);
-      URL.revokeObjectURL(img.src);
-      const name = document.getElementById("ob-name");
-      if (name) S.me.name = name.value;
-      commit("Photo added");
-    };
-    img.src = URL.createObjectURL(e.target.files[0]);
+  // Checks a handle as soon as the reader leaves the field.
+  document.addEventListener("focusout", async (e) => {
+    if (e.target.id !== "ob-handle") return;
+    const h = e.target.value.trim().toLowerCase();
+    const hint = document.getElementById("handleHint");
+    if (!/^[a-z0-9_.]{3,20}$/.test(h)) {
+      ui.handleOk = false;
+      ui.handleHint = "3 to 20 letters, numbers, dots or underscores.";
+    } else if (LIVE) {
+      const { data } = await sb.rpc("handle_available", { p_handle: h });
+      ui.handleOk = !!data;
+      ui.handleHint = data ? "@" + h + " is yours." : "@" + h + " is taken. Try another.";
+    } else {
+      ui.handleOk = !Object.values(DEMO_USERS).some((u) => u.id !== "me" && u.handle === h);
+      ui.handleHint = ui.handleOk ? "@" + h + " is yours." : "@" + h + " is taken. Try another.";
+    }
+    if (hint) {
+      hint.textContent = ui.handleHint;
+      hint.className = "hint " + (ui.handleOk ? "good" : "bad");
+    }
   });
 
-  document.addEventListener("submit", (e) => {
+  document.addEventListener("change", async (e) => {
+    if (e.target.dataset && e.target.dataset.draft) ui.draft[e.target.dataset.draft] = e.target.value;
+    if (e.target.id !== "photo" || !e.target.files[0]) return;
+    try {
+      const blob = await shrinkPhoto(e.target.files[0]);
+      if (LIVE) {
+        ui.busy++;
+        render();
+        const path = `${ME_ID}/avatar-${Date.now()}.jpg`;
+        const { error } = await sb.storage.from("avatars").upload(path, await blob.arrayBuffer(), { contentType: "image/jpeg", upsert: false });
+        ui.busy--;
+        if (error) throw new Error("Couldn't upload that photo. Try a smaller one.");
+        ui.draft.photo = sb.storage.from("avatars").getPublicUrl(path).data.publicUrl;
+      } else {
+        ui.draft.photo = await new Promise((resolve) => {
+          const fr = new FileReader();
+          fr.onload = () => resolve(fr.result);
+          fr.readAsDataURL(blob);
+        });
+      }
+      toast("Photo added");
+    } catch (err) {
+      toast(err.message);
+    }
+    render();
+  });
+
+  document.addEventListener("submit", async (e) => {
     e.preventDefault();
     const f = new FormData(e.target);
     const back = e.target.dataset.back;
-    if (e.target.id === "addrForm") {
-      S.me.address = { name: f.get("name"), line1: f.get("line1"), city: f.get("city"), state: f.get("state"), zip: f.get("zip") };
-      backTo(back);
-      commit("Address saved");
+    if (e.target.id === "emailForm") {
+      const email = String(f.get("email")).trim();
+      if (LIVE) {
+        const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: appUrl(), shouldCreateUser: true } });
+        if (error) return toast(/rate|seconds/i.test(error.message) ? "Please wait a minute before asking for another email." : "Couldn't send the email. Check the address."), render();
+      }
+      ui.otpEmail = email;
+      toast(LIVE ? "Check your email." : "Demo: no email is sent. Type any 6 digits.");
+      return render();
     }
-    if (e.target.id === "cardForm") {
-      const num = String(f.get("num")).replace(/\D/g, "");
-      if (num.length < 12) return toast("Enter a full card number."), render();
-      S.me.card = { brand: num[0] === "4" ? "Visa" : num[0] === "5" ? "Mastercard" : "Card", last4: num.slice(-4) };
-      ui.sheet = null;
-      checkWelcome();
-      if (!ui.sheet && back) openSheet("topup", { back, amount: 5 });
-      commit("Card saved");
+    if (e.target.id === "otpForm") {
+      const token = String(f.get("code")).trim();
+      if (LIVE) {
+        ui.busy++;
+        render();
+        const { error } = await sb.auth.verifyOtp({ email: ui.otpEmail, token, type: "email" });
+        ui.busy--;
+        if (error) return toast("That code didn't work. Check it, or ask for a new email."), render();
+        ui.otpEmail = null;
+        return;
+      }
+      ui.otpEmail = null;
+      return A.signIn();
+    }
+    if (e.target.id === "addrForm") {
+      const a = { name: f.get("name"), line1: f.get("line1"), line2: f.get("line2") || null, city: f.get("city"), state: f.get("state"), zip: f.get("zip") };
+      if (LIVE) {
+        const r = await call("save_address", { p_name: a.name, p_line1: a.line1, p_line2: a.line2, p_city: a.city, p_state: a.state, p_zip: a.zip }, "Address saved");
+        if (!r.error) backTo(back);
+        return;
+      }
+      S.me.address = a;
+      backTo(back);
+      return commit("Address saved");
     }
     if (e.target.id === "trackForm") {
       const r = req(e.target.dataset.id);
-      ship(exOf(r.id), f.get("carrier"), String(f.get("tracking")).trim());
+      const carrier = f.get("carrier");
+      const raw = String(f.get("tracking")).trim();
+      if (LIVE) {
+        const res = await invoke("add-tracking", { request_id: r.id, carrier, tracking: raw });
+        if (res.error) return toast(res.error), render();
+        await pull();
+        openSheet("deal", { id: r.id });
+        return toast("Tracking saved. You'll earn your credit when it arrives."), render();
+      }
+      const t = normalizeTracking(carrier, raw);
+      if (!t) return toast("That doesn't look like a " + carrier + " tracking number. Check your receipt."), render();
+      if (S.exchanges.some((x) => x.carrier === carrier && x.tracking === t)) return toast("That tracking number is already used on another exchange."), render();
+      ship(exOf(r.id), carrier, t);
       openSheet("deal", { id: r.id });
-      commit("Tracking saved. You'll earn your credit when it arrives.");
+      return commit("Tracking saved. You'll earn your credit when it arrives.");
     }
   });
 
@@ -1732,7 +2445,13 @@
     if (e.key === "Escape" && ui.sheet) closeSheet();
   });
 
+  // Covers that fail to load fall back to the generated jacket underneath.
+  document.addEventListener("error", (e) => {
+    if (e.target && e.target.classList && e.target.classList.contains("cover-img")) e.target.remove();
+  }, true);
+
   render();
+  if (LIVE) bootLive();
 
   // Offline support when installed as a PWA. Hosts that don't allow service workers just skip this.
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {

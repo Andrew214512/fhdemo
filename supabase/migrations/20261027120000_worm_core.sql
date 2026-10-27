@@ -826,7 +826,7 @@ begin
     values (l.id, c.id, c.isbn, c.owner_id, u, fee_s, fee_r)
     returning id into r;
   perform public._post(u, 'reserve', r, 'Requested ' || public._title(c.isbn));
-  perform public._log(r, 'You requested ' || public._title(c.isbn) || '. 1 credit reserved.');
+  perform public._log(r, public._name(u) || ' requested ' || public._title(c.isbn) || '. 1 credit reserved.');
   perform public._notify(c.owner_id, public._name(u) || ' requested ' || public._title(c.isbn),
     'Accept within 48 hours, then ship within 3 days. You earn 1 credit when it arrives.', jsonb_build_object('request', r));
   return r;
@@ -839,7 +839,7 @@ begin
   if not exists (select 1 from public.requests where id = p_req and recipient_id = u) then
     raise exception 'We couldn''t find that request.';
   end if;
-  if not public._close_request(p_req, 'withdrawn', 'You cancelled the request. Credit returned.') then
+  if not public._close_request(p_req, 'withdrawn', public._name(u) || ' cancelled the request. Their credit was returned.') then
     raise exception 'This request can''t be cancelled anymore.';
   end if;
 end $$;
@@ -924,7 +924,7 @@ language plpgsql security definer set search_path = public, pg_temp as $$
 declare x public.exchanges := public._my_exchange(p_req, 'recipient');
 begin
   if x.status not in ('shipped','delivered') then raise exception 'This book isn''t on its way yet.'; end if;
-  perform public._complete(x.id, 'You confirmed ' || public._title((select isbn from public.copies where id = x.copy_id)) || ' arrived and matches the listing.');
+  perform public._complete(x.id, public._name(x.recipient_id) || ' confirmed ' || public._title((select isbn from public.copies where id = x.copy_id)) || ' arrived and matches the listing.');
 end $$;
 
 create function public.report_problem(p_req uuid, p_reason text) returns void

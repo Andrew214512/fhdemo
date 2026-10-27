@@ -1,12 +1,12 @@
 {
-  "name": "Shelf Swap",
-  "short_name": "Shelf Swap",
-  "description": "Turn the books you've finished into credits for your next read.",
+  "name": "Worm",
+  "short_name": "Worm",
+  "description": "Send the books you've finished, earn credits, and spend them on your next read.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#eef2ee",
-  "theme_color": "#1d5a42",
+  "background_color": "#f2e8d5",
+  "theme_color": "#f2e8d5",
   "icons": [
     { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]

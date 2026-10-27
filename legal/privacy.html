@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Worm Privacy Policy</title>
+<style>
+  :root { --bg: #f2e8d5; --fg: #2b1d14; --muted: #6f5946; --accent: #cf5228; --note: #f8d9c8; --line: #d8c4a0; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #1d1611; --fg: #f3e6cf; --muted: #bea78b; --accent: #f0804c; --note: #43271b; --line: #4b3a2c; color-scheme: dark; } }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.6 "Jost", "Futura", system-ui, sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 32px max(20px, env(safe-area-inset-left)); }
+  h1 { color: var(--accent); font-size: 2rem; margin: 0 0 4px; }
+  h2 { font-size: 1.15rem; margin: 28px 0 6px; }
+  .muted { color: var(--muted); }
+  .draft { background: var(--note); padding: 12px 14px; border-radius: 10px; }
+  .wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.95rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Worm Privacy Policy</h1>
+  <p class="muted">Draft. Last updated October 27, 2026.</p>
+  <p class="draft"><strong>Draft for legal review.</strong> This describes what the Worm app actually collects and why. Have a lawyer review it, and fill in the bracketed details, before launch.</p>
+
+  <h2>What we collect, and who sees it</h2>
+  <div class="wrap">
+  <table>
+    <thead><tr><th>Information</th><th>Why</th><th>Who can see it</th></tr></thead>
+    <tbody>
+      <tr><td>Email, and your Apple or Google account ID if you sign in with them</td><td>To sign you in</td><td>Only Worm</td></tr>
+      <tr><td>Name, handle, photo, city and state</td><td>Your public reader profile</td><td>Other Worm readers</td></tr>
+      <tr><td>Street address</td><td>So a reader can ship you a book you requested</td><td>You, and only the one reader shipping you a book, until they add tracking</td></tr>
+      <tr><td>Books you list, their condition, your wishlist</td><td>To run the marketplace</td><td>Listings: other readers. Wishlist: only you (we use it to send you alerts)</td></tr>
+      <tr><td>Exchange history, tracking numbers, ratings</td><td>To run exchanges and settle credits; ratings appear on profiles as an average</td><td>You and the other reader in each exchange</td></tr>
+      <tr><td>Fee-balance payments</td><td>Accounting and refunds</td><td>Only Worm. Card details are handled by Stripe; we never receive your full card number</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>Services we use</h2>
+  <p>Supabase (database and sign-in), Stripe (payments), Google and Apple (if you choose to sign in with them), Open Library and Google Books (book information, no personal data sent), and [EasyPost] (package tracking: tracking numbers only). [Email provider] sends sign-in and exchange emails.</p>
+
+  <h2>Photos</h2>
+  <p>Profile photos are resized in your browser before upload, which removes the hidden location data many phones add to pictures.</p>
+
+  <h2>We don't sell your data</h2>
+  <p>We don't sell or rent personal information, and we don't use third-party advertising trackers.</p>
+
+  <h2>Deleting your account</h2>
+  <p>You can delete your account in the app (Profile → Delete account). We remove your profile, photo, address, wishlist and alerts, and your sign-in. We keep a record of past exchanges and payments, without your name, for accounting and legal reasons, for [7 years].</p>
+
+  <h2>Your rights</h2>
+  <p>Depending on your state, you may have rights to access, correct, or delete your information. Contact us at [privacy@yourdomain].</p>
+
+  <h2>Children</h2>
+  <p>Worm is for adults 18 and over. We don't knowingly collect information from children.</p>
+
+  <h2>Contact</h2>
+  <p>[Company name, LLC] · [address] · [privacy@yourdomain]</p>
+</main>
+</body>
+</html>

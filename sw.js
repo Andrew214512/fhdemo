@@ -1,6 +1,8 @@
-// Caches the app shell so Shelfswap opens offline once installed.
-const CACHE = "shelfswap-v2";
-const SHELL = ["./", "index.html", "app.css", "app.js", "icon.svg", "manifest.webmanifest"];
+// Caches Worm's own files so the app opens offline once installed. Requests to
+// other sites (Supabase, Stripe, fonts) always go straight to the network and
+// are never stored here, so no account data ends up in the cache.
+const CACHE = "worm-v1";
+const SHELL = ["./", "index.html", "app.css", "app.js", "config.js", "icon.svg", "manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
@@ -12,14 +14,17 @@ self.addEventListener("activate", (e) => {
   self.clients.claim();
 });
 
-// Network first, so changes show up right away; fall back to the cache when offline.
+// Network first, so updates show up right away; fall back to the cache when offline.
 self.addEventListener("fetch", (e) => {
-  if (e.request.method !== "GET") return;
+  const url = new URL(e.request.url);
+  if (e.request.method !== "GET" || url.origin !== self.location.origin) return;
   e.respondWith(
     fetch(e.request)
       .then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy));
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, copy));
+        }
         return res;
       })
       .catch(() => caches.match(e.request))

@@ -91,6 +91,27 @@ export function startMock({ db, port = 54321, functionsUrl = null, staticRoot = 
         return send(res, 200, { id: claims.sub, aud: "authenticated", role: "authenticated", email: exists.email, app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString() });
       }
       if (p === "/auth/v1/logout") return send(res, 204);
+      // Email sign-in: any address gets code 123456 in tests.
+      if (p === "/auth/v1/otp" && req.method === "POST") {
+        const { email } = JSON.parse((await readBody(req)).toString() || "{}");
+        if (!email) return send(res, 400, { msg: "Email required" });
+        return send(res, 200, {});
+      }
+      if (p === "/auth/v1/verify" && req.method === "POST") {
+        const { email, token } = JSON.parse((await readBody(req)).toString() || "{}");
+        if (token !== "123456") return send(res, 403, { code: 403, error_code: "otp_expired", msg: "Token has expired or is invalid" });
+        let row = (await db.query("select id from auth.users where email = $1", [email])).rows[0];
+        if (!row) row = (await db.query("insert into auth.users (id, email) values (gen_random_uuid(), $1) returning id", [email])).rows[0];
+        const access = userToken(row.id, email);
+        return send(res, 200, {
+          access_token: access, token_type: "bearer", expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600,
+          refresh_token: "refresh-" + row.id,
+          user: { id: row.id, aud: "authenticated", role: "authenticated", email, app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString() },
+        });
+      }
+      if (p === "/auth/v1/authorize") {
+        return send(res, 200, Buffer.from(`<p>Sign-in with ${url.searchParams.get("provider")} would continue here.</p>`), { "Content-Type": "text/html" });
+      }
       const delUser = p.match(/^\/auth\/v1\/admin\/users\/([0-9a-f-]+)$/);
       if (delUser && req.method === "DELETE") {
         if (callers(req)?.role !== "service_role") return send(res, 403, { msg: "Not allowed" });
