@@ -24,7 +24,7 @@ Readers scan their books into a personal library, send books other readers reque
 | Region | US only (50 states + DC) |
 | Book summaries | A 2–3 sentence "About this book" note, **written by Claude** from only the title and author: its own words, no quotes, no publisher copy, no spoilers, labeled as AI-written. Written once per book and shared. Optional |
 | Condition ratings | When a book arrives, the recipient says what condition it's **really** in. That updates their copy, goes on that physical copy's history (shown without names), and builds each sender's "condition as described in N of M swaps" record. Bigger problems still go through Report a problem |
-| Navigation | Discover · My Shelf (Available / Not available / Wishlist) · **Scan** · **Exchanges** · Profile. Credit balance and alerts sit in the header |
+| Navigation | Discover · My Shelf (Available / Not available / Wishlist) · **Scan** · **Exchanges** · Profile. Credit balance (a highlighted, pen-circled "1 credit" that opens the wallet) and alerts sit in the header |
 
 ## 2. Data model
 

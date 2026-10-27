@@ -741,7 +741,7 @@
 
   function creditPill() {
     const b = balances();
-    return `<button class="credit-pill" data-act="wallet" aria-label="${plural(b.available, "credit")} available"><span class="coin" aria-hidden="true">✦</span><b>${b.available}</b><span>${b.available === 1 ? "credit" : "credits"}</span></button>`;
+    return `<button class="credit-pill" data-act="wallet" aria-label="${plural(b.available, "credit")} available"><b>${b.available}</b><span>${b.available === 1 ? "credit" : "credits"}</span></button>`;
   }
 
   function avatar(cls = "", photo = S.me.photo, name = S.me.name) {
