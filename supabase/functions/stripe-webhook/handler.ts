@@ -41,7 +41,7 @@ export async function handler(req: Request): Promise<Response> {
   const admin = adminClient();
   if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
     const session = event.data.object as Stripe.Checkout.Session;
-    if (session.metadata?.kind === "topup" && session.payment_status === "paid") {
+    if (session.metadata?.kind === "topup" && session.payment_status === "paid" && session.currency === "usd") {
       const intent = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? null;
       const { error } = await admin.rpc("credit_topup", {
         p_user: session.client_reference_id,

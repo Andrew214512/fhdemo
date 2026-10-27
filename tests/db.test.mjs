@@ -22,7 +22,7 @@ const balances = async (u) => {
 };
 const listingOf = async (copyId) => (await sql("select id from listings where copy_id = $1 and closed_at is null", [copyId]))[0]?.id;
 const address = { p_name: "Test Reader", p_line1: "1 Main St", p_line2: null, p_city: "Springfield", p_state: "IL", p_zip: "62701" };
-const profile = (handle, name, state = "NY") => ({ p_handle: handle, p_display_name: name, p_city: "Brooklyn", p_state: state, p_genres: ["Literary"], p_avatar_url: null });
+const profile = (handle, name, state = "NY") => ({ p_handle: handle, p_display_name: name, p_city: "Brooklyn", p_state: state, p_genres: ["Literary"], p_avatar_path: null });
 let topupN = 0;
 const topup = (u, cents = 500, fp = null) => rpc(db, "service", "credit_topup", { p_user: u, p_cents: cents, p_session: "cs_test_" + ++topupN, p_payment_intent: "pi_test_" + topupN, p_fingerprint: fp });
 const copies = {};
@@ -79,8 +79,10 @@ test("profile setup validates handles, names, states and photo locations", async
   await rejects(rpc(db, A, "save_profile", profile("admin", "Ann")), /taken/);
   await rejects(rpc(db, A, "save_profile", profile("annreads", "")), /Add your name/);
   await rejects(rpc(db, A, "save_profile", profile("annreads", "Ann", "ON")), /US only/);
-  await rejects(rpc(db, A, "save_profile", { ...profile("annreads", "Ann"), p_avatar_url: `https://x.supabase.co/storage/v1/object/public/avatars/${B}/me.jpg` }), /Upload your photo again/);
-  await rpc(db, A, "save_profile", { ...profile("AnnReads", "Ann Lee"), p_avatar_url: `https://x.supabase.co/storage/v1/object/public/avatars/${A}/a.jpg` });
+  await rejects(rpc(db, A, "save_profile", { ...profile("annreads", "Ann"), p_avatar_path: `${B}/me.jpg` }), /Upload your photo again/, "someone else's folder");
+  await rejects(rpc(db, A, "save_profile", { ...profile("annreads", "Ann"), p_avatar_path: `https://evil.example/storage/v1/object/public/avatars/${A}/a.jpg` }), /Upload your photo again/, "an outside web address");
+  await rejects(rpc(db, A, "save_profile", { ...profile("annreads", "Ann"), p_avatar_path: `${A}/../${B}/a.jpg` }), /aren't valid/, "path tricks");
+  await rpc(db, A, "save_profile", { ...profile("AnnReads", "Ann Lee"), p_avatar_path: `${A}/a.jpg` });
   assert.equal((await state(A)).me.handle, "annreads");
   await rejects(rpc(db, B, "save_profile", profile("annreads", "Bo")), /taken/);
   assert.equal(await rpc(db, B, "handle_available", { p_handle: "annreads" }), false);
@@ -337,6 +339,10 @@ test("disputes: only support can decide; upheld returns the credit and strikes t
   await rejects(rpc(db, buyer.id, "resolve_dispute", { p_req: r, p_upheld: true, p_note: null }), /Only Worm support/);
   await rejects(rpc(db, seller.id, "resolve_dispute", { p_req: r, p_upheld: false, p_note: null }), /Only Worm support/);
   assert.ok((await state(ADMIN)).notes.some((n) => n.title === "Dispute to review"), "support is alerted");
+  const queue = (await state(ADMIN)).disputes;
+  assert.equal(queue.length, 1);
+  assert.equal(queue[0].reason, "Wrong book or edition");
+  assert.equal((await state(buyer.id)).disputes, null, "readers don't see the support queue");
   await rpc(db, ADMIN, "resolve_dispute", { p_req: r, p_upheld: true, p_note: "Photos show a different edition." });
   assert.deepEqual(await balances(buyer.id), { available: 1, reserved: 0 });
   assert.equal((await state(seller.id)).me.strikes, 1);
@@ -400,9 +406,9 @@ test("deleting an account: blocked during open exchanges, then anonymizes and fr
   // Someone has a pending request on A's other book when A leaves.
   const aPending = (await state(A)).requests.filter((x) => x.recipient === A && x.status === "pending");
   await rpc(db, A, "delete_account");
-  const p = await sql("select handle, display_name, avatar_url, deleted_at from profiles where id = $1", [A]);
+  const p = await sql("select handle, display_name, avatar_path, deleted_at from profiles where id = $1", [A]);
   assert.equal(p[0].display_name, "Deleted reader");
-  assert.equal(p[0].avatar_url, null);
+  assert.equal(p[0].avatar_path, null);
   assert.ok(p[0].deleted_at);
   assert.equal((await sql("select count(*)::int n from addresses where user_id = $1", [A]))[0].n, 0);
   for (const x of aPending) assert.equal((await sql("select status from requests where id = $1", [x.id]))[0].status, "withdrawn");

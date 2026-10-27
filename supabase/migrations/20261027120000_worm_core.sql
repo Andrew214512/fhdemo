@@ -32,7 +32,9 @@ create table public.profiles (
   id uuid primary key,
   handle text not null unique check (handle ~ '^[a-z0-9_.]{3,20}$'),
   display_name text not null check (char_length(btrim(display_name)) between 1 and 60),
-  avatar_url text check (avatar_url is null or char_length(avatar_url) <= 500),
+  -- Path inside Worm's own avatars bucket ("<user id>/<file>"), never a full web address,
+  -- so a profile photo can't point at someone else's server.
+  avatar_path text check (avatar_path is null or avatar_path ~ '^[0-9a-f-]{36}/[A-Za-z0-9._-]{1,80}$'),
   city text check (city is null or char_length(city) <= 60),
   state public.us_state,
   genres text[] not null default '{}' check (genres <@ array['Literary','Sci-fi & Fantasy','Historical','Mystery','Romance','Nonfiction']),
@@ -224,7 +226,16 @@ insert into public.settings (key, value) values
   ('pricing', '{"sender_cents": 100, "recipient_cents": 100}'),
   ('topup_amounts', '[500, 1000, 2000]'),
   ('limits', '{"open_requests": 5, "copies": 500}'),
-  ('welcome', '{"enabled": true, "listings": 3}');
+  ('welcome', '{"enabled": true, "listings": 3}'),
+  -- Per-reader limits on the server functions that cost money or call outside services.
+  ('rate_limits', '{"add-book": {"max": 200, "seconds": 3600}, "checkout": {"max": 10, "seconds": 3600}, "tracking": {"max": 30, "seconds": 3600}}');
+
+create table public.rate_hits (
+  user_id uuid not null,
+  bucket text not null,
+  at timestamptz not null default now()
+);
+create index rate_hits_lookup on public.rate_hits(user_id, bucket, at desc);
 
 -- Ledgers can't be edited or deleted, by anyone, including the server.
 create function public._immutable() returns trigger language plpgsql as $$
@@ -244,7 +255,7 @@ do $$
 declare t text;
 begin
   foreach t in array array['profiles','addresses','books','copies','listings','requests','exchanges',
-    'request_events','credit_entries','payments','wishlist','notifications','ratings','strikes','settings']
+    'request_events','credit_entries','payments','wishlist','notifications','ratings','strikes','settings','rate_hits']
   loop
     execute format('alter table public.%I enable row level security', t);
   end loop;
@@ -562,7 +573,7 @@ begin
       'onboarded', true,
       'name', prof.display_name,
       'handle', prof.handle,
-      'photo', prof.avatar_url,
+      'photo', prof.avatar_path,
       'city', prof.city,
       'state', prof.state,
       'genres', to_jsonb(prof.genres),
@@ -581,7 +592,7 @@ begin
         'name', p.display_name,
         'handle', p.handle,
         'city', concat_ws(', ', p.city, p.state),
-        'avatar', p.avatar_url,
+        'avatar', p.avatar_path,
         'rating', (select round(avg(stars), 1) from public.ratings where ratee_id = p.id),
         'ratings', (select count(*) from public.ratings where ratee_id = p.id)))
       from public.profiles p where p.id in (select id from vu) and p.id <> u), '{}'),
@@ -623,6 +634,17 @@ begin
                2 * (select count(*) from public.wishlist w where w.isbn = c.isbn)
                + (select count(*) from public.requests r where r.isbn = c.isbn and r.created_at > now() - interval '14 days') as score
         from public.copies c where c.id in (select copy_id from ol) group by c.isbn) t), '{}'),
+    -- Support accounts also get the open problem reports to rule on.
+    'disputes', case when prof.is_admin then coalesce((select jsonb_agg(jsonb_build_object(
+        'requestId', x.request_id, 'title', b.title, 'reason', x.dispute_reason, 'condition', c.condition,
+        'sender', ps.display_name, 'senderHandle', ps.handle, 'recipient', pr.display_name, 'recipientHandle', pr.handle,
+        'carrier', x.carrier, 'tracking', x.tracking, 'shippedAt', public._ms(x.shipped_at)) order by x.shipped_at)
+      from public.exchanges x
+      join public.copies c on c.id = x.copy_id
+      join public.books b on b.isbn = c.isbn
+      join public.profiles ps on ps.id = x.sender_id
+      join public.profiles pr on pr.id = x.recipient_id
+      where x.status = 'disputed'), '[]') end,
     'notes', coalesce((select jsonb_agg(jsonb_build_object(
         'id', n.id, 'at', public._ms(n.created_at), 'title', n.title, 'body', n.body, 'go', n.link, 'read', n.read_at is not null)
         order by n.created_at desc)
@@ -639,7 +661,7 @@ language sql stable security definer set search_path = public, pg_temp as $$
 $$;
 
 create function public.save_profile(p_handle text, p_display_name text, p_city text, p_state text,
-                                    p_genres text[] default '{}', p_avatar_url text default null) returns void
+                                    p_genres text[] default '{}', p_avatar_path text default null) returns void
 language plpgsql security definer set search_path = public, pg_temp as $$
 declare
   u uuid := public._uid();
@@ -660,19 +682,19 @@ begin
   if p_state is not null and p_state <> '' and not (p_state = any(array['AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'])) then
     raise exception 'Worm ships within the US only. Choose a US state.';
   end if;
-  -- Photos must come from this reader's own folder in Worm's storage.
-  if p_avatar_url is not null and position('/storage/v1/object/public/avatars/' || u::text || '/' in p_avatar_url) = 0 then
+  -- Photos must be a file in this reader's own folder of Worm's storage.
+  if p_avatar_path is not null and not starts_with(p_avatar_path, u::text || '/') then
     raise exception 'Upload your photo again.';
   end if;
-  insert into public.profiles (id, handle, display_name, city, state, genres, avatar_url)
-  values (u, h, btrim(p_display_name), nullif(btrim(p_city), ''), nullif(p_state, ''), coalesce(p_genres, '{}'), p_avatar_url)
+  insert into public.profiles (id, handle, display_name, city, state, genres, avatar_path)
+  values (u, h, btrim(p_display_name), nullif(btrim(p_city), ''), nullif(p_state, ''), coalesce(p_genres, '{}'), p_avatar_path)
   on conflict (id) do update set
     handle = excluded.handle,
     display_name = excluded.display_name,
     city = excluded.city,
     state = excluded.state,
     genres = excluded.genres,
-    avatar_url = coalesce(excluded.avatar_url, public.profiles.avatar_url);
+    avatar_path = coalesce(excluded.avatar_path, public.profiles.avatar_path);
 exception
   when unique_violation then raise exception 'That handle is taken. Try another.';
   when check_violation then raise exception 'Some profile details aren''t valid. Check your name, city and genres.';
@@ -988,7 +1010,7 @@ begin
   delete from public.notifications where user_id = u;
   update public.profiles set
     handle = 'deleted_' || substr(md5(u::text), 1, 10),
-    display_name = 'Deleted reader', avatar_url = null, city = null, state = null,
+    display_name = 'Deleted reader', avatar_path = null, city = null, state = null,
     genres = '{}', stripe_customer_id = null, deleted_at = now()
   where id = u;
 end $$;
@@ -1104,6 +1126,24 @@ begin
     insert into public.payments (user_id, kind, amount_cents, stripe_payment_intent, note)
       values (p.user_id, 'refund', least(p_refunded_total, p.amount_cents) - already, p_payment_intent, 'Refunded to your card');
   end if;
+end $$;
+
+-- Edge functions call this before doing anything costly. Returns false once a
+-- reader has used up a bucket's allowance (settings.rate_limits) for the window.
+create function public.rate_limit(p_user uuid, p_bucket text) returns boolean
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  cfg jsonb := public._setting('rate_limits') -> p_bucket;
+  n int;
+begin
+  if cfg is null then raise exception 'Unknown rate limit %', p_bucket; end if;
+  perform pg_advisory_xact_lock(hashtext(p_user::text || ':' || p_bucket));
+  select count(*) into n from public.rate_hits
+    where user_id = p_user and bucket = p_bucket and at > now() - make_interval(secs => (cfg ->> 'seconds')::int);
+  if n >= (cfg ->> 'max')::int then return false; end if;
+  insert into public.rate_hits (user_id, bucket) values (p_user, p_bucket);
+  delete from public.rate_hits where user_id = p_user and bucket = p_bucket and at < now() - interval '1 day';
+  return true;
 end $$;
 
 create function public.set_tracker(p_req uuid, p_tracker text) returns void
@@ -1228,6 +1268,7 @@ grant execute on function
   public.credit_topup(uuid, int, text, text, text),
   public.record_refund(text, int),
   public.set_tracker(uuid, text),
+  public.rate_limit(uuid, text),
   public.mark_delivered(text),
   public.worm_tick(),
   public.resolve_dispute(uuid, boolean, text)

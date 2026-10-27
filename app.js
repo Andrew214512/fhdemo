@@ -886,6 +886,7 @@
         <div class="stat"><b>${mineDone.length - sent}</b><span>received</span></div>
         <div class="stat"><b>${money(feeFree())}</b><span>fee balance</span></div>
       </div>
+      ${S.disputes ? `<button class="card tap attn" data-act="support"><span class="eyebrow">Worm support</span><strong>${S.disputes.length ? plural(S.disputes.length, "problem report") + " to review" : "No open problem reports"}</strong></button>` : ""}
       ${S.me.strikes ? `<p class="note warn"><strong>${plural(S.me.strikes, "strike")}.</strong> Missing a ship window adds one. 3 in 6 months pauses requests.</p>` : ""}
       <div class="section">
         <p class="eyebrow">Shipping address</p>
@@ -1306,6 +1307,20 @@
       <button class="btn primary" data-act="saveProfile">Save profile</button>`;
   }
 
+  // Support accounts only (profiles.is_admin): rule on reported problems.
+  function sheetSupport() {
+    const list = S.disputes || [];
+    if (!list.length) return '<p class="lede">No open problem reports.</p>';
+    return `<p class="lede">"Recipient was right" returns their credit, gives the sender no credit and a strike. "Book matched" completes the exchange normally.</p>
+      <div class="list">${list.map((x) => `<div class="card">
+        <strong>${esc(x.title)}</strong>
+        <p class="lede">${esc(x.sender)} (@${esc(x.senderHandle)}) → ${esc(x.recipient)} (@${esc(x.recipientHandle)})</p>
+        <p class="note warn">${esc(x.reason)}</p>
+        <p class="lede">Listed as ${esc((COND[x.condition] || {}).label || x.condition)}. ${esc(x.carrier || "")} <span class="mono">${esc(x.tracking || "")}</span></p>
+        <div class="btns"><button class="btn primary sm" data-act="rule" data-id="${esc(x.requestId)}" data-upheld="1">Recipient was right</button><button class="btn ghost sm" data-act="rule" data-id="${esc(x.requestId)}" data-upheld="0">Book matched</button></div>
+      </div>`).join("")}</div>`;
+  }
+
   function sheetDeleteAccount() {
     return `
       <p>Deleting your account removes your profile, photo, address, wishlist and alerts, takes your books off Worm, and signs you out everywhere.</p>
@@ -1426,7 +1441,7 @@
     stripe: [sheetStripe, "Checkout"], address: [sheetAddress, "Shipping address"], alerts: [sheetAlerts, "Alerts"],
     celebrate: [sheetCelebrate, ""], how: [sheetHow, "How Worm works"], shipping: [sheetShipping, "How to ship a book"],
     conditions: [sheetConditions, "Condition guide"], demo: [sheetDemo, "Demo controls"],
-    editProfile: [sheetEditProfile, "Edit profile"], deleteAccount: [sheetDeleteAccount, "Delete account"],
+    editProfile: [sheetEditProfile, "Edit profile"], deleteAccount: [sheetDeleteAccount, "Delete account"], support: [sheetSupport, "Problem reports"],
   };
 
   /* ---------------- render ---------------- */
@@ -1676,6 +1691,7 @@
     openDeal(d) { openSheet("deal", { id: d.id }); },
     editProfile() { ui.draft = {}; ui.handleOk = null; ui.handleHint = null; openSheet("editProfile"); },
     deleteAccount() { openSheet("deleteAccount"); },
+    support() { openSheet("support"); },
 
     signIn() { S.signedIn = true; commit(); },
     otpBack() { ui.otpEmail = null; render(); },
@@ -1980,11 +1996,13 @@
 
   // Turns the server's get_state() answer into the same shape the demo uses, with "me"
   // standing for the signed-in reader.
+  const photoUrl = (path) => (path ? sb.storage.from("avatars").getPublicUrl(path).data.publicUrl : null);
+
   function fromServer(d) {
     ME_ID = d.me_id;
     const id = (x) => (x === ME_ID ? "me" : x);
-    const users = { me: { id: "me", name: d.me.name || "You", handle: d.me.handle || "you", city: [d.me.city, d.me.state].filter(Boolean).join(", "), rating: null, avatar: d.me.photo } };
-    for (const [uidKey, u] of Object.entries(d.users || {})) users[uidKey] = { id: uidKey, name: u.name, handle: u.handle, city: u.city, rating: u.rating, avatar: u.avatar };
+    const users = { me: { id: "me", name: d.me.name || "You", handle: d.me.handle || "you", city: [d.me.city, d.me.state].filter(Boolean).join(", "), rating: null, avatar: photoUrl(d.me.photo) } };
+    for (const [uidKey, u] of Object.entries(d.users || {})) users[uidKey] = { id: uidKey, name: u.name, handle: u.handle, city: u.city, rating: u.rating, avatar: photoUrl(u.avatar) };
     USERS = users;
     const books = {};
     for (const b of Object.values(d.books || {})) books[b.isbn] = decorate(b);
@@ -2003,10 +2021,11 @@
       wishlist: { me: d.wishlist || [] },
       trend: d.trend || {},
       me: {
-        onboarded: !!d.me.onboarded, name: d.me.name || "", handle: d.me.handle || "", photo: d.me.photo || null,
+        onboarded: !!d.me.onboarded, name: d.me.name || "", handle: d.me.handle || "", photo: photoUrl(d.me.photo), photoPath: d.me.photo || null,
         genres: d.me.genres || [], city: d.me.city || "", state: d.me.state || "", address: d.me.address || null,
-        strikes: d.me.strikes || 0, paused: !!d.me.paused, welcome: d.me.welcome || "locked", ratings: {},
+        strikes: d.me.strikes || 0, paused: !!d.me.paused, welcome: d.me.welcome || "locked", ratings: {}, admin: !!d.me.admin,
       },
+      disputes: d.disputes || null,
     };
   }
 
@@ -2114,7 +2133,7 @@
       p_city: String(draft("city", S.me.city) || "").trim(),
       p_state: draft("state", S.me.state) || null,
       p_genres: S.me.genres,
-      p_avatar_url: draft("photo", S.me.photo) || null,
+      p_avatar_path: draft("photoPath", S.me.photoPath) || null,
     });
     if (r.error) return false;
     ui.draft = {};
@@ -2224,6 +2243,9 @@
     },
     async saveProfile() {
       if (await saveLiveProfile()) { closeSheet(); toast("Profile saved"); render(); }
+    },
+    async rule(d) {
+      await call("resolve_dispute", { p_req: d.id, p_upheld: d.upheld === "1", p_note: null }, "Decision saved. Both readers were notified.");
     },
   };
   // Actions that change data. While one is running, further taps on these are ignored.
@@ -2367,7 +2389,8 @@
         const { error } = await sb.storage.from("avatars").upload(path, await blob.arrayBuffer(), { contentType: "image/jpeg", upsert: false });
         ui.busy--;
         if (error) throw new Error("Couldn't upload that photo. Try a smaller one.");
-        ui.draft.photo = sb.storage.from("avatars").getPublicUrl(path).data.publicUrl;
+        ui.draft.photoPath = path;
+        ui.draft.photo = photoUrl(path);
       } else {
         ui.draft.photo = await new Promise((resolve) => {
           const fr = new FileReader();

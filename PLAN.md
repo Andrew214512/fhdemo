@@ -1,8 +1,8 @@
-# Shelf Swap: product plan
+# Worm: product plan
 
-**Your bookshelf is full of books someone else wants. Shelf Swap helps you turn them into your next great read.**
+**Your bookshelf is full of books someone else wants. Worm helps you turn them into your next great read.**
 
-Readers scan their books into a personal library, send books other readers request, and earn **book credits** they can spend on any available book. Shelf Swap runs the marketplace. It doesn't own inventory or pay for shipping.
+Readers scan their books into a personal library, send books other readers request, and earn **book credits** they can spend on any available book. Worm runs the marketplace. It doesn't own inventory or pay for shipping.
 
 ---
 
@@ -12,11 +12,15 @@ Readers scan their books into a personal library, send books other readers reque
 |---|---|
 | Exchange model | **Credits, not direct swaps.** Send a book, earn 1 credit. Spend 1 credit on any book from anyone. Nobody needs to want the other person's book |
 | Fees | $1 to send + $1 to receive (pricing experiment B: recipient pays $2, sender $0) |
-| How fees are paid | Prepaid **fee balance**, topped up $5 or more at a time, so card processing doesn't eat a third of each $1 |
+| How fees are paid | Prepaid **fee balance**, topped up $5, $10 or $20 on **Stripe's hosted checkout** (Apple Pay, Google Pay, cards, Link). Worm never sees or stores card numbers |
 | Deposit | **None.** The earlier $8 hold protected direct swaps. With credits, a recipient who never gets their book just has the credit returned |
-| Shipping | Sender buys postage (USPS Media Mail suggested) and **enters tracking**. Shelf Swap checks tracking automatically. In-app labels come later |
+| Shipping | Sender buys postage (USPS Media Mail suggested) and **enters tracking**. Worm checks tracking automatically (EasyPost), and recipients can confirm by hand. In-app labels come later |
 | When credits settle | When tracking shows delivered **and** the recipient confirms, or 2 days after delivery with no problem reported |
-| Welcome credit | 1 credit after listing **3 available books** and adding a card. Logged separately so it can be measured or switched off |
+| Welcome credit | 1 credit after listing **3 available books** and a **first top-up**. A card that already unlocked a welcome credit on another account can't unlock another (Stripe card fingerprint). Logged separately so it can be measured or switched off |
+| Sign-in | **Continue with Apple**, **Continue with Google**, or an **email link / 6-digit code**. No passwords |
+| Profile | Name, @handle, photo, city and state (public); street address (private, shown only to the reader shipping you a book, until they ship) |
+| "Points" | Read as fee-balance top-ups. Book credits still can't be bought |
+| Brand | **Worm**. Eclectic mid-century look: oatmeal and walnut, teal/tangerine/mustard/avocado/blush accents, a bookworm mascot |
 | Region | US only (50 states + DC) |
 | Navigation | Discover · My Shelf (Available / Not available / Wishlist) · **Scan** · **Exchanges** · Profile. Credit balance and alerts sit in the header |
 
@@ -91,7 +95,7 @@ Default pricing: **$1 to send, $1 to receive.** Senders also pay postage (~$4–
 
 The wallet should feel like a library card, not a bank account. Credits can't be bought, cashed out or transferred, and they don't expire.
 
-## 5. Screens (prototype status)
+## 5. Screens
 
 | Screen | What's there |
 |---|---|
@@ -103,22 +107,35 @@ The wallet should feel like a library card, not a bank account. Credits can't be
 | Scan | Viewfinder (real camera on supported phones, simulated elsewhere), default condition, rapid add, quick condition fixes, title/ISBN search with Open Library lookup |
 | Exchanges | To send / Coming to me / History. Step tracker, ship-by stamp, tracking entry, confirm or report, ratings |
 | Wallet | Available / reserved / pending, credit history, fee balance and top-ups |
-| Profile | Address (US), card, fees, strikes, help |
+| Sign in | Apple, Google, or email link with a 6-digit code |
+| Profile | Photo, name, @handle, city; address (US); fees and Stripe top-ups; strikes; help; legal; sign out; delete account; support queue for admins |
 | Demo panel | Plays other readers, moves the clock, decides disputes, switches pricing, shows a small business view |
 
-## 6. Real backend (next phase)
+## 6. Backend (built)
 
-| Need | Recommended |
-|---|---|
-| Accounts, database, photo storage, scheduled jobs | **Supabase** (Postgres + Auth + Storage + Edge Functions + cron) |
-| Fee-balance top-ups, saved cards | **Stripe** (Payment Element, Apple Pay, Google Pay). No Stripe Connect needed, since no money is paid out to users |
-| Tracking checks | **EasyPost** or **Shippo** tracking API (works with any carrier's number), then label purchase later |
-| Address validation | EasyPost/Shippo, plus Google Places autocomplete |
-| Book metadata and ISBN scan | Open Library + Google Books. `BarcodeDetector` on Android, ZXing fallback on iPhone |
-| Alerts | Web Push (iPhone needs the app added to the home screen) + email via Resend or Postmark |
-| Analytics | PostHog, for the metrics below |
+| Need | Built with | Where |
+|---|---|---|
+| Accounts, database, photo storage, hourly timers | **Supabase** (Postgres, Auth, Storage, pg_cron) | `supabase/migrations/` |
+| Fee-balance top-ups | **Stripe Checkout** (hosted page) plus a signed webhook. No Stripe Connect, since no money is paid out to readers | `supabase/functions/create-checkout`, `stripe-webhook` |
+| Book lookup and search | Open Library, then Google Books (server-side, so readers can't rename books) | `supabase/functions/add-book` |
+| Barcode scanning | Browser `BarcodeDetector` (Android), bundled ZXing (iPhone) | `app.js`, `vendor/` |
+| Tracking | Format checks and one-use rule in the database; **EasyPost** delivery updates via a signed webhook (optional) | `add-tracking`, `tracking-webhook` |
+| Account deletion | Anonymizes the profile, removes photo and sign-in; keeps the ledgers | `delete-account` |
+| Alerts | In-app, refreshed every 30 seconds. **Push and email: not built yet** | |
+| Analytics | **Not built yet.** PostHog suggested, for the metrics below | |
 
-Timers (48h accept, 3-day ship, 2-day confirm, 10-day lost) run as an hourly scheduled job, the same way the prototype's `tick()` does.
+Timers (48h accept, 24h ship reminder, 3-day ship, 2-day confirm, 10-day lost) run every hour in `worm_tick()`. The demo's `tick()` mirrors them.
+
+### Security model
+
+- **One door in.** Every table has Row Level Security on with no policies, and the public roles have no table access at all. The app can only call about 20 named database functions. Each one checks who is calling, what they own and what state things are in, then makes its change in a single transaction.
+- **Credits and money can't be edited.** Both ledgers are append-only. A trigger blocks edits and deletes, even by the database owner. Unique indexes stop duplicate awards, and a row lock stops two simultaneous requests from spending the same credit.
+- **No card data.** Payments happen on Stripe's page. The balance is only credited by a webhook whose signature is checked, and replays are ignored. Amounts must be on the allowed list and in USD.
+- **Address privacy.** A street address goes only to the sender of an accepted exchange, and disappears once they add tracking.
+- **Fraud brakes.** A tracking number can prove only one shipment. One card can unlock only one welcome credit. A copy can be in only one exchange. 3 strikes in 6 months pause an account. There are limits on open requests, shelf size, wishlist size, and per-reader limits on the server functions.
+- **Photos.** Shrunk in the browser, which strips location data. Stored only in the reader's own folder, and saved as a path in Worm's storage, never as an outside web address.
+- **Web page hardening.** A Content Security Policy allows scripts from Worm only (libraries are bundled, not pulled from CDNs). Every reader-entered text is escaped. `_headers` adds clickjacking, sniffing and HSTS protection.
+- **Tests.** 82 automated checks, including attack attempts (see `SETUP.md`).
 
 ## 7. Metrics
 

@@ -4,7 +4,7 @@
 // Only this server function writes book titles, so one reader can't rename a
 // book for everyone else.
 import { endpoint, HttpError, json, readJson } from "../_shared/http.ts";
-import { adminClient, dbError, requireUser } from "../_shared/supabase.ts";
+import { adminClient, dbError, rateLimit, requireUser } from "../_shared/supabase.ts";
 
 type Book = { isbn: string; title: string; author: string; year: number | null; genre: string | null; cover: string | null };
 // A lookup service that's down or rate-limiting us, as opposed to one that answered "no such book".
@@ -130,7 +130,8 @@ async function search(q: string): Promise<Book[] | typeof UNAVAILABLE> {
 const busy = () => new HttpError(503, "Book lookup is busy right now. Try again in a minute.");
 
 export const handler = endpoint(async (req) => {
-  await requireUser(req);
+  const { user } = await requireUser(req);
+  await rateLimit(user.id, "add-book");
   const body = await readJson<{ isbn?: string; q?: string }>(req);
 
   if (typeof body.q === "string") {

@@ -21,6 +21,7 @@ const stripe = new Stripe("sk_test_dummy");
 let db, mock, deno;
 const A = crypto.randomUUID(), B = crypto.randomUUID(), C = crypto.randomUUID();
 const sql = (t, p) => db.query(t, p).then((r) => r.rows);
+const rejects = (p, re) => assert.rejects(p, (e) => { assert.match(e.message, re); return true; });
 
 async function call(name, body, token, raw = false) {
   const res = await fetch(`${mock.url}/functions/v1/${name}`, {
@@ -65,7 +66,7 @@ before(async () => {
   });
   // Two readers with profiles, addresses and books.
   for (const [u, h] of [[A, "ann"], [B, "bo.reads"], [C, "cee"]]) {
-    await rpc(db, u, "save_profile", { p_handle: h, p_display_name: h, p_city: "Austin", p_state: "TX", p_genres: [], p_avatar_url: null });
+    await rpc(db, u, "save_profile", { p_handle: h, p_display_name: h, p_city: "Austin", p_state: "TX", p_genres: [], p_avatar_path: null });
     await rpc(db, u, "save_address", { p_name: h, p_line1: "1 Main St", p_line2: null, p_city: "Austin", p_state: "TX", p_zip: "78701" });
   }
 });
@@ -120,7 +121,7 @@ test("add-book checks ISBNs, converts ISBN-10, and looks up new books", async ()
 });
 
 test("stripe-webhook rejects unsigned or tampered events", async () => {
-  const session = { id: "cs_test_forged", object: "checkout.session", payment_status: "paid", amount_total: 2000, client_reference_id: A, payment_intent: null, metadata: { kind: "topup" } };
+  const session = { id: "cs_test_forged", object: "checkout.session", currency: "usd", payment_status: "paid", amount_total: 2000, client_reference_id: A, payment_intent: null, metadata: { kind: "topup" } };
   const ev = stripeEvent("checkout.session.completed", session);
   const bad = await fetch(`${mock.url}/functions/v1/stripe-webhook`, { method: "POST", body: ev.payload });
   assert.equal(bad.status, 400);
@@ -132,7 +133,7 @@ test("stripe-webhook rejects unsigned or tampered events", async () => {
 });
 
 test("a paid Checkout Session credits the fee balance exactly once", async () => {
-  const session = { id: "cs_test_1", object: "checkout.session", payment_status: "paid", amount_total: 500, client_reference_id: A, payment_intent: null, metadata: { kind: "topup" } };
+  const session = { id: "cs_test_1", object: "checkout.session", currency: "usd", payment_status: "paid", amount_total: 500, client_reference_id: A, payment_intent: null, metadata: { kind: "topup" } };
   assert.equal(await postStripe(stripeEvent("checkout.session.completed", session)), 200);
   assert.equal(await postStripe(stripeEvent("checkout.session.completed", session)), 200, "Stripe retries are fine");
   const rows = await sql("select amount_cents from payments where user_id = $1 and kind = 'topup'", [A]);
@@ -141,6 +142,8 @@ test("a paid Checkout Session credits the fee balance exactly once", async () =>
   assert.equal(await postStripe(stripeEvent("checkout.session.completed", unpaid)), 200);
   const other = { ...session, id: "cs_test_other", metadata: { kind: "something-else" } };
   assert.equal(await postStripe(stripeEvent("checkout.session.completed", other)), 200);
+  const euros = { ...session, id: "cs_test_eur", currency: "eur" };
+  assert.equal(await postStripe(stripeEvent("checkout.session.completed", euros)), 200, "other currencies are ignored");
   const odd = { ...session, id: "cs_test_odd", amount_total: 777 };
   assert.equal(await postStripe(stripeEvent("checkout.session.completed", odd)), 500, "unexpected amounts aren't credited");
   assert.equal((await sql("select count(*)::int n from payments where user_id = $1", [A]))[0].n, 1);
@@ -191,6 +194,17 @@ test("database errors meant for readers pass through; internal ones don't leak",
   const r = await call("add-tracking", { request_id: "not-a-uuid", carrier: "USPS", tracking: "9400111899223456778120" }, userToken(A));
   assert.equal(r.status, 500);
   assert.doesNotMatch(r.body.error, /uuid|syntax/i);
+});
+
+test("rate limits stop one reader from hammering a function", async () => {
+  await sql(`update settings set value = jsonb_set(value, '{add-book,max}', '3') where key = 'rate_limits'`);
+  await sql("delete from rate_hits");
+  const statuses = [];
+  for (let i = 0; i < 4; i++) statuses.push((await call("add-book", { isbn: "9780441172719" }, userToken(B))).status);
+  assert.deepEqual(statuses, [200, 200, 200, 429]);
+  assert.equal((await call("add-book", { isbn: "9780441172719" }, userToken(A))).status, 200, "other readers aren't affected");
+  await rejects(rpc(db, A, "rate_limit", { p_user: A, p_bucket: "add-book" }), /permission denied/);
+  await sql(`update settings set value = jsonb_set(value, '{add-book,max}', '200') where key = 'rate_limits'`);
 });
 
 test("delete-account waits for open exchanges, then removes the sign-in", async () => {

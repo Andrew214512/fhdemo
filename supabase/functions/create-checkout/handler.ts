@@ -4,7 +4,7 @@
 // Stripe webhook, never by this function or the browser.
 import Stripe from "npm:stripe@16.12.0";
 import { endpoint, HttpError, json, readJson } from "../_shared/http.ts";
-import { adminClient, dbError, requireUser } from "../_shared/supabase.ts";
+import { adminClient, dbError, rateLimit, requireUser } from "../_shared/supabase.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", {
   apiVersion: "2024-06-20",
@@ -13,6 +13,7 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", {
 
 export const handler = endpoint(async (req) => {
   const { db, user } = await requireUser(req);
+  await rateLimit(user.id, "checkout");
   const { amount } = await readJson<{ amount: number }>(req);
 
   const config = await db.rpc("app_config");

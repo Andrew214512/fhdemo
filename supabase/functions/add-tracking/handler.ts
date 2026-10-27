@@ -2,10 +2,11 @@
 // sender, the format fits the carrier, and the number isn't already used.
 // Then, if a tracking service is set up, we subscribe to delivery updates.
 import { endpoint, HttpError, json, readJson } from "../_shared/http.ts";
-import { adminClient, dbError, requireUser } from "../_shared/supabase.ts";
+import { adminClient, dbError, rateLimit, requireUser } from "../_shared/supabase.ts";
 
 export const handler = endpoint(async (req) => {
-  const { db } = await requireUser(req);
+  const { db, user } = await requireUser(req);
+  await rateLimit(user.id, "tracking");
   const { request_id, carrier, tracking } = await readJson<{ request_id: string; carrier: string; tracking: string }>(req);
   if (!request_id || !carrier || !tracking) throw new HttpError(400, "Add the carrier and tracking number.");
 

@@ -46,7 +46,7 @@ for (const [isbn, title, author] of Object.values(BOOKS)) {
 // Another reader, Maya, already has books on Worm.
 const MAYA = crypto.randomUUID();
 await sql("insert into auth.users (id, email) values ($1, 'maya@example.com')", [MAYA]);
-await rpc(db, MAYA, "save_profile", { p_handle: "mayareads", p_display_name: "Maya Rivera", p_city: "Portland", p_state: "OR", p_genres: ["Literary"], p_avatar_url: null });
+await rpc(db, MAYA, "save_profile", { p_handle: "mayareads", p_display_name: "Maya Rivera", p_city: "Portland", p_state: "OR", p_genres: ["Literary"], p_avatar_path: null });
 await rpc(db, MAYA, "save_address", { p_name: "Maya Rivera", p_line1: "88 Alder St", p_line2: null, p_city: "Portland", p_state: "OR", p_zip: "97204" });
 for (const k of ["babel", "piranesi", "hamnet"]) await rpc(db, MAYA, "add_copy", { p_isbn: BOOKS[k][0], p_condition: "vg", p_format: "Paperback" });
 await rpc(db, "service", "credit_topup", { p_user: MAYA, p_cents: 1000, p_session: "cs_maya", p_payment_intent: "pi_maya", p_fingerprint: "fp_maya" });
@@ -69,7 +69,7 @@ await new Promise((resolve, reject) => {
 // Plays Stripe: the app gets a checkout URL, and Stripe's signed webhook arrives shortly after.
 const fakeFunctions = {
   "create-checkout": async ({ claims, body }) => {
-    const session = { id: "cs_e2e_" + crypto.randomUUID(), object: "checkout.session", payment_status: "paid", amount_total: body.amount, client_reference_id: claims.sub, payment_intent: null, metadata: { kind: "topup" } };
+    const session = { id: "cs_e2e_" + crypto.randomUUID(), object: "checkout.session", currency: "usd", payment_status: "paid", amount_total: body.amount, client_reference_id: claims.sub, payment_intent: null, metadata: { kind: "topup" } };
     const payload = JSON.stringify({ id: "evt_" + crypto.randomUUID(), object: "event", type: "checkout.session.completed", data: { object: session } });
     setTimeout(() => fetch(`http://localhost:${FN_PORT}/stripe-webhook`, {
       method: "POST", body: payload,
@@ -139,11 +139,12 @@ try {
   await page.setInputFiles("#photo", { name: "me.png", mimeType: "image/png", buffer: png });
   await page.waitForSelector("img.avatar.lg", { timeout: 10000 });
   check("the photo uploads to the reader's own folder", [...mock.files.keys()].some((k) => k.startsWith(`avatars/${JAMIE}/`)));
+  check("the photo shows from Worm's storage", (await page.locator("img.avatar.lg").getAttribute("src")).startsWith(mock.url + "/storage/v1/object/public/avatars/"));
   await shot("e2e-02-profile");
   await tap('[data-act="obNext"]');
   await idle();
-  const prof = (await sql("select handle, display_name, city, state, avatar_url from profiles where id = $1", [JAMIE]))[0];
-  check("the profile is saved on the server", prof?.handle === "jamie.reads" && prof.state === "OK" && /avatars\//.test(prof.avatar_url || ""), JSON.stringify(prof));
+  const prof = (await sql("select handle, display_name, city, state, avatar_path from profiles where id = $1", [JAMIE]))[0];
+  check("the profile is saved on the server, with the photo as a path in Worm's storage", prof?.handle === "jamie.reads" && prof.state === "OK" && (prof.avatar_path || "").startsWith(JAMIE + "/"), JSON.stringify(prof));
   await tap('[data-act="obGenre"]', 0);
   await tap('[data-act="obNext"]');
   await idle();
@@ -260,6 +261,31 @@ try {
   await page.waitForTimeout(300);
   check("Jamie has 1 credit after sending", (await credits()) === 1);
 
+  console.log("Support rules on a problem report");
+  const THEO = crypto.randomUUID();
+  await sql("insert into auth.users (id, email) values ($1, 'theo@example.com')", [THEO]);
+  await rpc(db, THEO, "save_profile", { p_handle: "theo.t", p_display_name: "Theo Tran", p_city: "Denver", p_state: "CO", p_genres: [], p_avatar_path: null });
+  await rpc(db, THEO, "save_address", { p_name: "Theo Tran", p_line1: "9 Elm St", p_line2: null, p_city: "Denver", p_state: "CO", p_zip: "80202" });
+  for (const k of ["dune", "circe", "klara"]) await rpc(db, THEO, "add_copy", { p_isbn: BOOKS[k][0], p_condition: "vg", p_format: "Paperback" });
+  await rpc(db, "service", "credit_topup", { p_user: THEO, p_cents: 500, p_session: "cs_theo", p_payment_intent: "pi_theo", p_fingerprint: "fp_theo" });
+  const piranesi = (await sql("select l.id from listings l join copies c on c.id = l.copy_id where c.owner_id = $1 and c.isbn = $2 and l.closed_at is null", [MAYA, BOOKS.piranesi[0]]))[0].id;
+  const theoReq = await rpc(db, THEO, "request_book", { p_listing: piranesi });
+  await asMaya("accept_request", { p_req: theoReq });
+  await asMaya("ship_exchange", { p_req: theoReq, p_carrier: "USPS", p_tracking: "EA987654321US" });
+  await rpc(db, THEO, "report_problem", { p_req: theoReq, p_reason: "Wrong book or edition" });
+  await sql("update profiles set is_admin = true where id = $1", [JAMIE]);
+  await page.reload();
+  await idle();
+  await tap('[data-act="tab"][data-id="profile"]');
+  check("support accounts see the problem queue", /1 problem report to review/.test(await text('[data-act="support"]')));
+  await tap('[data-act="support"]');
+  await shot("e2e-07-support");
+  await tap('[data-act="rule"][data-upheld="1"]');
+  await idle();
+  check("ruling for the recipient returns their credit", (await rpc(db, THEO, "get_state")).ledger.some((e) => e.type === "release" && e.requestId === theoReq));
+  check("and strikes the sender", (await rpc(db, MAYA, "get_state")).me.strikes === 1);
+  await tap('[data-act="close"].x');
+
   console.log("Alerts, sign out, delete");
   await tap('[data-act="alerts"]');
   check("alerts list server notifications", (await page.locator(".alert").count()) >= 3);
@@ -268,7 +294,7 @@ try {
   check("mark all read clears the badge", (await page.locator(".icon-btn .badge").count()) === 0);
   await tap('[data-act="close"].x');
   await tap('[data-act="tab"][data-id="profile"]');
-  await shot("e2e-07-profile");
+  await shot("e2e-08-profile");
   await tap('[data-act="signOut"]');
   await page.waitForSelector(".signin .auth-btn.apple");
   check("sign out returns to the sign-in screen", true);
