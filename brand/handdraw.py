@@ -4,7 +4,7 @@ the same every run.
 
     python3 brand/handdraw.py > hand.json
 
-prints the icon strokes and drawings (pasted into app.js: ICONS, HEART, SPINES, BURST, ATOM,
+prints the icon strokes and drawings (pasted into app.js: ICONS, HEART, SPINES, BURST, ATOM, SCAN_*,
 CORNERS) and the CSS images (pasted into app.css :root as --hand-*, --m-* and --mark-* tokens;
 css_dark holds the dark-theme versions of the --mark-* tokens).
 
@@ -145,6 +145,79 @@ BURST = " ".join(pts)
 CORNERS = "".join(f'<path d="{line(p, 0.5, s)}"/>' for p, s in (
     ([(0, 24), (0.5, 1), (22, 0.4)], 501), ([(78, 0.5), (99.6, 1), (100, 24)], 502), ([(99.7, 36), (99.4, 59.4), (78, 59.8)], 503), ([(22, 59.6), (0.4, 59.2), (0.2, 36)], 504)))
 
+def rounded(x0, y0, x1, y1, r, seed=1, jit=0.35, over=True):
+    """A rounded rectangle drawn in one go, ending a little past where it started (or closed, for a fill)."""
+    rng = random.Random(seed); pts = [((x0 + x1) / 2, y0)]
+    j = lambda: rng.uniform(-jit, jit)
+    for cx, cy, a0 in ((x1 - r, y0 + r, -90), (x1 - r, y1 - r, 0), (x0 + r, y1 - r, 90), (x0 + r, y0 + r, 180)):
+        for k in range(4):
+            a = math.radians(a0 + 30 * k)
+            pts.append((cx + r * math.cos(a) + j(), cy + r * math.sin(a) + j()))
+        if a0 == -90: pts.append((x1 + j() * 2, (y0 + y1) / 2))  # the long sides bow a little
+        if a0 == 90: pts.append((x0 + j() * 2, (y0 + y1) / 2))
+    if not over: return path(pts, closed=True)
+    sx, sy = pts[1]
+    return path(pts + [((x0 + x1) / 2 + rng.uniform(-0.6, 0.6), y0 + 0.5), ((x0 + x1) / 2 + (sx - (x0 + x1) / 2) * 0.35, y0 + 0.9)])
+
+def bars(x0, y0, x1, y1, seed):
+    """Barcode bars between two x positions: lines of a few widths, like a real EAN code."""
+    rng = random.Random(seed); out = []; x = x0
+    while x < x1:
+        w = rng.choice((0.9, 0.9, 1.6, 2.3))
+        out.append((x + w / 2, w, 2.2 if len(out) in (0, 1) else 0))  # the guard bars run a little longer
+        x += w + rng.choice((0.9, 1.3, 1.8))
+    return out
+
+# scan tab: a book, back cover up, with a phone held over its barcode (viewBox 200 x 140)
+sa = []; ink_ = []
+book = rot([(30, 22), (104, 20), (106, 126), (32, 128)], 68, 74, -7)
+pages = [(x + 4.2, y + 3.4) for x, y in book]
+sa.append(f'<path d="{fill(pages, 0.7, 601, 0, 0)}" fill="var(--paper-2)"/>')
+sa.append(f'<path d="{fill(book, 0.9, 602, 1.8, 1.6)}" fill="var(--peach)"/>')
+label = rot([(60, 88), (96, 87.4), (96.6, 118), (60.4, 118.4)], 68, 74, -7)
+sa.append(f'<path d="{fill(label, 0.5, 603, 0.8, 0.8)}" fill="var(--paper-2)"/>')
+ink_.append(outline(pages, 0.6, 611, over=0.1))
+ink_.append(outline(book, 0.8, 612, over=0.12))
+ink_.append(line(rot([(39, 22.5), (40.6, 126.5)], 68, 74, -7), 0.7, 613))
+ink_.append(outline(label, 0.4, 614, over=0.14))
+for i, (a, b, y) in enumerate(((46, 92, 36), (46, 86, 42), (46, 74, 48))):
+    ink_.append(line(rot([(a, y), (b, y - 0.3)], 68, 74, -7), 0.5, 620 + i))
+barcode = []
+for x, w, extra in bars(64, 92, 92.4, 110, 630):
+    barcode.append(f'<path d="{line(rot([(x, 92), (x, 110 + extra)], 68, 74, -7), 0.15, int(x * 10))}" stroke-width="{w}" stroke-linecap="butt"/>')
+# the phone, tilted the other way, its screen showing the barcode it has found
+pc = (146, 66); tilt = 11
+def R(pts): return rot(pts, pc[0], pc[1], tilt)
+phone = rounded(118, 14, 172, 118, 9, 640)
+sa.append(f'<path d="{rounded(118, 14, 172, 118, 9, 641, over=False)}" fill="var(--sea)" transform="rotate({tilt} {pc[0]} {pc[1]}) translate(1.8 1.6)"/>')
+sa.append(f'<path d="{rounded(123.5, 25, 166.5, 104, 4, 642, over=False)}" fill="var(--paper-2)" transform="rotate({tilt} {pc[0]} {pc[1]})"/>')
+ink_.append(f'<g transform="rotate({tilt} {pc[0]} {pc[1]})"><path d="{phone}"/><path d="{rounded(123.5, 25, 166.5, 104, 4, 643, jit=0.25)}"/>'
+            f'<path d="{line([(139, 19.6), (151, 19.4)], 0.2, 644)}"/><path d="{line([(139.5, 110.6), (150.5, 110.8)], 0.25, 645)}"/>'
+            + "".join(f'<path d="{line(p, 0.15, s)}"/>' for p, s in (
+                ([(129, 52), (129, 46), (135, 45.8)], 651), ([(155, 45.8), (161, 46), (161.2, 52)], 652),
+                ([(161, 76), (160.8, 82), (155, 82.2)], 653), ([(135, 82.2), (129.2, 82), (129, 76)], 654)))
+            + "".join(f'<path d="{line([(x, 52), (x, 72 + extra * 1.2)], 0.12, int(x * 10) + 7)}" stroke-width="{w * 1.25}" stroke-linecap="butt"/>' for x, w, extra in bars(133, 52, 157, 72, 631))
+            + '</g>')
+beam = f'<path d="{line(R([(126.5, 63), (163.5, 62.4)]), 0.3, 660)}" stroke="var(--peach)" stroke-width="2.6"/>'
+# little "beep" marks off the phone's top corner, and a sparkle
+for i, (a, b) in enumerate((((174, 14), (182, 8.5)), ((178, 23), (188, 22)), ((168, 6.5), (171.5, -1.5)))):
+    ink_.append(line([a, b], 0.3, 670 + i))
+ink_.append(line([(13.5, 22), (14, 8)], 0.3, 681)); ink_.append(line([(7, 15.2), (20.6, 14.8)], 0.3, 682))
+sa.append(f'<path d="{blob(14, 15, 4.8, 4.6, 0.5, 683, 7)}" fill="var(--sun)"/>')
+SCAN_ART = ("".join(sa) + '<g fill="none" stroke="var(--ink)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'
+            + "".join(p if p.startswith("<") else f'<path d="{p}"/>' for p in ink_) + "".join(barcode) + "</g>" + beam)
+SCAN_WASH = blob(104, 76, 86, 56, 2.2, 690, 11)
+
+# the demo scanner's stand-in for a camera: a close-up of a barcode label (viewBox 120 x 66)
+lab = [(4, 4), (116, 3.4), (116.6, 61.6), (3.6, 62)]
+sim = [f'<path d="{fill(lab, 0.6, 701, 1.4, 1.4)}" fill="rgba(0,0,0,.18)"/><path d="{fill(lab, 0.5, 702)}" fill="#fbf7ef"/><g fill="none" stroke="#26201a" stroke-linecap="butt">']
+for x, w, extra in bars(14, 10, 106, 46, 703):
+    sim.append(f'<path d="{line([(x, 10), (x, 46 + extra * 1.8)], 0.12, int(x * 10) + 3)}" stroke-width="{f(w * 1.3)}"/>')
+sim.append(f'</g><g fill="none" stroke="#26201a" stroke-width="1.7" stroke-linecap="round"><path d="{outline(lab, 0.5, 704, over=0.1)}"/>')
+for i, x in enumerate([8] + [18 + 5.2 * k for k in range(6)] + [61 + 5.2 * k for k in range(6)]):
+    sim.append(f'<path d="{line([(x, 54.4), (x + 2.6, 54.2)], 0.1, 710 + i)}"/>')
+SCAN_SIM = "".join(sim) + "</g>"
+
 # ---------------- CSS images (data URIs) ----------------
 def uri(svg):
     svg = " ".join(svg.split())
@@ -265,5 +338,5 @@ CSS["--mark-under"] = marker_under("#cf5628")
 CSS["--mark-hl"] = marker_hl("#f2c14e", 0.5)
 DARK = {"--mark-under": marker_under("#f08a5d"), "--mark-hl": marker_hl("#f08a5d", 0.2)}
 
-out = {"icons": {k: {"ink": v[0], "wash": v[1], "color": v[2]} for k, v in I.items()}, "heart": HEART, "atom": ATOM, "spines": SPINES, "burst": BURST, "corners": CORNERS, "css": CSS, "css_dark": DARK}
+out = {"icons": {k: {"ink": v[0], "wash": v[1], "color": v[2]} for k, v in I.items()}, "heart": HEART, "atom": ATOM, "spines": SPINES, "burst": BURST, "corners": CORNERS, "scan_art": SCAN_ART, "scan_wash": SCAN_WASH, "scan_sim": SCAN_SIM, "css": CSS, "css_dark": DARK}
 print(json.dumps(out, indent=1))

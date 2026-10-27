@@ -269,7 +269,7 @@
   const ui = {
     tab: "discover", shelf: "available", xTab: "ship", q: "", genre: "All", cond: "all", showAll: false,
     sheet: null, sheetEnter: false, toast: null, ob: 0, obActive: false, draft: {}, scanQ: "", scanned: [], searchHits: null,
-    defCond: "vg", cam: null, busy: 0, screen: LIVE ? "loading" : "app", otpEmail: null,
+    defCond: "vg", busy: 0, screen: LIVE ? "loading" : "app", otpEmail: null,
     summaries: {}, // live: isbn → "loading" | "none" while a book's summary is fetched
     find: null, // live search: { q, state, results }
     similar: {}, // live suggestions by book: { at, results }
@@ -694,6 +694,10 @@
   // An atom drawn in three colored marker loops, for the sign-in screen.
   const ATOM = "<path d='M26.1 30.2C27.9 30.4 33.1 30.7 37.1 31.7C41.1 32.6 45.6 34 50.1 35.8C54.7 37.5 59.5 39.8 64.1 42.2C68.8 44.6 73.5 47.5 77.8 50.4C82.1 53.2 86.3 56.4 89.8 59.5C93.3 62.6 96.6 65.8 99 68.8C101.5 71.7 103.4 74.7 104.5 77.3C105.6 79.9 106.1 82.3 105.7 84.2C105.3 86.1 104.2 87.7 102.3 88.8C100.5 89.8 97.7 90.4 94.6 90.4C91.4 90.4 87.5 89.9 83.4 88.9C79.3 87.9 74.6 86.4 70 84.6C65.4 82.7 60.5 80.4 55.8 77.9C51.2 75.5 46.4 72.6 42.1 69.7C37.8 66.8 33.6 63.6 30.1 60.5C26.5 57.4 23.3 54.1 20.9 51.2C18.6 48.3 16.7 45.3 15.8 42.8C14.9 40.3 14.7 38.1 15.3 36.3C15.9 34.5 17.3 33.2 19.2 32.3C21.2 31.4 24 31 27 31C30.1 31.1 36 32.3 37.8 32.5' fill='none' stroke='var(--sea)' stroke-width='4.6' stroke-linecap='round'/><path d='M16.1 74.9C17.3 73.4 20 68.9 22.9 65.9C25.8 62.8 29.5 59.4 33.4 56.3C37.3 53.2 41.8 50 46.4 47.2C50.9 44.4 55.9 41.7 60.6 39.5C65.3 37.2 70.2 35.3 74.6 33.8C79 32.3 83.3 31.2 87 30.7C90.7 30.2 94.1 30.1 96.7 30.6C99.3 31 101.3 32 102.6 33.3C103.9 34.6 104.4 36.5 104.3 38.6C104.2 40.7 103.3 43.2 101.9 45.8C100.4 48.5 98.3 51.4 95.6 54.4C93 57.3 89.6 60.5 85.9 63.6C82.3 66.6 77.9 69.8 73.5 72.6C69.1 75.5 64.1 78.3 59.4 80.6C54.7 82.9 49.8 84.9 45.3 86.4C40.9 87.9 36.5 89 32.8 89.5C29.1 90.1 25.7 90.1 23 89.7C20.4 89.2 18.3 88.3 17 87C15.6 85.7 14.9 83.8 15 81.8C15.1 79.7 15.9 77.1 17.4 74.4C18.9 71.8 22.9 67.1 24 65.7' fill='none' stroke='var(--peach)' stroke-width='4.6' stroke-linecap='round'/><path d='M68.9 15.4C69.6 17.1 72 21.7 73.2 25.6C74.4 29.6 75.5 34.3 76.2 39.1C77 44 77.5 49.4 77.6 54.6C77.8 59.9 77.7 65.5 77.4 70.7C77 75.8 76.3 81.1 75.4 85.7C74.5 90.3 73.3 94.6 71.9 98.2C70.5 101.7 68.9 104.7 67.2 106.9C65.6 109 63.7 110.5 61.9 111C60 111.6 58.1 111.4 56.3 110.4C54.5 109.3 52.7 107.5 51 104.9C49.4 102.3 47.8 98.9 46.6 94.9C45.3 91 44.2 86.2 43.4 81.3C42.7 76.4 42.2 70.8 42 65.5C41.8 60.1 42 54.4 42.5 49.2C42.9 44.1 43.7 38.9 44.7 34.4C45.7 30 46.9 25.9 48.3 22.5C49.7 19.1 51.3 16.3 52.9 14.2C54.6 12.2 56.4 10.8 58.2 10.3C60 9.8 61.9 10 63.6 11.1C65.3 12.2 67.1 14.1 68.7 16.7C70.2 19.3 72.1 25 72.8 26.6' fill='none' stroke='var(--sun)' stroke-width='4.6' stroke-linecap='round'/><path d='M70.1 60C70 61.9 68.9 65.1 67.7 66.7C66.4 68.2 64.3 69.2 62.5 69.3C60.6 69.4 57.9 68.3 56.3 67.4C54.8 66.6 53.9 66 53.2 64.2C52.5 62.4 51.9 58.5 52.2 56.6C52.5 54.8 53.6 54 55.1 53.2C56.6 52.4 59.1 51.3 61.3 51.6C63.4 51.9 66.7 53.6 68.2 54.9C69.7 56.3 70.2 58 70.1 60Z' fill='var(--lilac)'/><path d='M64.8 51.7C65.3 52.1 67 53.4 67.7 54.6C68.4 55.7 68.8 57.1 68.9 58.4C69 59.6 68.8 61 68.4 62.2C68 63.3 67.4 64.5 66.6 65.4C65.9 66.4 64.9 67.3 63.8 67.8C62.7 68.4 61.4 68.7 60.2 68.7C59 68.7 57.7 68.3 56.6 67.8C55.6 67.2 54.6 66.3 53.9 65.4C53.1 64.5 52.6 63.5 52.2 62.4C51.8 61.3 51.6 60 51.7 58.8C51.8 57.7 52.1 56.4 52.7 55.3C53.3 54.3 54.2 53.2 55.2 52.5C56.3 51.8 57.6 51.3 58.8 51.1C60 50.9 61.5 50.9 62.7 51.3C63.9 51.7 65.5 53 66 53.3' fill='none' stroke='var(--ink)' stroke-width='1.6' stroke-linecap='round'/><path d='M108.5 37.4C108.5 38.5 107.5 40.1 106.5 40.7C105.5 41.4 103.6 41.4 102.5 41.1C101.4 40.9 100.4 40.2 100 39.2C99.5 38.3 99.4 36.4 100 35.4C100.5 34.4 102 33.7 103.2 33.4C104.3 33.2 105.9 33.3 106.8 33.9C107.7 34.6 108.5 36.2 108.5 37.4Z' fill='var(--sage)'/>";
   const atomicDeco = () => `<svg class="deco" viewBox="0 0 120 120" aria-hidden="true"><g filter="url(#wm-ink-lg)">${ATOM}</g></svg>`;
+  const SCAN_ART = "<path d='M27.7 30.5C28.9 28.2 26.1 30.8 36.9 29.1C47.8 27.4 82.1 21.8 92.9 20.2C103.7 18.6 100 17.4 101.7 19.4C103.4 21.4 100.9 16.5 103.1 32C105.4 47.5 112.8 96.8 115 112.2C117.1 127.7 117.3 122.4 116.1 124.6C114.8 126.9 118.2 124.1 107.5 125.7C96.8 127.3 62.7 132.4 52 134.1C41.3 135.8 45.1 137.5 43.3 135.6C41.5 133.8 43.5 138.3 41.3 122.8C39 107.3 31.8 58.1 29.6 42.8C27.3 27.4 26.5 32.8 27.7 30.5Z' fill='var(--paper-2)'/><path d='M25.6 28.3C26.8 26.1 23.7 28.9 34.5 27.3C45.4 25.7 79.8 20.5 90.6 18.9C101.4 17.2 97.4 15.5 99.1 17.4C100.8 19.3 98.5 14.8 100.7 30.2C103 45.7 110.3 94.7 112.6 110.1C114.9 125.4 116 120 114.7 122.3C113.5 124.6 116 122.3 105.1 123.9C94.2 125.5 60 130.6 49.3 132.2C38.7 133.7 42.8 135.1 41.1 133.3C39.3 131.4 41.2 136.4 38.9 121C36.5 105.5 29.3 56 27.1 40.6C24.8 25.1 24.3 30.5 25.6 28.3Z' fill='var(--peach)'/><path d='M62.2 89.7C62.9 89 61.6 89.8 66.8 89.1C72.1 88.3 88.7 86.2 93.9 85.4C99.1 84.6 97.4 83.7 98.2 84.2C99.1 84.7 98.2 83.9 98.7 88.3C99.3 92.8 100.9 106.5 101.6 110.9C102.3 115.4 103.3 114.2 102.7 115C102.2 115.7 103.5 114.9 98.2 115.6C93 116.3 76.6 118.4 71.4 119.1C66.1 119.9 67.8 120.7 66.9 120.2C66 119.7 66.9 120.6 66.2 116.2C65.5 111.7 63.5 98 62.8 93.6C62.1 89.2 61.6 90.5 62.2 89.7Z' fill='var(--paper-2)'/><path d='M145 14C150.9 13.9 159.2 13.4 162.9 13.7C166.6 13.9 165.9 14.6 167.2 15.4C168.5 16.2 170.2 17.2 171 18.5C171.8 19.8 172.1 15.3 172.1 23.2C172.2 31.1 171.4 51.7 171.4 66C171.3 80.3 172 101 171.9 108.9C171.8 116.9 171.5 112.3 170.7 113.6C170 114.9 169 116 167.7 116.7C166.4 117.5 169.8 118.1 163 118.3C156.2 118.5 133.6 118.2 126.8 117.9C120 117.6 123.4 117.2 122.2 116.5C120.9 115.7 120.1 114.5 119.3 113.3C118.6 112 117.8 116.8 117.7 108.9C117.6 101 118.5 80.3 118.5 66C118.6 51.7 117.7 31.2 117.8 23.3C117.9 15.4 118.5 20.1 119.2 18.7C119.9 17.3 120.8 15.6 122.2 14.9C123.5 14.1 123.5 14.4 127.3 14.2C131.2 14.1 139.1 14.1 145 14Z' fill='var(--sea)' transform='rotate(11 146 66) translate(1.8 1.6)'/><path d='M145 25C150.9 25 159.4 24.7 162.6 24.8C165.9 25 163.9 25.4 164.4 25.8C165 26.2 165.6 26.7 165.9 27.2C166.2 27.7 166.1 22.7 166.2 28.9C166.3 35.2 166.5 52.7 166.5 64.5C166.6 76.3 166.5 93.7 166.4 99.9C166.4 106.2 166.5 101.4 166.2 101.9C165.9 102.5 165.1 103 164.5 103.4C164 103.8 169 104.2 162.8 104.3C156.6 104.4 133.5 104.1 127.3 104C121 103.8 125.8 103.8 125.2 103.5C124.6 103.3 124 102.9 123.8 102.3C123.5 101.7 123.9 106.3 123.7 100C123.6 93.7 123 76.3 123 64.5C122.9 52.7 123.1 35.3 123.2 29C123.4 22.7 123.4 27.4 123.7 26.8C124 26.2 124.6 25.7 125.3 25.3C125.9 25 124.1 24.8 127.4 24.8C130.7 24.7 139.1 25 145 25Z' fill='var(--paper-2)' transform='rotate(11 146 66)'/><path d='M18.9 14.7C18.8 15.9 17.5 18.1 16.6 18.9C15.7 19.7 14.5 19.6 13.4 19.3C12.4 19.1 10.8 18.3 10.2 17.3C9.6 16.2 9.3 14.2 9.8 13C10.3 11.8 12 10.3 13.3 10.1C14.5 9.8 16.3 10.7 17.2 11.4C18.2 12.2 19 13.4 18.9 14.7Z' fill='var(--sun)'/><g fill='none' stroke='var(--ink)' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M28.1 30.4C29.4 30.2 29.4 30.2 35.5 29.3C41.6 28.4 55 26.4 64.8 25C74.5 23.5 87.9 21.4 94 20.5C100.1 19.6 99.9 17.8 101.4 19.4C102.8 21 101.7 21.2 102.8 29.9C104 38.7 106.3 58 108.2 72C110.2 86 113.4 105.2 114.8 113.9C116.1 122.6 117.2 122.4 116.3 124.4C115.3 126.3 115 124.6 108.9 125.5C102.8 126.4 89.4 128.3 79.6 129.7C69.9 131.2 56.5 133.3 50.4 134.3C44.3 135.2 44.5 137 43 135.4C41.6 133.8 42.7 133.6 41.6 124.9C40.4 116.1 38.1 96.8 36.1 82.8C34.1 68.8 29.7 49.8 29.6 40.9C29.5 32.1 34.6 31.7 35.5 29.8'/><path d='M23.9 27C25.2 26.8 25.2 26.7 31.3 25.9C37.4 25.1 50.9 23.5 60.6 22C70.4 20.6 83.7 18.1 89.8 17.1C95.9 16.1 95.7 14.4 97.2 16C98.6 17.6 97.3 17.8 98.6 26.5C100 35.2 103.1 54.4 105 68.4C107 82.4 109.4 101.7 110.6 110.5C111.7 119.2 113 119 112.1 121C111.1 122.9 110.8 121.2 104.7 122.1C98.6 122.9 85.1 124.6 75.4 126C65.6 127.5 52.3 129.9 46.2 130.9C40.1 131.9 40.3 133.6 38.8 132C37.4 130.4 38.6 130.2 37.4 121.5C36.1 112.7 33.5 93.5 31.6 79.5C29.6 65.5 25.2 46.4 25.4 37.5C25.6 28.6 31.6 28.1 32.8 26.2'/><path d='M32.9 26.4C33.8 32.4 36.6 50.8 38.2 62.4C39.9 74.1 41.3 85.3 42.8 96.5C44.3 107.6 46.5 124 47.2 129.4'/><path d='M61.8 88.9C62.4 88.8 62.4 88.8 65.3 88.4C68.3 87.9 74.8 86.8 79.6 86.2C84.3 85.5 90.9 84.8 93.9 84.4C96.8 84 96.8 83.5 97.4 83.9C98.1 84.3 97.5 84.4 97.9 86.9C98.2 89.4 98.9 95 99.5 99C100.1 103.1 100.9 108.6 101.3 111.2C101.7 113.7 102.3 113.6 101.7 114.2C101.2 114.8 101.1 114.2 98.2 114.7C95.2 115.1 88.6 116.2 83.8 116.8C79.1 117.5 72.5 118.2 69.5 118.5C66.5 118.9 66.5 119.4 65.9 119C65.2 118.6 65.8 118.5 65.5 116C65.1 113.5 64.4 107.9 63.9 103.9C63.3 99.9 61.7 94.4 62.2 91.9C62.7 89.3 66.1 89.2 66.8 88.7'/><path d='M41.5 39C44.2 38.6 52.3 37.3 57.5 36.6C62.6 35.9 67.6 35.3 72.5 34.7C77.5 34.1 84.7 33.3 87.2 33.1'/><path d='M42.3 44.9C44.6 44.6 51.6 43.5 56.1 42.9C60.6 42.3 64.9 41.8 69.2 41.3C73.5 40.8 79.8 40 81.9 39.7'/><path d='M43 50.9C44.6 50.6 49.5 49.8 52.7 49.4C55.8 49 58.9 48.7 61.9 48.3C64.9 48 69.3 47.4 70.8 47.2'/><g transform='rotate(11 146 66)'><path d='M145 14C147.9 14 159 13.7 162.7 14C166.4 14.2 165.8 14.7 167.2 15.4C168.6 16.1 170.2 17 171 18.3C171.9 19.6 172.1 15 172.3 23C172.5 31 172.4 51.7 172.3 66C172.2 80.3 172.1 100.8 171.8 108.7C171.6 116.6 171.4 112.1 170.7 113.4C169.9 114.8 168.6 116.2 167.3 117C166 117.7 169.7 117.6 163 117.8C156.3 117.9 133.7 117.9 127 117.7C120.2 117.5 123.9 117.2 122.6 116.5C121.3 115.8 120 114.8 119.2 113.5C118.3 112.2 117.7 116.7 117.7 108.8C117.6 100.8 118.5 80.3 118.6 66C118.7 51.7 118.3 30.7 118.3 22.8C118.4 14.8 118.2 19.7 119 18.4C119.7 17.2 121.5 16.2 122.8 15.5C124.1 14.7 123.1 13.9 126.8 13.8C130.5 13.6 140.8 14.3 144.8 14.5C148.9 14.7 150.1 14.8 151.2 14.9'/><path d='M145 25C147.9 25 159.3 24.9 162.5 24.9C165.8 25 163.9 25.2 164.5 25.5C165.1 25.9 165.8 26.3 166.2 26.9C166.5 27.5 166.4 22.7 166.4 28.9C166.4 35.2 166.2 52.6 166.2 64.5C166.2 76.4 166.5 93.9 166.4 100.2C166.4 106.5 166.3 101.7 165.9 102.2C165.6 102.7 165 103 164.4 103.3C163.9 103.6 168.6 103.7 162.4 103.8C156.3 103.9 133.6 103.9 127.4 103.9C121.3 103.9 126.3 103.8 125.7 103.5C125.2 103.2 124.5 102.8 124.1 102.2C123.7 101.7 123.4 106.3 123.3 100C123.1 93.7 123.3 76.3 123.3 64.5C123.3 52.7 123.2 35.4 123.3 29.2C123.5 23 123.8 27.7 124.2 27.1C124.6 26.5 125.2 26.1 125.7 25.7C126.3 25.3 124.5 24.9 127.7 24.9C130.9 24.8 140.9 25.3 144.8 25.5C148.8 25.7 150.1 25.8 151.1 25.9'/><path d='M139 19.6C139.7 19.6 141.8 19.5 143.2 19.5C144.6 19.5 145.9 19.5 147.2 19.5C148.5 19.4 150.4 19.4 151 19.4'/><path d='M139.5 110.6C140.1 110.6 142.1 110.5 143.4 110.5C144.6 110.5 145.8 110.5 147 110.6C148.2 110.6 149.9 110.8 150.5 110.8'/><path d='M129 52C129 51.6 128.9 50.6 128.9 49.9C128.8 49.2 128.9 48.6 128.9 47.9C128.9 47.3 128.6 46.3 129 46C129.4 45.7 130.4 46 131.1 46C131.8 46 132.4 45.9 133.1 45.9C133.7 45.9 134.7 45.8 135 45.8'/><path d='M155 45.8C155.4 45.8 156.4 45.8 157.1 45.8C157.8 45.8 158.4 45.8 159.1 45.9C159.7 45.9 160.7 45.6 161 46C161.3 46.4 161 47.4 161.1 48.1C161.1 48.8 161.1 49.4 161.1 50.1C161.1 50.7 161.2 51.7 161.2 52'/><path d='M161 76C161 76.3 160.9 77.4 160.9 78.1C160.8 78.8 160.8 79.4 160.8 80.1C160.8 80.7 161.1 81.7 160.8 82C160.5 82.3 159.4 81.9 158.8 82C158.1 82 157.5 82 156.9 82.1C156.2 82.1 155.3 82.2 155 82.2'/><path d='M135 82.2C134.7 82.2 133.6 82.1 133 82.1C132.3 82.1 131.7 82 131.1 82C130.4 82 129.5 82.4 129.2 82C128.9 81.6 129.1 80.6 129.1 79.9C129 79.2 129 78.6 129 77.9C129 77.3 129 76.3 129 76'/><path d='M133.8 52C133.8 53.3 133.9 57.4 133.9 59.9C133.9 62.5 133.9 64.9 133.8 67.4C133.8 69.8 133.8 73.4 133.8 74.6' stroke-width='2.0' stroke-linecap='butt'/><path d='M136.3 52C136.3 53.3 136.3 57.4 136.3 59.9C136.3 62.5 136.3 64.9 136.3 67.4C136.3 69.8 136.3 73.4 136.3 74.6' stroke-width='1.125' stroke-linecap='butt'/><path d='M138.2 52C138.1 53.2 138.1 56.7 138.1 59C138.1 61.3 138.1 63.4 138.1 65.6C138.1 67.8 138.1 70.9 138.2 72' stroke-width='1.125' stroke-linecap='butt'/><path d='M140.8 52C140.8 53.2 140.8 56.7 140.8 59C140.8 61.3 140.7 63.4 140.8 65.6C140.8 67.8 140.8 70.9 140.8 72' stroke-width='1.125' stroke-linecap='butt'/><path d='M143.9 52C143.9 53.2 143.9 56.7 143.9 59C143.9 61.3 143.9 63.4 143.9 65.6C143.9 67.8 143.9 70.9 143.9 72' stroke-width='2.0' stroke-linecap='butt'/><path d='M146 52C146 53.2 146 56.7 146 59C146 61.3 146 63.4 146 65.6C146 67.8 146 70.9 146 72' stroke-width='1.125' stroke-linecap='butt'/><path d='M149.1 52C149.1 53.2 149.2 56.7 149.2 59C149.2 61.3 149.2 63.4 149.2 65.6C149.2 67.8 149.1 70.9 149.1 72' stroke-width='2.0' stroke-linecap='butt'/><path d='M151.2 52C151.3 53.2 151.3 56.7 151.3 59C151.3 61.3 151.3 63.4 151.3 65.6C151.3 67.8 151.3 70.9 151.2 72' stroke-width='1.125' stroke-linecap='butt'/><path d='M153.9 52C154 53.2 154 56.7 154 59C154.1 61.3 154 63.4 154 65.6C154 67.8 154 70.9 153.9 72' stroke-width='1.125' stroke-linecap='butt'/><path d='M156.4 52C156.5 53.2 156.5 56.7 156.5 59C156.5 61.3 156.6 63.4 156.5 65.6C156.5 67.8 156.5 70.9 156.4 72' stroke-width='2.875' stroke-linecap='butt'/></g><path d='M174 14C174.5 13.7 175.9 12.7 176.8 12.1C177.7 11.5 178.6 10.9 179.5 10.3C180.3 9.7 181.6 8.8 182 8.5'/><path d='M178 23C178.6 23 180.4 22.9 181.5 22.8C182.7 22.7 183.7 22.5 184.8 22.4C185.9 22.3 187.5 22.1 188 22'/><path d='M168 6.5C168.2 6 168.6 4.5 169 3.6C169.3 2.7 169.7 1.8 170.1 0.9C170.5 0.1 171.3 -1.1 171.5 -1.5'/><path d='M13.5 22C13.5 21.2 13.6 18.7 13.6 17.1C13.7 15.5 13.7 14 13.8 12.5C13.8 11 14 8.7 14 8'/><path d='M7 15.2C7.8 15.2 10.2 15.1 11.8 15.1C13.3 15 14.8 14.9 16.2 14.9C17.7 14.8 19.9 14.8 20.6 14.8'/><path d='M67.4 92.2C67.5 93.4 68.1 96.9 68.4 99.2C68.7 101.5 68.9 103.7 69.1 105.8C69.4 108 69.7 111.2 69.8 112.3' stroke-width='2.3' stroke-linecap='butt'/><path d='M69.8 91.9C70 93.1 70.6 96.6 70.8 98.9C71.1 101.2 71.4 103.4 71.6 105.5C71.8 107.7 72.2 110.9 72.3 112' stroke-width='0.9' stroke-linecap='butt'/><path d='M72.9 91.5C73 92.6 73.5 95.7 73.8 97.8C74.1 99.8 74.3 101.7 74.5 103.7C74.7 105.6 75 108.4 75.1 109.4' stroke-width='1.6' stroke-linecap='butt'/><path d='M75.4 91.2C75.5 92.3 75.8 95.5 76.1 97.5C76.3 99.5 76.5 101.5 76.8 103.4C77 105.3 77.4 108.1 77.5 109.1' stroke-width='1.6' stroke-linecap='butt'/><path d='M78.4 90.9C78.5 91.9 78.8 95.1 79 97.1C79.2 99.2 79.5 101.1 79.8 103C80 105 80.4 107.8 80.6 108.7' stroke-width='0.9' stroke-linecap='butt'/><path d='M81.3 90.5C81.4 91.6 81.7 94.7 82 96.8C82.2 98.8 82.5 100.7 82.7 102.7C82.9 104.6 83.3 107.4 83.5 108.4' stroke-width='2.3' stroke-linecap='butt'/><path d='M84.6 90.1C84.8 91.1 85.2 94.3 85.5 96.3C85.7 98.4 85.9 100.3 86.1 102.2C86.4 104.2 86.7 107 86.8 108' stroke-width='0.9' stroke-linecap='butt'/><path d='M86.4 89.9C86.5 90.9 86.9 94.1 87.1 96.1C87.4 98.2 87.6 100.1 87.9 102C88.1 104 88.5 106.8 88.6 107.7' stroke-width='0.9' stroke-linecap='butt'/><path d='M89.3 89.5C89.4 90.6 89.8 93.7 90.1 95.8C90.3 97.8 90.5 99.7 90.8 101.7C91 103.6 91.4 106.4 91.5 107.4' stroke-width='2.3' stroke-linecap='butt'/><path d='M93 89.1C93.1 90.1 93.5 93.3 93.8 95.3C94 97.3 94.2 99.3 94.5 101.2C94.7 103.1 95.1 106 95.2 106.9' stroke-width='1.6' stroke-linecap='butt'/></g><path d='M127.4 59.3C129.6 59.7 136.1 60.6 140.2 61.3C144.4 62 148.3 62.8 152.2 63.5C156.2 64.3 161.9 65.4 163.9 65.8' stroke='var(--peach)' stroke-width='2.6'/>";
+  const SCAN_WASH = "M191.3 79C191.8 88.2 188.8 93.8 181.3 101.3C173.7 108.9 162.3 119.4 146.1 124.2C129.8 129 100.2 131.2 83.5 130C66.7 128.8 56 123.8 45.6 116.9C35.2 110 24.8 98.1 21.1 88.5C17.5 78.9 18.7 68.4 23.5 59.1C28.3 49.9 40.1 39.2 50.1 33C60 26.7 66.9 22.6 83.2 21.6C99.4 20.5 131.6 22.7 147.5 26.8C163.5 30.9 171.4 37.4 178.7 46.1C186 54.8 190.9 69.8 191.3 79Z";
+  const scanArt = () => `<svg class="scan-art" viewBox="-4 -6 208 146" aria-hidden="true"><g class="wash" filter="url(#wm-ink-lg)"><path d="${SCAN_WASH}" fill="var(--sun)"/></g><g filter="url(#wm-ink-lg)">${SCAN_ART}</g></svg>`;
+  const SCAN_SIM = "<path d='M5.7 5.4C8 4.3 2.5 5.4 18.8 5.3C35.1 5.3 87.1 5 103.5 4.9C119.9 4.9 114.8 3.7 117.1 4.8C119.4 6 117.2 3.2 117.5 11.8C117.7 20.3 118.5 47.6 118.5 56.1C118.5 64.5 119.8 61.4 117.5 62.6C115.1 63.8 120.8 63 104.4 63C88 63.1 35.6 63 19 62.9C2.4 62.9 7.2 63.9 4.9 62.9C2.5 61.8 5 64.9 5 56.4C5.1 48 5 20.7 5.1 12.2C5.2 3.7 3.4 6.5 5.7 5.4Z' fill='rgba(0,0,0,.18)'/><path d='M4.3 4.3C6.4 3.1 1.1 4 17.4 3.9C33.8 3.9 85.7 3.9 102.2 3.9C118.7 3.8 114 2.6 116.3 3.7C118.6 4.8 116 1.8 116.1 10.4C116.1 18.9 116.6 46.5 116.7 55.1C116.9 63.7 119.2 60.9 116.9 62C114.6 63.1 119.7 61.7 103 61.6C86.4 61.6 33.6 61.4 17.1 61.5C0.6 61.6 6.3 63.3 4.1 62.2C1.9 61.2 3.6 63.5 3.6 55C3.7 46.5 4.3 19.7 4.4 11.3C4.5 2.8 2.1 5.5 4.3 4.3Z' fill='#fbf7ef'/><g fill='none' stroke='#26201a' stroke-linecap='butt'><path d='M14.4 10C14.4 12.3 14.4 19.5 14.4 24C14.4 28.5 14.5 32.8 14.5 37.2C14.5 41.5 14.5 47.8 14.4 50' stroke-width='1.2'/><path d='M16.6 10C16.7 12.3 16.7 19.5 16.7 24C16.7 28.5 16.7 32.8 16.7 37.2C16.7 41.5 16.7 47.8 16.6 50' stroke-width='1.2'/><path d='M18.8 10C18.8 12.1 18.8 18.5 18.8 22.6C18.8 26.7 18.8 30.6 18.8 34.5C18.8 38.4 18.8 44.1 18.8 46' stroke-width='1.2'/><path d='M21 10C21.1 12.1 21.1 18.5 21.1 22.6C21.1 26.7 21.2 30.6 21.1 34.5C21.1 38.4 21.1 44.1 21 46' stroke-width='1.2'/><path d='M23.2 10C23.3 12.1 23.3 18.5 23.3 22.6C23.3 26.7 23.3 30.6 23.3 34.5C23.3 38.4 23.3 44.1 23.2 46' stroke-width='1.2'/><path d='M25.7 10C25.8 12.1 25.8 18.5 25.8 22.6C25.8 26.7 25.8 30.6 25.8 34.5C25.8 38.4 25.8 44.1 25.7 46' stroke-width='3'/><path d='M28.6 10C28.6 12.1 28.5 18.5 28.5 22.6C28.5 26.7 28.5 30.6 28.5 34.5C28.6 38.4 28.6 44.1 28.6 46' stroke-width='2.1'/><path d='M31.1 10C31.2 12.1 31.2 18.5 31.2 22.6C31.2 26.7 31.2 30.6 31.2 34.5C31.2 38.4 31.2 44.1 31.1 46' stroke-width='1.2'/><path d='M33.7 10C33.7 12.1 33.8 18.5 33.8 22.6C33.8 26.7 33.7 30.6 33.7 34.5C33.7 38.4 33.7 44.1 33.7 46' stroke-width='2.1'/><path d='M36.2 10C36.2 12.1 36.1 18.5 36.1 22.6C36.1 26.7 36.2 30.6 36.2 34.5C36.2 38.4 36.2 44.1 36.2 46' stroke-width='2.1'/><path d='M38.4 10C38.3 12.1 38.3 18.5 38.3 22.6C38.3 26.7 38.3 30.6 38.3 34.5C38.3 38.4 38.3 44.1 38.4 46' stroke-width='1.2'/><path d='M40.8 10C40.9 12.1 40.9 18.5 40.9 22.6C40.9 26.7 40.9 30.6 40.9 34.5C40.9 38.4 40.9 44.1 40.8 46' stroke-width='3'/><path d='M43.4 10C43.4 12.1 43.4 18.5 43.4 22.6C43.4 26.7 43.4 30.6 43.4 34.5C43.3 38.4 43.4 44.1 43.4 46' stroke-width='1.2'/><path d='M46.4 10C46.4 12.1 46.5 18.5 46.5 22.6C46.5 26.7 46.5 30.6 46.5 34.5C46.4 38.4 46.4 44.1 46.4 46' stroke-width='2.1'/><path d='M49.5 10C49.5 12.1 49.5 18.5 49.5 22.6C49.5 26.7 49.5 30.6 49.5 34.5C49.5 38.4 49.5 44.1 49.5 46' stroke-width='1.2'/><path d='M51.7 10C51.6 12.1 51.6 18.5 51.6 22.6C51.6 26.7 51.7 30.6 51.7 34.5C51.7 38.4 51.7 44.1 51.7 46' stroke-width='1.2'/><path d='M53.5 10C53.4 12.1 53.4 18.5 53.4 22.6C53.4 26.7 53.4 30.6 53.4 34.5C53.4 38.4 53.4 44.1 53.5 46' stroke-width='1.2'/><path d='M56.9 10C56.9 12.1 56.9 18.5 56.9 22.6C56.9 26.7 56.9 30.6 56.9 34.5C56.9 38.4 56.9 44.1 56.9 46' stroke-width='3'/><path d='M60.1 10C60.1 12.1 60.1 18.5 60.1 22.6C60.1 26.7 60.1 30.6 60.1 34.5C60.1 38.4 60.1 44.1 60.1 46' stroke-width='3'/><path d='M63.8 10C63.8 12.1 63.8 18.5 63.8 22.6C63.8 26.7 63.9 30.6 63.9 34.5C63.9 38.4 63.8 44.1 63.8 46' stroke-width='2.1'/><path d='M66.7 10C66.7 12.1 66.7 18.5 66.7 22.6C66.7 26.7 66.7 30.6 66.7 34.5C66.7 38.4 66.7 44.1 66.7 46' stroke-width='2.1'/><path d='M69.8 10C69.8 12.1 69.8 18.5 69.8 22.6C69.8 26.7 69.8 30.6 69.8 34.5C69.8 38.4 69.8 44.1 69.8 46' stroke-width='1.2'/><path d='M72.3 10C72.3 12.1 72.3 18.5 72.3 22.6C72.4 26.7 72.4 30.6 72.4 34.5C72.3 38.4 72.3 44.1 72.3 46' stroke-width='3'/><path d='M74.8 10C74.8 12.1 74.8 18.5 74.8 22.6C74.8 26.7 74.8 30.6 74.8 34.5C74.8 38.4 74.8 44.1 74.8 46' stroke-width='1.2'/><path d='M77.7 10C77.6 12.1 77.6 18.5 77.6 22.6C77.6 26.7 77.6 30.6 77.6 34.5C77.6 38.4 77.6 44.1 77.7 46' stroke-width='3'/><path d='M80.5 10C80.5 12.1 80.5 18.5 80.5 22.6C80.5 26.7 80.5 30.6 80.5 34.5C80.5 38.4 80.5 44.1 80.5 46' stroke-width='2.1'/><path d='M83.4 10C83.4 12.1 83.4 18.5 83.4 22.6C83.4 26.7 83.4 30.6 83.4 34.5C83.4 38.4 83.4 44.1 83.4 46' stroke-width='3'/><path d='M86.6 10C86.6 12.1 86.6 18.5 86.6 22.6C86.6 26.7 86.6 30.6 86.6 34.5C86.6 38.4 86.6 44.1 86.6 46' stroke-width='2.1'/><path d='M89.5 10C89.5 12.1 89.5 18.5 89.6 22.6C89.6 26.7 89.6 30.6 89.6 34.5C89.6 38.4 89.5 44.1 89.5 46' stroke-width='3'/><path d='M92.7 10C92.7 12.1 92.7 18.5 92.7 22.6C92.7 26.7 92.8 30.6 92.7 34.5C92.7 38.4 92.7 44.1 92.7 46' stroke-width='3'/><path d='M96.8 10C96.7 12.1 96.7 18.5 96.7 22.6C96.7 26.7 96.7 30.6 96.7 34.5C96.7 38.4 96.7 44.1 96.8 46' stroke-width='3'/><path d='M100 10C99.9 12.1 99.9 18.5 99.9 22.6C99.9 26.7 100 30.6 100 34.5C100 38.4 100 44.1 100 46' stroke-width='3'/><path d='M103.6 10C103.6 12.1 103.6 18.5 103.6 22.6C103.7 26.7 103.7 30.6 103.6 34.5C103.6 38.4 103.6 44.1 103.6 46' stroke-width='3'/></g><g fill='none' stroke='#26201a' stroke-width='1.7' stroke-linecap='round'><path d='M4 4C5.9 4 5.9 3.9 15.2 3.9C24.5 3.9 45.1 4.1 60 4C74.9 4 95.5 3.6 104.8 3.5C114.1 3.4 114.1 2.4 116 3.4C117.9 4.4 116 4.4 116.1 9.2C116.1 14.1 116.3 24.7 116.4 32.5C116.5 40.3 116.5 50.9 116.5 55.8C116.6 60.6 118.5 60.6 116.6 61.6C114.7 62.6 114.7 61.6 105.3 61.6C95.9 61.6 75.2 61.5 60.1 61.6C45 61.6 24.3 61.9 14.9 62C5.5 62 5.5 63 3.6 62C1.7 61 3.6 61 3.6 56.2C3.6 51.4 3.6 40.7 3.6 33C3.7 25.3 2 14.6 4 9.8C5.9 5 13.3 5.3 15.2 4.4'/><path d='M8 54.4C8.2 54.4 8.6 54.3 8.9 54.3C9.2 54.3 9.5 54.3 9.8 54.2C10 54.2 10.5 54.2 10.6 54.2'/><path d='M18 54.4C18.2 54.4 18.6 54.4 18.9 54.4C19.2 54.3 19.5 54.3 19.8 54.3C20.1 54.3 20.5 54.2 20.6 54.2'/><path d='M23.2 54.4C23.4 54.4 23.8 54.3 24.1 54.3C24.4 54.3 24.7 54.2 25 54.2C25.2 54.2 25.7 54.2 25.8 54.2'/><path d='M28.4 54.4C28.6 54.4 29 54.3 29.3 54.3C29.6 54.3 29.9 54.3 30.2 54.2C30.4 54.2 30.9 54.2 31 54.2'/><path d='M33.6 54.4C33.8 54.4 34.2 54.4 34.5 54.4C34.8 54.4 35.1 54.3 35.4 54.3C35.7 54.3 36.1 54.2 36.2 54.2'/><path d='M38.8 54.4C39 54.4 39.4 54.4 39.7 54.3C40 54.3 40.3 54.3 40.6 54.2C40.8 54.2 41.3 54.2 41.4 54.2'/><path d='M44 54.4C44.2 54.4 44.6 54.3 44.9 54.3C45.2 54.2 45.5 54.2 45.8 54.2C46 54.2 46.5 54.2 46.6 54.2'/><path d='M61 54.4C61.2 54.4 61.6 54.3 61.9 54.3C62.2 54.2 62.5 54.2 62.8 54.2C63 54.2 63.5 54.2 63.6 54.2'/><path d='M66.2 54.4C66.4 54.4 66.8 54.3 67.1 54.3C67.4 54.3 67.7 54.2 68 54.2C68.2 54.2 68.7 54.2 68.8 54.2'/><path d='M71.4 54.4C71.6 54.4 72 54.3 72.3 54.3C72.6 54.3 72.9 54.3 73.2 54.2C73.4 54.2 73.9 54.2 74 54.2'/><path d='M76.6 54.4C76.8 54.4 77.2 54.4 77.5 54.4C77.8 54.4 78.1 54.3 78.4 54.3C78.7 54.3 79.1 54.2 79.2 54.2'/><path d='M81.8 54.4C82 54.4 82.4 54.3 82.7 54.3C83 54.2 83.3 54.2 83.6 54.2C83.8 54.2 84.3 54.2 84.4 54.2'/><path d='M87 54.4C87.2 54.4 87.6 54.4 87.9 54.4C88.2 54.3 88.5 54.3 88.8 54.3C89 54.2 89.5 54.2 89.6 54.2'/></g>";
   // Viewfinder corners for the scanner. The box stretches; the lines keep their weight.
   const CORNERS = "<path vector-effect='non-scaling-stroke' d='M0 24C0.1 22.7 0.2 18.6 0.3 16C0.4 13.3 0.5 10.9 0.5 8.4C0.5 5.9 -0.8 2.3 0.5 1C1.8 -0.3 5.6 0.6 8 0.5C10.5 0.4 12.8 0.5 15.1 0.5C17.4 0.5 20.9 0.4 22 0.4'/><path vector-effect='non-scaling-stroke' d='M78 0.5C79.3 0.5 83.1 0.6 85.6 0.7C88 0.7 90.4 0.7 92.7 0.7C95 0.8 98.4 -0.4 99.6 1C100.8 2.4 99.8 6.4 99.9 9C99.9 11.7 99.9 14.1 99.9 16.6C99.9 19.1 100 22.8 100 24'/><path vector-effect='non-scaling-stroke' d='M99.7 36C99.7 37.4 99.9 41.5 99.9 44.2C99.9 46.8 99.9 49.4 99.8 51.9C99.7 54.5 100.7 58.1 99.4 59.4C98.1 60.7 94.3 59.8 91.9 59.8C89.5 59.9 87.2 60 84.9 60C82.5 60 79.1 59.8 78 59.8'/><path vector-effect='non-scaling-stroke' d='M22 59.6C20.7 59.6 16.9 59.5 14.4 59.5C12 59.5 9.7 59.4 7.3 59.3C5 59.3 1.5 60.6 0.4 59.2C-0.7 57.8 0.6 53.7 0.6 51.1C0.7 48.4 0.7 45.9 0.6 43.4C0.5 40.9 0.3 37.2 0.2 36'/>";
 
@@ -1118,27 +1122,20 @@
   }
 
   function viewScan() {
-    const camMsg = ui.cam === "unsupported" || ui.cam === "denied"
-      ? (LIVE ? "Camera unavailable. Type the ISBN below." : "No camera here. Tap to simulate a scan.")
-      : "Tap to start scanning";
     return `<div class="view">
       <h2 class="page-title">Scan</h2>
-      <button class="viewfinder" data-act="camera" aria-label="Scan a barcode">
-        <span class="screen">
-          <svg class="corners" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true">${CORNERS}</svg>
-          <span class="beam"></span>
-          <span class="vf-text"><strong>Point at the barcode</strong><small>${camMsg}</small></span>
+      <button class="scan-hero" data-act="camera" aria-label="Open the scanner">
+        ${scanArt()}
+        <span class="scan-cta">
+          <strong>Scan the barcode on the back</strong>
+          <small>Each book goes straight onto your shelf, ready to swap.</small>
+          <span class="btn primary">Open the scanner</span>
         </span>
-        <span class="knobs"><i></i><i></i><i></i></span>
       </button>
-      <div class="section">
-        <p class="eyebrow">New scans start as</p>
-        <div class="chips">${CONDITIONS.map((c) => `<button class="chip sm" data-act="defCond" data-id="${c.id}" aria-pressed="${ui.defCond === c.id}">${c.label}</button>`).join("")}</div>
-        <p class="lede">Every scan goes straight onto your shelf as available. Fix any condition below.</p>
-      </div>
       ${ui.scanned.length ? `<div class="section">
         <div class="section-head"><h2>Just added</h2><span class="aside">${plural(ui.scanned.length, "book")}</span></div>
         <div class="list">${ui.scanned.map(scanRow).join("")}</div>
+        <p class="lede">Tap a condition to fix it. Switch a book off to keep it without offering it.</p>
       </div>` : ""}
       <div class="section">
         <p class="eyebrow">No barcode? Search instead</p>
@@ -1842,6 +1839,7 @@
   // Returns "entering" the first time a screen is drawn, so its parts rise in once.
   let lastScreen = null;
   let screenNow = null;
+  let scanner = null; // the open scanner, if any (see startCamera)
   function entering(key) {
     screenNow = key;
     return key !== lastScreen ? "entering" : "";
@@ -1936,6 +1934,7 @@
       ${ui.toast ? `<div class="toast" role="status">${esc(ui.toast)}</div>` : ""}
     `;
     putBackTyped(typed);
+    if (scanner) scanner.paint();
     if (prevScroll) {
       const sh = document.querySelector(".sheet");
       if (sh) sh.scrollTop = prevScroll;
@@ -2050,70 +2049,142 @@
     });
   }
 
-  // Camera scanning. Uses the browser's own barcode reader where there is one (Chrome on
-  // Android), and the bundled ZXing reader elsewhere (Safari on iPhone).
+  // The scanner: a full-screen camera view that adds every book whose barcode it reads. It lives
+  // outside #app so re-rendering the page doesn't stop the camera; render() repaints its tray.
+  // Reads barcodes with the browser's own reader where it handles book barcodes (Chrome on
+  // Android) and the bundled ZXing reader elsewhere (Safari on iPhone). Without a camera, the
+  // demo shows a drawn barcode to tap, and the real app asks for the ISBN instead.
+
   async function startCamera() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      ui.cam = "unsupported";
-      return LIVE ? (toast("This browser can't use the camera. Type the ISBN below."), render()) : simulateScan();
-    }
+    if (scanner) return;
     const wrap = document.createElement("div");
-    wrap.className = "camera";
-    wrap.innerHTML = `<video playsinline muted></video><span class="cam-frame"></span><p class="cam-hint">Hold a barcode inside the frame</p><p class="cam-count" aria-live="polite"></p><button class="btn primary cam-done">Done</button>`;
-    const video = wrap.querySelector("video");
-    const count = wrap.querySelector(".cam-count");
+    wrap.className = "scanner";
+    wrap.setAttribute("role", "dialog");
+    wrap.setAttribute("aria-modal", "true");
+    wrap.setAttribute("aria-label", "Scan barcodes");
+    wrap.innerHTML = `
+      <video playsinline muted></video>
+      <div class="sc-top">
+        <button class="sc-x" aria-label="Close the scanner">${icon("x", 20)}</button>
+        <p class="sc-status" aria-live="polite"></p>
+      </div>
+      <div class="sc-mid">
+        <div class="sc-frame"><svg class="corners" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true">${CORNERS}</svg><span class="beam"></span></div>
+        <p class="sc-hint">Starting the camera…</p>
+      </div>
+      <div class="sc-bottom">
+        <div class="sc-tray"></div>
+        <div class="sc-cond"><span>New scans start as</span><div class="sc-chips">${CONDITIONS.map((c) => `<button data-act="defCond" data-id="${c.id}">${c.label}</button>`).join("")}</div></div>
+        <button class="btn primary sc-done">Done</button>
+      </div>`;
+    const $ = (sel) => wrap.querySelector(sel);
+    const video = $("video"), frame = $(".sc-frame"), hint = $(".sc-hint"), tray = $(".sc-tray"), status = $(".sc-status");
+    const base = ui.scanned.length; // books added before this scan session
     const seen = new Set();
-    let added = 0;
+    let shown = 0;
     let stopReader = () => {};
+    const me = {
+      paint() {
+        const fresh = ui.scanned.slice(0, Math.max(0, ui.scanned.length - base)).map(copy).filter(Boolean);
+        status.textContent = ui.toast || (fresh.length ? plural(fresh.length, "book") + " added to your shelf" : "Nothing scanned yet");
+        if (fresh.length !== shown) {
+          tray.innerHTML = fresh.map((c, i) => `<div class="sc-book${i === 0 && fresh.length > shown ? " new" : ""}"><span class="mini">${cover(bk(c.bookId))}</span><span>${esc(bk(c.bookId).title)}</span></div>`).join("");
+          shown = fresh.length;
+        }
+        wrap.querySelectorAll(".sc-chips button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === ui.defCond)));
+      },
+      close() {
+        stopReader();
+        if (video.srcObject) video.srcObject.getTracks().forEach((tr) => tr.stop());
+        scanner = null;
+        document.body.classList.remove("scanning");
+        wrap.classList.add("leaving");
+        setTimeout(() => wrap.remove(), 220);
+        render();
+      },
+    };
+    scanner = me;
+    ui.toast = null; // the status line starts fresh
+    $(".sc-x").addEventListener("click", me.close);
+    $(".sc-done").addEventListener("click", me.close);
+    document.body.appendChild(wrap);
+    document.body.classList.add("scanning");
+    me.paint();
+
+    const flash = () => {
+      frame.classList.remove("hit");
+      void frame.offsetWidth; // restart the animation
+      frame.classList.add("hit");
+    };
     const onCode = async (code) => {
       if (!/^97[89]\d{10}$/.test(code) || seen.has(code)) return;
       seen.add(code);
       if (navigator.vibrate) navigator.vibrate(40);
-      count.textContent = "Looking up " + code + "…";
-      await addByIsbn(code);
-      added++;
-      count.textContent = plural(added, "book") + " added";
-    };
-    const stop = () => {
-      stopReader();
-      if (video.srcObject) video.srcObject.getTracks().forEach((tr) => tr.stop());
-      wrap.remove();
+      flash();
+      toast("Looking up " + code + "…");
       render();
+      await addByIsbn(code);
     };
-    wrap.querySelector(".cam-done").addEventListener("click", stop);
+    // No camera: the demo scans a drawn barcode; the real app takes the ISBN by hand.
+    const noCamera = (why) => {
+      if (scanner !== me) return;
+      if (!LIVE) {
+        wrap.classList.add("sim");
+        frame.insertAdjacentHTML("afterbegin", `<button class="sim-tap" aria-label="Scan this barcode"><svg viewBox="0 0 120 66" aria-hidden="true">${SCAN_SIM}</svg></button>`);
+        $(".sim-tap").addEventListener("click", () => { flash(); simulateScan(); });
+        hint.textContent = "This preview can't use your camera, so tap the barcode to scan a sample book.";
+        return;
+      }
+      wrap.classList.add("manual");
+      $(".sc-mid").innerHTML = `<div class="sc-manual">${scanArt()}
+        <h3>${why === "blocked" ? "The camera is blocked" : "No camera here"}</h3>
+        <p>${why === "blocked" ? "To scan, allow camera access for Wormy in your browser settings. Meanwhile, type" : "Type"} the ISBN printed above the barcode.</p>
+        <form class="sc-isbn"><input inputmode="numeric" autocomplete="off" placeholder="978…" aria-label="ISBN"><button class="btn primary">Add</button></form>
+      </div>`;
+      $(".sc-isbn").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const input = $(".sc-isbn input");
+        const isbn = isbn13(input.value);
+        if (!isbn) return (status.textContent = "An ISBN has 10 or 13 digits. Check the back cover.");
+        input.value = "";
+        addByIsbn(isbn);
+      });
+    };
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return noCamera("none");
+    const constraints = { video: { facingMode: "environment" } };
     try {
-      if ("BarcodeDetector" in window) {
+      const native = "BarcodeDetector" in window && (await window.BarcodeDetector.getSupportedFormats()).includes("ean_13");
+      if (native) {
         const detector = new window.BarcodeDetector({ formats: ["ean_13"] });
-        video.srcObject = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-        document.body.appendChild(wrap);
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        if (scanner !== me) return stream.getTracks().forEach((tr) => tr.stop()); // closed while asking
+        video.srcObject = stream;
         await video.play();
         let running = true;
         stopReader = () => { running = false; };
-        const loop = async () => {
+        const look = async () => {
           if (!running) return;
           try {
-            const codes = await detector.detect(video);
-            for (const c of codes) await onCode(c.rawValue);
-          } catch (e) { /* keep scanning */ }
-          setTimeout(loop, 250);
+            for (const c of await detector.detect(video)) await onCode(c.rawValue);
+          } catch (e) { /* keep looking */ }
+          setTimeout(look, 250);
         };
-        loop();
+        look();
       } else {
         await loadScript("vendor/zxing.min.js");
         const hints = new Map([[window.ZXing.DecodeHintType.POSSIBLE_FORMATS, [window.ZXing.BarcodeFormat.EAN_13]]]);
         const reader = new window.ZXing.BrowserMultiFormatReader(hints, 300);
-        document.body.appendChild(wrap);
         stopReader = () => reader.reset();
-        await reader.decodeFromVideoDevice(undefined, video, (result) => { if (result) onCode(result.getText()); });
+        await reader.decodeFromConstraints(constraints, video, (result) => { if (result) onCode(result.getText()); });
+        if (scanner !== me) return reader.reset();
       }
+      wrap.classList.add("live");
+      hint.textContent = "Hold the barcode inside the frame. Each book adds itself.";
     } catch (e) {
-      wrap.remove();
-      ui.cam = "denied";
-      if (LIVE) {
-        toast("Camera blocked. Allow camera access in your browser settings, or type the ISBN below.");
-        return render();
-      }
-      return simulateScan();
+      stopReader();
+      if (video.srcObject) video.srcObject.getTracks().forEach((tr) => tr.stop());
+      noCamera(e && e.name === "NotAllowedError" ? "blocked" : "none");
     }
   }
 
@@ -2953,6 +3024,7 @@
   });
 
   document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && scanner) return scanner.close();
     if (e.key === "Escape" && ui.sheet) closeSheet();
   });
 

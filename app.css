@@ -968,37 +968,22 @@ img.avatar { object-fit: cover; }
 .burst small { position: absolute; bottom: 40px; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #2a1f17; }
 @keyframes burstIn { from { transform: rotate(-25deg) scale(0.3); opacity: 0; } to { transform: rotate(-6deg) scale(1); opacity: 1; } }
 
-/* ---------- scan: a 1958 television ---------- */
-.viewfinder {
-  position: relative;
-  width: 100%; max-width: 100%;
-  aspect-ratio: 16 / 11;
-  border: 0;
-  border-radius: 36px 36px 30px 30px / 32px 32px 26px 26px;
-  background: linear-gradient(160deg, color-mix(in srgb, var(--sea) 85%, white), var(--sea));
-  cursor: pointer;
-  overflow: hidden;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.5), inset 0 -4px 0 rgba(0, 0, 0, 0.08), var(--shadow-md);
+/* ---------- scan: one drawing that opens the scanner ---------- */
+.scan-hero {
+  width: 100%; border: 0; background: none; padding: 4px 0 0; margin: 0;
+  color: inherit; font: inherit; text-align: center; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  -webkit-tap-highlight-color: transparent;
 }
-.viewfinder .screen {
-  position: absolute; inset: 16px 70px 16px 16px;
-  border-radius: 28px / 24px;
-  background: radial-gradient(ellipse at 40% 30%, #46585a, #182120 78%);
-  box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.18), inset 0 8px 24px rgba(0, 0, 0, 0.4);
-  overflow: hidden;
-  display: grid; place-items: end center;
-  padding: 14px;
-}
-.viewfinder .knobs { position: absolute; right: 20px; top: 26px; display: flex; flex-direction: column; gap: 12px; align-items: center; }
-.viewfinder .knobs i { width: 28px; height: 28px; border-radius: var(--blob); background: var(--sun); box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.12), 0 2px 3px rgba(0, 0, 0, 0.15); }
-.viewfinder .knobs i:nth-child(2) { background: var(--peach); width: 22px; height: 22px; }
-.viewfinder .knobs i:nth-child(3) { width: 24px; height: 5px; border-radius: 3px; background: rgba(0, 0, 0, 0.25); box-shadow: none; }
-.viewfinder .corners { position: absolute; left: 22%; top: 14%; width: 56%; height: 40%; overflow: visible; fill: none; stroke: #f6efe1; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
-.viewfinder .beam { position: absolute; left: 20%; right: 20%; top: 40%; height: 2px; background: #f2c14e; box-shadow: 0 0 12px #f2c14e; animation: beam 1.8s ease-in-out infinite alternate; }
-@keyframes beam { from { top: 16%; } to { top: 52%; } }
-.vf-text { position: relative; display: flex; flex-direction: column; gap: 2px; text-align: center; color: #f6efe1; }
-.vf-text strong { font-size: var(--t-15); font-weight: 600; }
-.vf-text small { font-size: var(--t-12); opacity: 0.8; }
+.scan-art { width: min(100%, 300px); height: auto; overflow: visible; transition: transform 0.35s var(--ease-out); }
+.scan-art .wash { opacity: 0.45; }
+:root[data-look="dark"] .scan-art .wash { opacity: 0.09; }
+.scan-hero:hover .scan-art, .scan-hero:focus-visible .scan-art { transform: rotate(-1.5deg) scale(1.02); }
+.scan-hero:active .scan-art { transform: scale(0.97); }
+.scan-cta { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.scan-cta strong { font-family: var(--f-display); font-weight: 400; font-size: var(--t-20); line-height: 1.2; }
+.scan-cta small { color: var(--muted); font-size: var(--t-13); max-width: 30ch; }
+.scan-cta .btn { margin-top: 12px; }
 .mini { width: 44px; flex: none; }
 .result-row, .scan-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--hair); }
 .result-row .grow, .scan-row .grow { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
@@ -1011,12 +996,68 @@ img.avatar { object-fit: cover; }
 .toggle[aria-pressed="true"] { background: var(--primary); }
 .toggle[aria-pressed="true"] span { transform: translateX(18px); }
 .toggle[disabled] { opacity: 0.45; cursor: not-allowed; }
-.camera { position: fixed; inset: 0; z-index: 80; background: #000000; display: grid; place-items: center; }
-.camera video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.cam-frame { position: relative; width: 72%; max-width: 330px; aspect-ratio: 2 / 1; border: 3px solid #f2c14e; border-radius: 16px; box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5); }
-.cam-hint { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 26px); left: 16px; right: 16px; text-align: center; color: #f6efe1; font-weight: 600; }
-.cam-count { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 56px); left: 16px; right: 16px; text-align: center; color: #f2c14e; font-size: var(--t-13); }
-.cam-done { position: absolute; bottom: calc(env(safe-area-inset-bottom, 0px) + 30px); }
+/* the scanner: full screen and dark, like a camera */
+body.scanning { overflow: hidden; }
+.scanner {
+  --sc-fg: #f6efe1;
+  position: fixed; inset: 0; z-index: 80;
+  display: flex; flex-direction: column;
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 16px) max(16px, env(safe-area-inset-left, 0px));
+  background: #14110e; color: var(--sc-fg);
+  overflow: hidden;
+  animation: sc-in 0.25s var(--ease-out) both;
+}
+.scanner.leaving { animation: sc-out 0.2s ease-in both; pointer-events: none; }
+@keyframes sc-in { from { opacity: 0; transform: scale(1.03); } }
+@keyframes sc-out { to { opacity: 0; transform: scale(1.03); } }
+.scanner video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.scanner:not(.live) video { display: none; }
+/* the demo's stand-in: the camera is looking at the back of a book */
+.scanner.sim { background: #e58f69; }
+.sc-top, .sc-bottom { position: relative; z-index: 1; }
+.sc-top { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+.sc-x { width: 44px; height: 44px; flex: none; border-radius: 50%; border: 0; background: rgba(20, 17, 14, 0.5); color: inherit; display: grid; place-items: center; cursor: pointer; }
+.sc-status { flex: 1; margin-right: 56px; text-align: center; font-size: var(--t-13); font-weight: 600; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45); }
+.sc-mid { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; }
+.sc-frame { position: relative; width: min(78vw, 340px); aspect-ratio: 5 / 3; border-radius: 14px; box-shadow: 0 0 0 100vmax rgba(12, 10, 8, 0.5); }
+.sc-frame .corners { position: absolute; inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px); overflow: visible; fill: none; stroke: var(--sc-fg); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.sc-frame .corners path { vector-effect: non-scaling-stroke; }
+.sc-frame .beam { position: absolute; left: 7%; right: 7%; top: 50%; height: 3px; border-radius: 2px; background: var(--sun); box-shadow: 0 0 12px var(--sun); pointer-events: none; animation: beam 1.8s ease-in-out infinite alternate; }
+@keyframes beam { from { top: 16%; } to { top: 84%; } }
+.sc-frame.hit .corners { animation: sc-hit 0.55s ease-out; }
+@keyframes sc-hit { 30% { stroke: var(--sun); transform: scale(1.05); } }
+.sim-tap { position: absolute; inset: 9% 7%; padding: 0; border: 0; background: none; cursor: pointer; transform: rotate(-2deg); transition: transform 0.15s var(--ease-out); -webkit-tap-highlight-color: transparent; }
+.sim-tap svg { display: block; width: 100%; height: 100%; }
+.sim-tap:active { transform: rotate(-2deg) scale(0.96); }
+.sc-hint { position: relative; max-width: 32ch; text-align: center; font-size: var(--t-13); text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5); }
+.sc-bottom { display: flex; flex-direction: column; gap: 14px; }
+.sc-tray { display: flex; align-items: flex-start; gap: 8px; min-height: 64px; overflow-x: auto; scrollbar-width: none; margin: -4px -16px -6px; padding: 4px 16px 6px; } /* keeps its room, so the frame never jumps */
+.sc-tray::-webkit-scrollbar { display: none; }
+.sc-book { flex: none; display: flex; align-items: center; gap: 8px; max-width: 210px; padding: 6px 12px 6px 6px; border-radius: 12px; background: rgba(20, 17, 14, 0.62); font-size: var(--t-12); font-weight: 600; }
+.sc-book .mini { width: 28px; }
+.sc-book > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc-book.new { animation: sc-pop 0.45s cubic-bezier(0.3, 1.5, 0.5, 1) both; }
+@keyframes sc-pop { from { transform: translateY(14px) scale(0.85); opacity: 0; } }
+.sc-cond { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.sc-cond > span { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5); }
+.sc-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.sc-chips button { padding: 7px 12px; border-radius: 999px; border: 1.5px solid rgba(246, 239, 225, 0.45); background: rgba(20, 17, 14, 0.45); color: inherit; font: inherit; font-size: var(--t-12); font-weight: 600; cursor: pointer; }
+.sc-chips button[aria-pressed="true"] { background: var(--sc-fg); border-color: var(--sc-fg); color: #14110e; }
+.sc-done { align-self: stretch; }
+/* the real app with no camera: type the ISBN instead */
+.scanner.manual { --sc-fg: var(--ink); background: var(--paper); }
+.scanner.manual .sc-x { background: var(--sunk); }
+.scanner.manual .sc-status, .scanner.manual .sc-cond > span { text-shadow: none; }
+.scanner.manual .sc-book { background: var(--raised); box-shadow: var(--shadow-sm); }
+.scanner.manual .sc-chips button { border-color: var(--hair-2); background: transparent; }
+.scanner.manual .sc-chips button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.sc-manual { display: flex; flex-direction: column; align-items: center; gap: 10px; max-width: 340px; text-align: center; }
+.sc-manual .scan-art { width: 190px; margin-bottom: 4px; }
+.sc-manual h3 { font-family: var(--f-display); font-weight: 400; font-size: var(--t-20); }
+.sc-manual p { color: var(--muted); font-size: var(--t-13); }
+.sc-isbn { display: flex; gap: 8px; width: 100%; margin-top: 6px; }
+.sc-isbn input { flex: 1; min-width: 0; height: 50px; padding: 0 16px; border: 1px solid var(--hair-2); border-radius: 999px; background: var(--raised); color: var(--ink); font: inherit; font-size: var(--t-15); letter-spacing: 0.04em; }
+.sc-isbn input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px var(--primary-tint); }
 
 /* ---------- sign in + onboarding ---------- */
 .signin {

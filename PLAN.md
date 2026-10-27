@@ -24,7 +24,7 @@ Readers scan their books into a personal library, send books other readers reque
 | Region | US only (50 states + DC) |
 | Book summaries | A 2–3 sentence "About this book" note, **written by Claude** from only the title and author: its own words, no quotes, no publisher copy, no spoilers, labeled as AI-written. Written once per book and shared. Optional |
 | Condition ratings | When a book arrives, the recipient says what condition it's **really** in. That updates their copy, goes on that physical copy's history (shown without names), and builds each sender's "condition as described in N of M swaps" record. Bigger problems still go through Report a problem |
-| Navigation | Discover · My Shelf (Available / Not available / Wishlist) · **Scan** · **Exchanges** · Profile. Credit balance (a highlighted, pen-circled "1 credit" that opens the wallet) and alerts sit in the header |
+| Navigation | Discover · My Shelf (Available / Not available / Wishlist) · **Scan** · **Exchanges** · Profile. Credit balance (a highlighted, pen-underlined "1 credit" that opens the wallet) and alerts sit in the header |
 
 ## 2. Data model
 
@@ -106,7 +106,7 @@ The wallet should feel like a library card, not a bank account. Credits can't be
 | Book page | Condition, AI summary, owner (with their condition record), the cost: **1 credit + $1 fee**, who ships and how, and this copy's history |
 | Request | Credit check, address confirmation, fee from balance, reserve |
 | My Shelf | Available / Not available / Wishlist. Per-copy condition, format, flags, availability toggle |
-| Scan | Viewfinder (real camera on supported phones, simulated elsewhere), default condition, rapid add, quick condition fixes, title/ISBN search with Open Library lookup |
+| Scan | One drawing that opens a full-screen scanner: camera view, condition for new scans, a tray of books as they land, Done. No camera: type the ISBN (the demo taps a drawn barcode instead). Then quick condition fixes, and title/ISBN search with Open Library lookup |
 | Exchanges | To send / Coming to me / History. Step tracker, ship-by stamp, tracking entry, confirm or report, star rating, and "what condition did it arrive in?" |
 | Wallet | Available / reserved / pending, credit history, fee balance and top-ups |
 | Sign in | Apple, Google, or email link with a 6-digit code |
@@ -120,7 +120,7 @@ The wallet should feel like a library card, not a bank account. Credits can't be
 | Accounts, database, photo storage, hourly timers | **Supabase** (Postgres, Auth, Storage, pg_cron) | `supabase/migrations/` |
 | Fee-balance top-ups | **Stripe Checkout** (hosted page) plus a signed webhook. No Stripe Connect, since no money is paid out to readers | `supabase/functions/create-checkout`, `stripe-webhook` |
 | Book lookup and search | Open Library, then Google Books (server-side, so readers can't rename books) | `supabase/functions/add-book` |
-| Barcode scanning | Browser `BarcodeDetector` (Android), bundled ZXing (iPhone) | `app.js`, `vendor/` |
+| Barcode scanning | Browser `BarcodeDetector` where it reads book barcodes (Chrome on Android), bundled ZXing everywhere else (Safari on iPhone). Needs HTTPS and the reader's OK to use the camera. Tested by pointing the scanner at a fake camera showing a real book barcode | `app.js`, `vendor/` |
 | Tracking | Format checks and one-use rule in the database; carrier tracking links; **EasyPost** scan updates via a signed webhook (optional) | `add-tracking`, `tracking-webhook` |
 | Search | Typo-tolerant search over the whole catalog in Postgres (`pg_trgm`), editions grouped, live availability, similar-book suggestions | `search_books`, `similar_books` |
 | Book summaries | **Claude** (Anthropic API), once per book, saved and shared (optional) | `book-summary` |
@@ -139,7 +139,7 @@ Timers (48h accept, 24h ship reminder, 3-day ship, 2-day confirm, 10-day lost) r
 - **Fraud brakes.** A tracking number can prove only one shipment. One card can unlock only one welcome credit. A copy can be in only one exchange. 3 strikes in 6 months pause an account. There are limits on open requests, shelf size, wishlist size, and per-reader limits on the server functions.
 - **Photos.** Shrunk in the browser, which strips location data. Stored only in the reader's own folder, and saved as a path in Wormy's storage, never as an outside web address.
 - **Web page hardening.** A Content Security Policy allows scripts from Wormy only (libraries are bundled, not pulled from CDNs). Every reader-entered text is escaped. `_headers` adds clickjacking, sniffing and HSTS protection.
-- **Tests.** 102 automated checks, including attack attempts (see `SETUP.md`).
+- **Tests.** 106 automated checks, including attack attempts (see `SETUP.md`).
 
 ## 7. Search and the book catalog
 

@@ -163,11 +163,28 @@ try {
   check("onboarding ends on the Scan tab", (await page.locator(".tabbar button[aria-current=page]").textContent()).includes("Scan"));
 
   console.log("Adding books");
-  for (const k of ["dune", "circe", "klara"]) {
+  for (const k of ["dune", "circe"]) {
     await page.fill("#scanq", BOOKS[k][0]);
     await tap('[data-act="lookupIsbn"]');
     await idle();
   }
+  // This browser has no camera, so the scanner asks for the ISBN instead.
+  await tap('[data-act="camera"]');
+  await page.waitForSelector(".scanner.manual .sc-isbn", { timeout: 5000 });
+  check("with no camera, the scanner offers to type the ISBN", /ISBN/.test(await text(".sc-manual p")));
+  await page.fill(".sc-isbn input", "12345");
+  await page.press(".sc-isbn input", "Enter");
+  check("the scanner turns down something that isn't an ISBN", /10 or 13 digits/.test(await text(".sc-status")));
+  await tap('.scanner [data-act="defCond"][data-id="ln"]');
+  await page.fill(".sc-isbn input", BOOKS.klara[0]);
+  await page.press(".sc-isbn input", "Enter");
+  await page.waitForSelector(".sc-book", { timeout: 15000 });
+  await idle();
+  check("a book typed into the scanner lands in its tray", /Klara/.test(await text(".sc-book")));
+  check("...in the condition picked in the scanner", (await sql("select condition from copies c join books b on b.isbn = c.isbn where c.owner_id = $1 and b.title like 'Klara%'", [JAMIE]))[0]?.condition === "ln");
+  await shot("e2e-03-scanner");
+  await tap(".sc-done");
+  await page.waitForSelector(".scanner", { state: "detached" });
   check("three books scanned in by ISBN appear under Just added", (await page.locator(".scan-row").count()) === 3);
   check("they're listed on the server", (await sql("select count(*)::int n from listings l join copies c on c.id = l.copy_id where c.owner_id = $1 and l.closed_at is null", [JAMIE]))[0].n === 3);
   await tap('.scan-row [data-act="setCond"][data-c="good"]', 0);

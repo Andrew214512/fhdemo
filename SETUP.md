@@ -101,7 +101,7 @@ Supabase provides `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE
 
 1. In Netlify or Cloudflare Pages, connect the GitHub repo. There's no build step: the publish directory is the repo root.
 2. Add your domain. HTTPS is automatic.
-3. The `_headers` file applies Wormy's security headers automatically. If your Supabase project uses a custom domain, add it to `connect-src` in `_headers` and in `index.html`.
+3. The `_headers` file applies Wormy's security headers automatically. They allow Wormy (and only Wormy) to use the camera, which the scanner needs. Phones only allow the camera on HTTPS sites, so scanning won't work from a plain `http://` address. If your Supabase project uses a custom domain, add it to `connect-src` in `_headers` and in `index.html`.
 
 ### 6. Book lookups
 
@@ -149,7 +149,7 @@ They need PostgreSQL (set `PG_ADMIN_URL`, default `postgres://postgres:postgres@
 |---|---|
 | `db.test.mjs` (34) | No direct table access. Credits can't be minted, double-spent or duplicated, even with simultaneous requests. Address privacy, timers, disputes, strikes, refunds, account deletion, photo-path rules, condition ratings (only the recipient, once, after it arrives), summaries server-only, search (typos, ISBN-10, editions grouped, availability, wildcards), similar books, any-edition wishlists, tracking updates, no credit without tracking |
 | `functions.test.mjs` (13) | Unsigned or tampered Stripe and EasyPost events are rejected. Carrier scans are saved. Replays count once. Rate limits work. Internal errors don't leak. Book summaries: only the title and author are sent to Claude, each book is summarized once, unknown books show nothing, outages retry later (against a stand-in for the Claude API, so no key is needed) |
-| `e2e.test.mjs` (55) | Sign-in (Google redirect with PKCE, email code), profile setup with photo, scanning, Stripe top-up via webhook, welcome credit, search (typos, not on a shelf yet, not on Wormy at all), a book page with a summary arriving fresh, a full exchange both ways with a condition rating, tracking rules, the support queue, sign out, account deletion |
+| `e2e.test.mjs` (59) | Sign-in (Google redirect with PKCE, email code), profile setup with photo, scanning (including the scanner's type-the-ISBN fallback when there's no camera), Stripe top-up via webhook, welcome credit, search (typos, not on a shelf yet, not on Wormy at all), a book page with a summary arriving fresh, a full exchange both ways with a condition rating, tracking rules, the support queue, sign out, account deletion |
 
 ## Not built yet
 
