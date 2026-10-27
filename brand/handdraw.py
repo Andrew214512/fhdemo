@@ -8,9 +8,9 @@ prints the icon strokes and drawings (pasted into app.js: ICONS, HEART, SPINES, 
 CORNERS) and the CSS images (pasted into app.css :root as --hand-*, --m-* and --mark-* tokens;
 css_dark holds the dark-theme versions of the --mark-* tokens).
 
-Texture comes from grain(): crisp specks knocked out of the ink. Nothing is displaced, so
-lines never go soft. The same filter, at icon and drawing scale, is defined in app.js as
-#wm-ink and #wm-ink-lg."""
+Texture comes from ink(): solid ink with small irregular bumps along its edges, sharpened back
+to a crisp line, like the logo. The same filter, at icon and drawing scale, is defined in
+app.js as #wm-ink and #wm-ink-lg."""
 import math, random, json
 
 def f(v):
@@ -148,17 +148,14 @@ def uri(svg):
     svg = " ".join(svg.split())
     return 'url("data:image/svg+xml,' + svg.replace("%", "%25").replace("#", "%23").replace("<", "%3C").replace(">", "%3E").replace('"', "'") + '")'
 
-def grain(freq, cut=0.16, seed=3, fid="g"):
-    """Felt-tip texture: knocks tiny hard-edged specks out of the ink, like a marker on paper.
-    The noise is thresholded, never used to move pixels, so edges stay crisp instead of going soft.
-    In a stretched image the specks stretch too, which reads as streaks along a stroke."""
-    n = 25
-    table = " ".join(["0"] * round(cut * n) + ["1"] * (n - round(cut * n)))
+def ink(freq, scale, seed=3, fid="g"):
+    """Marker-ink edges, like the logo: solid ink whose outline is nudged into small irregular bumps,
+    then sharpened back to a crisp edge (the alpha is pushed to fully in or fully out). The ink
+    itself stays solid, with no specks, and the edge never goes soft."""
     return (f"<filter id='{fid}' filterUnits='userSpaceOnUse' x='0' y='0' width='100%' height='100%' color-interpolation-filters='sRGB'>"
             f"<feTurbulence type='fractalNoise' baseFrequency='{freq}' numOctaves='2' seed='{seed}'/>"
-            "<feColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0'/>"
-            f"<feComponentTransfer><feFuncA type='discrete' tableValues='{table}'/></feComponentTransfer>"
-            "<feComposite in='SourceGraphic' operator='in'/></filter>")
+            f"<feDisplacementMap in='SourceGraphic' scale='{scale}' xChannelSelector='R' yChannelSelector='G'/>"
+            "<feComponentTransfer><feFuncA type='linear' slope='3' intercept='-1'/></feComponentTransfer></filter>")
 
 def rays(cx, cy, n, r0, r1, w0, w1, seed, jitter=0.06, vw=200, vh=200, color="white", gap=1.0):
     rng = random.Random(seed); ps = []
@@ -171,11 +168,11 @@ def rays(cx, cy, n, r0, r1, w0, w1, seed, jitter=0.06, vw=200, vh=200, color="wh
              (cx + ca * L + px * ww, cy + sa * L + py * ww), (cx + ca * L - px * ww, cy + sa * L - py * ww),
              (cx + ca * (r0 + L) / 2 - px * (w0 + ww) / 2 + px * bend, cy + sa * (r0 + L) / 2 - py * (w0 + ww) / 2 + py * bend), (cx + ca * r0 - px * w0, cy + sa * r0 - py * w0)]
         ps.append("M" + " ".join(f"{f(x)} {f(y)}" for x, y in p) + "Z")
-    return f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {vw} {vh}' preserveAspectRatio='none'>{grain(0.5, 0.3, 5)}<path filter='url(#g)' fill='{color}' d='{''.join(ps)}'/></svg>"
+    return f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {vw} {vh}' preserveAspectRatio='none'>{ink(0.05, 2.4, 5)}<path filter='url(#g)' fill='{color}' d='{''.join(ps)}'/></svg>"
 
 CSS = {}
 CSS["--hand-rays"] = uri(rays(100, 100, 15, 14, 98, 1.2, 7, 601, color="#f2c14e"))
-CSS["--hand-sun"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>{grain(0.45, 0.28, 6)}<path filter='url(#g)' fill='#f2c14e' d='{blob(50, 50, 45, 44, 2.4, 602, 11)}'/></svg>")
+CSS["--hand-sun"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>{ink(0.06, 2.6, 6)}<path filter='url(#g)' fill='#f2c14e' d='{blob(50, 50, 45, 44, 2.4, 602, 11)}'/></svg>")
 # masks for book jackets (white = shape; the color comes from the jacket)
 CSS["--m-blob"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><path fill='white' d='{blob(50, 50, 46, 46, 2.2, 701, 11)}'/></svg>")
 CSS["--m-square"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><path fill='white' d='{fill([(7, 8), (93, 6), (94, 93), (6, 94)], 1.6, 702, tight=0.06)}'/></svg>")
@@ -189,7 +186,7 @@ CSS["--m-stripes"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 
 CSS["--m-frame"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 150' preserveAspectRatio='none'><g fill='none' stroke='white' stroke-linecap='round'><path stroke-width='1.7' d='{outline([(8, 7), (93, 6.5), (93.4, 143), (8.5, 143.6)], 0.8, 801, over=0.08, tight=0.05)}'/><path stroke-width='0.8' d='{outline([(11.5, 10.5), (89.6, 10.2), (89.8, 139.6), (11.8, 139.9)], 0.6, 802, over=0.06, tight=0.05)}'/></g></svg>")
 
 # a thin pen underline for things you can tap (links, the credit counter); stretched to fit
-CSS["--m-underline"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'>{grain(0.9, 0.28, 7)}<path filter='url(#g)' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' d='{line([(1.5, 4.8), (50, 3.9), (98.5, 3.2)], 0.9, 911)}'/></svg>")
+CSS["--m-underline"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'>{ink(0.25, 0.8, 7)}<path filter='url(#g)' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' d='{line([(1.5, 4.8), (50, 3.9), (98.5, 3.2)], 0.9, 911)}'/></svg>")
 
 # a torn paper edge for the top of the tab bar: tiles left to right without a seam
 def torn_edge(w=360, h=8, seed=921):
@@ -206,15 +203,17 @@ def torn_edge(w=360, h=8, seed=921):
 CSS["--m-torn"] = uri(torn_edge())
 
 # The felt-tip underline (under a reader's name, "a credit") and the highlighter swipe, light and dark.
+# Each layer is inked at full strength and faded afterwards (the opacity attribute): the edge
+# sharpening in ink() would otherwise erase see-through ink like the dark-mode highlighter.
 def marker_under(color):
-    return uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 24' preserveAspectRatio='none'>{grain(0.6, 0.32, 11)}<g filter='url(#g)' fill='{color}'>"
-               "<path fill-opacity='.92' d='M3 15.5C38 12.4 86 10.6 132 10.2C158 10 180 9.2 196.4 7.6C199.4 7.3 200 11.8 197 12.5C176 15 146 15.6 112 16.3C76 17 40 18.6 7 20.4C2.6 20.6 0.4 15.8 3 15.5Z'/>"
-               "<path fill-opacity='.35' d='M120 11.4C150 11 176 10 195 8.6C197 8.5 197.4 10.6 195.6 11C176 13.4 148 14.2 121 14.8Z'/></g></svg>")
+    return uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 24' preserveAspectRatio='none'>{ink(0.12, 1.6, 11)}"
+               f"<path filter='url(#g)' fill='{color}' opacity='.92' d='M3 15.5C38 12.4 86 10.6 132 10.2C158 10 180 9.2 196.4 7.6C199.4 7.3 200 11.8 197 12.5C176 15 146 15.6 112 16.3C76 17 40 18.6 7 20.4C2.6 20.6 0.4 15.8 3 15.5Z'/>"
+               f"<path filter='url(#g)' fill='{color}' opacity='.35' d='M120 11.4C150 11 176 10 195 8.6C197 8.5 197.4 10.6 195.6 11C176 13.4 148 14.2 121 14.8Z'/></svg>")
 def marker_hl(color, o):
-    return uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'>{grain(0.35, 0.3, 12)}<g filter='url(#g)' fill='{color}'>"
-               f"<path fill-opacity='{o}' d='M5 6.5C62 4.6 132 3.6 196 3L199 37C134 37.4 64 38.2 1 39.2Z'/>"
-               f"<path fill-opacity='{round(o * 0.45, 2)}' d='M5 6.5C62 4.6 132 3.6 196 3L196.3 6.4C132 7 62 8 4.6 9.8Z M1.4 35.8C64 34.8 134 34 198.7 33.6L199 37C134 37.4 64 38.2 1 39.2Z'/>"
-               f"<path fill-opacity='{round(o * 0.5, 2)}' d='M170 3.3L196 3L199 37L174 37.2C176 26 172 14 170 3.3Z'/></g></svg>")
+    return uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'>{ink(0.08, 2.2, 12)}"
+               f"<path filter='url(#g)' fill='{color}' opacity='{o}' d='M5 6.5C62 4.6 132 3.6 196 3L199 37C134 37.4 64 38.2 1 39.2Z'/>"
+               f"<path filter='url(#g)' fill='{color}' opacity='{round(o * 0.45, 2)}' d='M5 6.5C62 4.6 132 3.6 196 3L196.3 6.4C132 7 62 8 4.6 9.8Z M1.4 35.8C64 34.8 134 34 198.7 33.6L199 37C134 37.4 64 38.2 1 39.2Z'/>"
+               f"<path filter='url(#g)' fill='{color}' opacity='{round(o * 0.5, 2)}' d='M170 3.3L196 3L199 37L174 37.2C176 26 172 14 170 3.3Z'/></svg>")
 CSS["--mark-under"] = marker_under("#cf5628")
 CSS["--mark-hl"] = marker_hl("#f2c14e", 0.5)
 DARK = {"--mark-under": marker_under("#f08a5d"), "--mark-hl": marker_hl("#f08a5d", 0.2)}

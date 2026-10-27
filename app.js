@@ -677,11 +677,12 @@
     const [color, wash, ink] = ICONS[n];
     return `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${wash ? `<path class="wash" d="${wash}" fill="var(--${color})" stroke="none" filter="url(#wm-ink)" transform="translate(.7 .8)"/>` : ""}<g filter="url(#wm-ink)">${ink.map((d) => `<path d="${d}"/>`).join("")}</g></svg>`;
   };
-  // Felt-tip texture: tiny hard-edged specks knocked out of the ink (the same grain as brand/handdraw.py).
-  // Nothing is displaced, so lines stay crisp. One size for icons, a coarser one for drawings.
+  // Marker-ink edges, like the logo (the same ink() as brand/handdraw.py): the outline is nudged into
+  // small bumps, then sharpened back to a crisp edge. Solid ink, no specks, no blur.
+  // One size for icons, a larger one for drawings.
   document.body.insertAdjacentHTML("beforeend", `<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-    <filter id="wm-ink" filterUnits="userSpaceOnUse" x="-24" y="-24" width="72" height="72" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" seed="5"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0"/><feComponentTransfer><feFuncA type="discrete" tableValues="0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"/></feComponentTransfer><feComposite in="SourceGraphic" operator="in"/></filter>
-    <filter id="wm-ink-lg" filterUnits="userSpaceOnUse" x="-120" y="-120" width="360" height="360" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.45" numOctaves="2" seed="5"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0"/><feComponentTransfer><feFuncA type="discrete" tableValues="0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"/></feComponentTransfer><feComposite in="SourceGraphic" operator="in"/></filter>
+    <filter id="wm-ink" filterUnits="userSpaceOnUse" x="-24" y="-24" width="72" height="72" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.3" numOctaves="2" seed="5"/><feDisplacementMap in="SourceGraphic" scale="1.1" xChannelSelector="R" yChannelSelector="G"/><feComponentTransfer><feFuncA type="linear" slope="3" intercept="-1"/></feComponentTransfer></filter>
+    <filter id="wm-ink-lg" filterUnits="userSpaceOnUse" x="-120" y="-120" width="360" height="360" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="2" seed="5"/><feDisplacementMap in="SourceGraphic" scale="2.4" xChannelSelector="R" yChannelSelector="G"/><feComponentTransfer><feFuncA type="linear" slope="3" intercept="-1"/></feComponentTransfer></filter>
   </svg>`);
 
   // Three book spines on a shelf, for empty states. Color sits a hair off the ink, like a quick sketch.
