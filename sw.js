@@ -1,7 +1,7 @@
 // Caches Worm's own files so the app opens offline once installed. Requests to
 // other sites (Supabase, Stripe, fonts) always go straight to the network and
 // are never stored here, so no account data ends up in the cache.
-const CACHE = "worm-v2";
+const CACHE = "worm-v3";
 const SHELL = ["./", "index.html", "app.css", "app.js", "config.js", "icon.svg", "manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {

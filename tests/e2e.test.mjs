@@ -189,7 +189,7 @@ try {
 
   console.log("Requesting a book");
   await page.locator(".book", { hasText: "Babel" }).first().click();
-  await tap('[data-act="request"]');
+  await tap('.sheet [data-act="request"]');
   await tap('[data-act="editAddress"]');
   await page.fill("#a-name", "Jamie Reader");
   await page.fill("#a-line1", "500 Main St");

@@ -39,39 +39,40 @@
   const US_STATES = "AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY".split(" ");
   const REPORT_REASONS = ["Condition is worse than listed", "Wrong book or edition", "Damaged in the mail", "Says delivered, but it isn't here"];
 
-  // Cover colors are part of each book's identity, so they stay the same in light and dark.
+  // Cover colors and jacket style (1–7, see app.css) are part of each book's identity, so they
+  // stay the same in light and dark.
   const CATALOG = [
-    ["b1", "Tomorrow, and Tomorrow, and Tomorrow", "Gabrielle Zevin", 2022, "9780593321201", "#ffd36e", "#2a1f17", 1, 0],
-    ["b2", "Project Hail Mary", "Andy Weir", 2021, "9780593135204", "#a9d4f0", "#1d3550", 3, 1],
+    ["b1", "Tomorrow, and Tomorrow, and Tomorrow", "Gabrielle Zevin", 2022, "9780593321201", "#ffd36e", "#2a1f17", 2, 0],
+    ["b2", "Project Hail Mary", "Andy Weir", 2021, "9780593135204", "#a9d4f0", "#1d3550", 6, 1],
     ["b3", "Circe", "Madeline Miller", 2018, "9780316556347", "#ffb48a", "#3a1d0f", 1, 1],
-    ["b4", "The Overstory", "Richard Powers", 2018, "9780393356687", "#c8d58e", "#2c3a12", 2, 0],
-    ["b5", "Piranesi", "Susanna Clarke", 2020, "9781635577808", "#d8c8f2", "#2e2350", 3, 1],
-    ["b6", "Station Eleven", "Emily St. John Mandel", 2014, "9780804172448", "#fff1d6", "#b0331f", 2, 1],
-    ["b7", "The Left Hand of Darkness", "Ursula K. Le Guin", 1969, "9780441478125", "#cfe6ef", "#18324a", 3, 1],
-    ["b8", "Lessons in Chemistry", "Bonnie Garmus", 2022, "9780385547345", "#f8c6bd", "#5a2018", 1, 2],
-    ["b9", "Pachinko", "Min Jin Lee", 2017, "9781455563920", "#e9a7a0", "#4a1220", 2, 2],
-    ["b10", "Demon Copperhead", "Barbara Kingsolver", 2022, "9780063251922", "#9fd8cb", "#1d4a44", 1, 0],
-    ["b11", "Klara and the Sun", "Kazuo Ishiguro", 2021, "9780593318171", "#ffe08f", "#5b3a24", 3, 1],
-    ["b12", "Babel", "R. F. Kuang", 2022, "9780063021426", "#f3ecdf", "#8a2420", 2, 1],
-    ["b13", "The Song of Achilles", "Madeline Miller", 2012, "9780062060624", "#3d4a6b", "#ffd36e", 1, 2],
-    ["b14", "Sea of Tranquility", "Emily St. John Mandel", 2022, "9780593321447", "#bfe1ec", "#1d2f45", 3, 1],
-    ["b15", "Educated", "Tara Westover", 2018, "9780399590504", "#f6efe2", "#2b1d14", 2, 5],
-    ["b16", "Remarkably Bright Creatures", "Shelby Van Pelt", 2022, "9780063204157", "#8cc7c7", "#12383d", 1, 0],
-    ["b17", "The Remains of the Day", "Kazuo Ishiguro", 1989, "9780679731726", "#d7dfae", "#3b4418", 2, 0],
-    ["b18", "Normal People", "Sally Rooney", 2018, "9781984822185", "#c7ead8", "#18302a", 3, 0],
-    ["b19", "The Midnight Library", "Matt Haig", 2020, "9780525559474", "#2f4a78", "#ffe08f", 1, 0],
-    ["b20", "A Gentleman in Moscow", "Amor Towles", 2016, "9780670026197", "#f2b8a8", "#5a1520", 2, 2],
-    ["b21", "Hamnet", "Maggie O'Farrell", 2020, "9780525657606", "#b9d7b0", "#23432a", 3, 2],
-    ["b22", "The Name of the Wind", "Patrick Rothfuss", 2007, "9780756404741", "#e8c39a", "#3b2416", 1, 1],
-    ["b23", "Beloved", "Toni Morrison", 1987, "9781400033416", "#e3c3d8", "#4a1d38", 2, 0],
-    ["b24", "Braiding Sweetgrass", "Robin Wall Kimmerer", 2013, "9781571313560", "#d9e3a0", "#3d4a12", 3, 5],
-    ["b25", "Dune", "Frank Herbert", 1965, "9780441172719", "#ffc58a", "#4a2408", 3, 1],
-    ["b26", "The Thursday Murder Club", "Richard Osman", 2020, "9781984880963", "#a6dcdf", "#12474d", 1, 3],
-    ["b27", "Gone Girl", "Gillian Flynn", 2012, "9780307588371", "#2e2a28", "#f6ecdc", 2, 3],
-    ["b28", "Beach Read", "Emily Henry", 2020, "9781984806734", "#ffc4b4", "#24304a", 1, 4],
-    ["b29", "Book Lovers", "Emily Henry", 2022, "9780593334836", "#ffe58f", "#2b4a3a", 3, 4],
+    ["b4", "The Overstory", "Richard Powers", 2018, "9780393356687", "#c8d58e", "#2c3a12", 4, 0],
+    ["b5", "Piranesi", "Susanna Clarke", 2020, "9781635577808", "#d8c8f2", "#2e2350", 7, 1],
+    ["b6", "Station Eleven", "Emily St. John Mandel", 2014, "9780804172448", "#fff1d6", "#b0331f", 3, 1],
+    ["b7", "The Left Hand of Darkness", "Ursula K. Le Guin", 1969, "9780441478125", "#cfe6ef", "#18324a", 5, 1],
+    ["b8", "Lessons in Chemistry", "Bonnie Garmus", 2022, "9780385547345", "#f8c6bd", "#5a2018", 2, 2],
+    ["b9", "Pachinko", "Min Jin Lee", 2017, "9781455563920", "#e9a7a0", "#4a1220", 1, 2],
+    ["b10", "Demon Copperhead", "Barbara Kingsolver", 2022, "9780063251922", "#9fd8cb", "#1d4a44", 3, 0],
+    ["b11", "Klara and the Sun", "Kazuo Ishiguro", 2021, "9780593318171", "#ffe08f", "#5b3a24", 6, 1],
+    ["b12", "Babel", "R. F. Kuang", 2022, "9780063021426", "#f3ecdf", "#8a2420", 4, 1],
+    ["b13", "The Song of Achilles", "Madeline Miller", 2012, "9780062060624", "#3d4a6b", "#ffd36e", 7, 2],
+    ["b14", "Sea of Tranquility", "Emily St. John Mandel", 2022, "9780593321447", "#bfe1ec", "#1d2f45", 5, 1],
+    ["b15", "Educated", "Tara Westover", 2018, "9780399590504", "#f6efe2", "#2b1d14", 3, 5],
+    ["b16", "Remarkably Bright Creatures", "Shelby Van Pelt", 2022, "9780063204157", "#8cc7c7", "#12383d", 4, 0],
+    ["b17", "The Remains of the Day", "Kazuo Ishiguro", 1989, "9780679731726", "#d7dfae", "#3b4418", 1, 0],
+    ["b18", "Normal People", "Sally Rooney", 2018, "9781984822185", "#c7ead8", "#18302a", 2, 0],
+    ["b19", "The Midnight Library", "Matt Haig", 2020, "9780525559474", "#2f4a78", "#ffe08f", 6, 0],
+    ["b20", "A Gentleman in Moscow", "Amor Towles", 2016, "9780670026197", "#f2b8a8", "#5a1520", 7, 2],
+    ["b21", "Hamnet", "Maggie O'Farrell", 2020, "9780525657606", "#b9d7b0", "#23432a", 4, 2],
+    ["b22", "The Name of the Wind", "Patrick Rothfuss", 2007, "9780756404741", "#e8c39a", "#3b2416", 5, 1],
+    ["b23", "Beloved", "Toni Morrison", 1987, "9781400033416", "#e3c3d8", "#4a1d38", 1, 0],
+    ["b24", "Braiding Sweetgrass", "Robin Wall Kimmerer", 2013, "9781571313560", "#d9e3a0", "#3d4a12", 6, 5],
+    ["b25", "Dune", "Frank Herbert", 1965, "9780441172719", "#ffc58a", "#4a2408", 2, 1],
+    ["b26", "The Thursday Murder Club", "Richard Osman", 2020, "9781984880963", "#a6dcdf", "#12474d", 3, 3],
+    ["b27", "Gone Girl", "Gillian Flynn", 2012, "9780307588371", "#2e2a28", "#f6ecdc", 5, 3],
+    ["b28", "Beach Read", "Emily Henry", 2020, "9781984806734", "#ffc4b4", "#24304a", 6, 4],
+    ["b29", "Book Lovers", "Emily Henry", 2022, "9780593334836", "#ffe58f", "#2b4a3a", 4, 4],
     ["b30", "Sapiens", "Yuval Noah Harari", 2015, "9780062316097", "#f4efe6", "#c0392b", 2, 5],
-  ].map(([id, title, author, year, isbn, bg, fg, motif, g]) => ({ id, title, author, year, isbn, bg, fg, motif, genre: GENRES[g] }));
+  ].map(([id, title, author, year, isbn, bg, fg, jacket, g]) => ({ id, title, author, year, isbn, bg, fg, jacket, genre: GENRES[g] }));
   const CATALOG_BY_ID = Object.fromEntries(CATALOG.map((b) => [b.id, b]));
   // Jacket colors for real books that don't come with a cover image.
   const PALETTE = [["#9fd8cb", "#1d4a44"], ["#ffb48a", "#3a1d0f"], ["#ffd36e", "#2a1f17"], ["#c8d58e", "#2c3a12"], ["#d8c8f2", "#2e2350"], ["#f8c6bd", "#5a2018"], ["#a9d4f0", "#1d3550"], ["#3d4a6b", "#ffd36e"]];
@@ -241,7 +242,7 @@
   const now = () => (LIVE ? Date.now() + skew : S.now);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const money = (n) => "$" + Number(n).toFixed(2);
-  const UNKNOWN_BOOK = { id: "?", title: "Unknown book", author: "", year: "", isbn: "", bg: "#f4ecdd", fg: "#2f241b", motif: 1, genre: "Other" };
+  const UNKNOWN_BOOK = { id: "?", title: "Unknown book", author: "", year: "", isbn: "", bg: "#f4ecdd", fg: "#2f241b", jacket: 7, genre: "Other" };
   const bk = (id) => CATALOG_BY_ID[id] || S.extraBooks[id] || UNKNOWN_BOOK;
   const copy = (id) => S.copies.find((c) => c.id === id);
   const listing = (id) => S.listings.find((l) => l.id === id);
@@ -264,7 +265,16 @@
   function decorate(b) {
     const h = hash(b.isbn || b.title);
     const [bg, fg] = PALETTE[h % PALETTE.length];
-    return Object.assign({ bg, fg, motif: (h % 3) + 1, genre: "Other" }, b, { id: b.id || b.isbn });
+    return Object.assign({ bg, fg, jacket: (h % 7) + 1, genre: "Other" }, b, { id: b.id || b.isbn });
+  }
+  // A jacket's accent: a deep ink on light cloth, a bright one on dark cloth.
+  const DEEP_ACCENTS = ["#cf5628", "#1f5c55", "#2f4a78", "#b0331f", "#d99a1c", "#6b4a8a", "#3b6b4a"];
+  const BRIGHT_ACCENTS = ["#f2c14e", "#f7a982", "#8fcfc1", "#eeb3a6", "#c9b8ea"];
+  function accentFor(b) {
+    const n = parseInt(String(b.bg).slice(1), 16) || 0;
+    const light = (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255 > 0.55;
+    const set = light ? DEEP_ACCENTS : BRIGHT_ACCENTS;
+    return set[(hash(b.isbn || b.title) >>> 3) % set.length];
   }
 
   /* ---------------- credit ledger ----------------
@@ -597,47 +607,42 @@
 
   function cover(b, cls = "") {
     const img = LIVE && b.cover ? `<img class="cover-img${loadedCovers.has(b.cover) ? " loaded" : ""}" src="${esc(b.cover)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : "";
-    return `<div class="cover-wrap"><div class="cover m${b.motif || 1} ${cls}" style="background:${esc(b.bg)};color:${esc(b.fg)}" role="img" aria-label="Cover of ${esc(b.title)}">
-      <span class="c-mark"></span>
+    return `<div class="cover-wrap"><div class="cover j${Number(b.jacket) || 7} ${cls}" style="--bg:${esc(b.bg)};--fg:${esc(b.fg)};--ac:${accentFor(b)}" role="img" aria-label="Cover of ${esc(b.title)}">
+      <span class="j-art"></span>
       <span class="c-title">${esc(b.title)}</span>
       <span class="c-author">${esc(b.author)}</span>
       ${img}
     </div></div>`;
   }
 
+  // Book tiles: the jacket, then title, author and one quiet line of detail.
+  function bookTile({ act, id, key, b, flag = "", meta = "", dim = false }) {
+    return `<button class="book${dim ? " dim" : ""}" data-act="${act}" data-id="${esc(id)}" ${rv(key)}>
+      <div class="book-cover-box">${cover(b)}${flag}</div>
+      <span class="b-title">${esc(b.title)}</span>
+      <span class="b-author">${esc(b.author)}</span>
+      ${meta ? `<span class="b-meta">${meta}</span>` : ""}
+    </button>`;
+  }
+  const BUSY = '<span class="busy">In an exchange</span>';
+  const WISH_FLAG = '<span class="flag" role="img" aria-label="On your wishlist">♥</span>';
+
   function listingTile(l, ctx = "l") {
     const c = copy(l.copyId);
     const b = bk(c.bookId);
     const busy = activeExchange(c.id);
-    const tags = [`<span class="cond">${COND[c.cond].short}</span>`];
-    if (busy) tags.push('<span class="cond off">IN AN EXCHANGE</span>');
-    else if (onWishlist(b.id) && c.owner !== "me") tags.push('<span class="cond wish">WISHLIST</span>');
-    const owner = c.owner === "me" ? "" : `<span>@${esc(user(c.owner).handle)}</span>`;
-    return `<button class="book ${busy ? "dim" : ""}" data-act="openListing" data-id="${esc(l.id)}" ${rv(ctx + ":" + l.id)}>
-      <div class="book-cover-box">${cover(b)}</div>
-      <span class="b-title">${esc(b.title)}</span>
-      <span class="b-meta">${tags.join("")}${owner}</span>
-    </button>`;
+    const flag = !busy && onWishlist(b.id) && c.owner !== "me" ? WISH_FLAG : "";
+    return bookTile({ act: "openListing", id: l.id, key: ctx + ":" + l.id, b, flag, meta: busy ? BUSY : COND[c.cond].label, dim: !!busy });
   }
 
   function copyTile(c) {
-    const b = bk(c.bookId);
     const busy = activeExchange(c.id);
-    return `<button class="book" data-act="openCopy" data-id="${esc(c.id)}" ${rv("copy:" + c.id)}>
-      <div class="book-cover-box">${cover(b)}</div>
-      <span class="b-title">${esc(b.title)}</span>
-      <span class="b-meta"><span class="cond">${COND[c.cond].short}</span>${busy ? '<span class="cond wish">IN AN EXCHANGE</span>' : ""}</span>
-    </button>`;
+    return bookTile({ act: "openCopy", id: c.id, key: "copy:" + c.id, b: bk(c.bookId), meta: busy ? BUSY : COND[c.cond].label });
   }
 
   function wishTile(bookId) {
-    const b = bk(bookId);
     const avail = S.listings.filter((l) => requestable(l) && copy(l.copyId).bookId === bookId && copy(l.copyId).owner !== "me").length;
-    return `<button class="book" data-act="openBook" data-id="${esc(bookId)}" ${rv("wish:" + bookId)}>
-      <div class="book-cover-box">${cover(b)}</div>
-      <span class="b-title">${esc(b.title)}</span>
-      <span class="b-meta">${avail ? `<span class="cond wish">${avail} AVAILABLE</span>` : "<span>Watching</span>"}</span>
-    </button>`;
+    return bookTile({ act: "openBook", id: bookId, key: "wish:" + bookId, b: bk(bookId), meta: avail ? `<span class="avail">${avail} available</span>` : "Watching for a copy" });
   }
 
   function stampHTML(ms, label = "SHIP BY") {
@@ -660,7 +665,7 @@
 
   function creditPill() {
     const b = balances();
-    return `<button class="credit-pill" data-act="wallet" aria-label="${plural(b.available, "credit")} available">${icon("credit", 18)}<b>${b.available}</b><span>${b.available === 1 ? "credit" : "credits"}</span></button>`;
+    return `<button class="credit-pill" data-act="wallet" aria-label="${plural(b.available, "credit")} available"><span class="coin" aria-hidden="true">✦</span><b>${b.available}</b><span>${b.available === 1 ? "credit" : "credits"}</span></button>`;
   }
 
   function avatar(cls = "", photo = S.me.photo, name = S.me.name) {
@@ -674,9 +679,21 @@
 
   function viewDiscover() {
     return `<div class="view">
+      ${greeting()}
       <label class="search" for="q">${icon("search", 18)}<input id="q" type="search" placeholder="Title, author, or ISBN" value="${esc(ui.q)}" autocomplete="off"></label>
       <div id="results">${discoverResults()}</div>
     </div>`;
+  }
+
+  function greeting() {
+    const h = new Date(now()).getHours();
+    const part = h < 5 ? "Up late" : h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+    const name = (S.me.name || "").trim().split(/\s+/)[0];
+    const n = discoverPool().filter(requestable).length;
+    const sub = balances().available > 0
+      ? `You have ${plural(balances().available, "credit")} to spend, and ${plural(n, "book")} ${n === 1 ? "is" : "are"} ready to request.`
+      : `${plural(n, "book")} ${n === 1 ? "is" : "are"} ready to request. Send one of yours to earn a credit.`;
+    return `<div class="hello" ${rv("hello")}><h1 class="page-title">${part}${name ? ", " + esc(name) : ""}</h1><p class="lede">${sub}</p></div>`;
   }
 
   function trendScore(bookId) {
@@ -700,24 +717,24 @@
       }</div>`;
     }
     let html = welcomeBanner();
-    const b = balances();
-    if (b.available > 0) {
-      html += `<p class="ready">You have ${plural(b.available, "credit")}. ${plural(avail.length, "book")} ${avail.length === 1 ? "is" : "are"} ready for you to discover.</p>`;
-    }
     if (!pool.length) {
       return html + `<div class="empty">${spines()}<h3>The shelves are filling up</h3><p>No one near you has listed books yet. Scan yours so the first readers find them.</p><button class="btn primary sm" data-act="tab" data-id="scan">Scan my books</button></div>`;
     }
     const wished = avail.filter((l) => onWishlist(copy(l.copyId).bookId));
-    if (wished.length) {
+    const byTrend = avail.slice().sort((a, z) => trendScore(copy(z.copyId).bookId) - trendScore(copy(a.copyId).bookId));
+    const pick = wished[0] || byTrend[0];
+    if (pick) html += featureCard(pick, wished.length ? "On your wishlist" : "Most wanted this week");
+    const moreWished = wished.filter((l) => l !== pick);
+    if (moreWished.length) {
       html += `<div class="section">
-        <div class="section-head"><h2>From your wishlist</h2><span class="eyebrow">${wished.length} available</span></div>
-        <div class="rail">${wished.map((l) => listingTile(l, "wished")).join("")}</div>
+        <div class="section-head"><h2>From your wishlist</h2><span class="aside">${wished.length} available</span></div>
+        <div class="rail">${moreWished.map((l) => listingTile(l, "wished")).join("")}</div>
       </div>`;
     }
-    const trending = avail.slice().sort((a, z) => trendScore(copy(z.copyId).bookId) - trendScore(copy(a.copyId).bookId)).slice(0, 6);
+    const trending = byTrend.filter((l) => l !== pick && !wished.includes(l)).slice(0, 8);
     if (trending.length) {
       html += `<div class="section">
-        <div class="section-head"><h2>Trending</h2><span class="eyebrow">Most wanted</span></div>
+        <div class="section-head"><h2>Trending</h2><span class="aside">Most wanted</span></div>
         <div class="rail">${trending.map((l) => listingTile(l, "trend")).join("")}</div>
       </div>`;
     }
@@ -732,13 +749,33 @@
     html += `<div class="section">
       <div class="section-head"><h2>Recently listed</h2></div>
       <div class="chips scroll" role="group" aria-label="Genre">${genres.map((g) => `<button class="chip" data-act="genre" data-id="${esc(g)}" aria-pressed="${ui.genre === g}">${esc(g)}</button>`).join("")}</div>
-      <div class="chips" role="group" aria-label="Condition and availability">
+      <div class="chips scroll" role="group" aria-label="Condition and availability">
         ${conds.map((c) => `<button class="chip sm" data-act="cond" data-id="${c}" aria-pressed="${ui.cond === c}">${c === "all" ? "Any condition" : COND[c].label + " +"}</button>`).join("")}
         <button class="chip sm" data-act="showAll" aria-pressed="${ui.showAll}">Include books in exchanges</button>
       </div>
       ${recent.length ? `<div class="grid">${recent.map((l) => listingTile(l, "recent")).join("")}</div>` : '<p class="lede">No books match these filters yet.</p>'}
     </div>`;
     return html;
+  }
+
+  // The one book to look at first. The whole card opens the book; the button requests it.
+  function featureCard(l, why) {
+    const c = copy(l.copyId);
+    const b = bk(c.bookId);
+    const o = user(c.owner);
+    const asked = S.requests.some((r) => r.listingId === l.id && r.recipient === "me" && r.status === "pending");
+    const canAsk = !asked && balances().available > 0;
+    return `<div class="feature" ${rv("feature:" + l.id)}>
+      <button class="feature-hit" data-act="openListing" data-id="${esc(l.id)}" aria-label="${esc(b.title)} by ${esc(b.author)}"></button>
+      ${cover(b, "lg")}
+      <div class="who">
+        <span class="eyebrow">${esc(why)}</span>
+        <h3>${esc(b.title)}</h3>
+        <span class="by">${esc(b.author)}</span>
+        <span class="meta">${COND[c.cond].label} · @${esc(o.handle)}${o.city ? " · " + esc(o.city) : ""}</span>
+        ${canAsk ? `<button class="btn primary sm" data-act="request" data-id="${esc(l.id)}">Request · 1 credit</button>` : asked ? '<span class="meta">Requested</span>' : ""}
+      </div>
+    </div>`;
   }
 
   function welcomeBanner() {
@@ -819,7 +856,7 @@
         <p class="lede">Every scan goes straight onto your shelf as available. Fix any condition below.</p>
       </div>
       ${ui.scanned.length ? `<div class="section">
-        <div class="section-head"><h2>Just added</h2><span class="eyebrow">${plural(ui.scanned.length, "book")}</span></div>
+        <div class="section-head"><h2>Just added</h2><span class="aside">${plural(ui.scanned.length, "book")}</span></div>
         <div class="list">${ui.scanned.map(scanRow).join("")}</div>
       </div>` : ""}
       <div class="section">
@@ -972,7 +1009,9 @@
   function viewLoading() {
     const book = `<span class="skel-book"><span class="skel cover-skel"></span><span class="skel line"></span><span class="skel line w40"></span></span>`;
     return `<div class="view" aria-busy="true" aria-label="Loading your shelf">
+      <div class="hello"><span class="skel title big"></span><span class="skel line w70"></span></div>
       <span class="skel pill"></span>
+      <span class="skel hero"></span>
       <span class="skel title"></span>
       <div class="rail">${book.repeat(4)}</div>
       <span class="skel title"></span>
