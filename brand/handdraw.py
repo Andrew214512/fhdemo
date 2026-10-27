@@ -177,5 +177,19 @@ CSS["--m-frame"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10
 # a thin pen underline for things you can tap (links, the credit counter); stretched to fit
 CSS["--m-underline"] = uri(f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 8' preserveAspectRatio='none'>{rough(0.2, 0.8)}<path filter='url(#r)' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' d='{line([(1.5, 4.8), (50, 3.9), (98.5, 3.2)], 0.9, 911)}'/></svg>")
 
+# a torn paper edge for the top of the tab bar: tiles left to right without a seam
+def torn_edge(w=360, h=8, seed=921):
+    rng = random.Random(seed); nz = noise(rng)
+    pts = []
+    for i in range(0, w + 1, 3):
+        a = 2 * math.pi * i / w  # one full noise cycle per tile, so the ends meet
+        y = 3.4 + 1.1 * nz(a * 3) + rng.uniform(-0.45, 0.45) * (0 < i < w)
+        if 0 < i < w and rng.random() < 0.06: y += rng.uniform(0.6, 1.4)  # the odd fibre pulled loose
+        pts.append((i, y))
+    pts[-1] = (w, pts[0][1])
+    d = "M0 " + f(h) + " " + " ".join(f"L{f(x)} {f(y)}" for x, y in pts) + f" L{w} {f(h)}Z"
+    return f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {w} {h}'>{rough(0.35, 0.9)}<path filter='url(#r)' fill='white' d='{d}'/></svg>"
+CSS["--m-torn"] = uri(torn_edge())
+
 out = {"icons": {k: {"ink": v[0], "wash": v[1], "color": v[2]} for k, v in I.items()}, "heart": HEART, "atom": ATOM, "spines": SPINES, "burst": BURST, "corners": CORNERS, "css": CSS}
 print(json.dumps(out, indent=1))
