@@ -41,40 +41,40 @@
 
   // Cover colors are part of each book's identity, so they stay the same in light and dark.
   const CATALOG = [
-    ["b1", "Tomorrow, and Tomorrow, and Tomorrow", "Gabrielle Zevin", 2022, "9780593321201", "#e2a52b", "#2b1d14", 1, 0],
-    ["b2", "Project Hail Mary", "Andy Weir", 2021, "9780593135204", "#1f4f6e", "#f2bd4f", 3, 1],
-    ["b3", "Circe", "Madeline Miller", 2018, "9780316556347", "#cf5228", "#2b1d14", 1, 1],
-    ["b4", "The Overstory", "Richard Powers", 2018, "9780393356687", "#2f5d3a", "#f2e8d5", 2, 0],
-    ["b5", "Piranesi", "Susanna Clarke", 2020, "9781635577808", "#1d2b4f", "#e7c88c", 3, 1],
-    ["b6", "Station Eleven", "Emily St. John Mandel", 2014, "9780804172448", "#f2e8d5", "#a3291f", 2, 1],
-    ["b7", "The Left Hand of Darkness", "Ursula K. Le Guin", 1969, "9780441478125", "#a7c4bc", "#1f3b37", 3, 1],
-    ["b8", "Lessons in Chemistry", "Bonnie Garmus", 2022, "9780385547345", "#e7a39a", "#2b1d14", 1, 2],
-    ["b9", "Pachinko", "Min Jin Lee", 2017, "9781455563920", "#7c1f2c", "#f3d9b8", 2, 2],
-    ["b10", "Demon Copperhead", "Barbara Kingsolver", 2022, "9780063251922", "#1f6e68", "#f2bd4f", 1, 0],
-    ["b11", "Klara and the Sun", "Kazuo Ishiguro", 2021, "9780593318171", "#f2bd4f", "#5b3a24", 3, 1],
-    ["b12", "Babel", "R. F. Kuang", 2022, "9780063021426", "#efe5d1", "#7a1d1d", 2, 1],
-    ["b13", "The Song of Achilles", "Madeline Miller", 2012, "9780062060624", "#1c1611", "#e2a52b", 1, 2],
-    ["b14", "Sea of Tranquility", "Emily St. John Mandel", 2022, "9780593321447", "#8fb9c7", "#1d2f45", 3, 1],
-    ["b15", "Educated", "Tara Westover", 2018, "9780399590504", "#f2e8d5", "#2b1d14", 2, 5],
-    ["b16", "Remarkably Bright Creatures", "Shelby Van Pelt", 2022, "9780063204157", "#0f4c5c", "#f2c6a0", 1, 0],
-    ["b17", "The Remains of the Day", "Kazuo Ishiguro", 1989, "9780679731726", "#7e8c33", "#f8f1dc", 2, 0],
-    ["b18", "Normal People", "Sally Rooney", 2018, "9781984822185", "#a8d5c2", "#18302a", 3, 0],
-    ["b19", "The Midnight Library", "Matt Haig", 2020, "9780525559474", "#152a4a", "#f2d27a", 1, 0],
-    ["b20", "A Gentleman in Moscow", "Amor Towles", 2016, "9780670026197", "#8a1c2b", "#efd9a7", 2, 2],
-    ["b21", "Hamnet", "Maggie O'Farrell", 2020, "9780525657606", "#2d5a3c", "#f6e3c4", 3, 2],
-    ["b22", "The Name of the Wind", "Patrick Rothfuss", 2007, "9780756404741", "#5b3a24", "#e6b25c", 1, 1],
-    ["b23", "Beloved", "Toni Morrison", 1987, "9781400033416", "#5a2340", "#f4dfe8", 2, 0],
-    ["b24", "Braiding Sweetgrass", "Robin Wall Kimmerer", 2013, "9781571313560", "#9aa53f", "#fbf6e2", 3, 5],
-    ["b25", "Dune", "Frank Herbert", 1965, "9780441172719", "#d98b3a", "#2b1608", 3, 1],
-    ["b26", "The Thursday Murder Club", "Richard Osman", 2020, "9781984880963", "#1f6f78", "#fbe7b5", 1, 3],
-    ["b27", "Gone Girl", "Gillian Flynn", 2012, "9780307588371", "#101010", "#e9e3d8", 2, 3],
-    ["b28", "Beach Read", "Emily Henry", 2020, "9781984806734", "#f6a99a", "#24304a", 1, 4],
-    ["b29", "Book Lovers", "Emily Henry", 2022, "9780593334836", "#f3d36b", "#2b4a3a", 3, 4],
-    ["b30", "Sapiens", "Yuval Noah Harari", 2015, "9780062316097", "#f0ece4", "#b3261e", 2, 5],
+    ["b1", "Tomorrow, and Tomorrow, and Tomorrow", "Gabrielle Zevin", 2022, "9780593321201", "#ffd36e", "#2a1f17", 1, 0],
+    ["b2", "Project Hail Mary", "Andy Weir", 2021, "9780593135204", "#a9d4f0", "#1d3550", 3, 1],
+    ["b3", "Circe", "Madeline Miller", 2018, "9780316556347", "#ffb48a", "#3a1d0f", 1, 1],
+    ["b4", "The Overstory", "Richard Powers", 2018, "9780393356687", "#c8d58e", "#2c3a12", 2, 0],
+    ["b5", "Piranesi", "Susanna Clarke", 2020, "9781635577808", "#d8c8f2", "#2e2350", 3, 1],
+    ["b6", "Station Eleven", "Emily St. John Mandel", 2014, "9780804172448", "#fff1d6", "#b0331f", 2, 1],
+    ["b7", "The Left Hand of Darkness", "Ursula K. Le Guin", 1969, "9780441478125", "#cfe6ef", "#18324a", 3, 1],
+    ["b8", "Lessons in Chemistry", "Bonnie Garmus", 2022, "9780385547345", "#f8c6bd", "#5a2018", 1, 2],
+    ["b9", "Pachinko", "Min Jin Lee", 2017, "9781455563920", "#e9a7a0", "#4a1220", 2, 2],
+    ["b10", "Demon Copperhead", "Barbara Kingsolver", 2022, "9780063251922", "#9fd8cb", "#1d4a44", 1, 0],
+    ["b11", "Klara and the Sun", "Kazuo Ishiguro", 2021, "9780593318171", "#ffe08f", "#5b3a24", 3, 1],
+    ["b12", "Babel", "R. F. Kuang", 2022, "9780063021426", "#f3ecdf", "#8a2420", 2, 1],
+    ["b13", "The Song of Achilles", "Madeline Miller", 2012, "9780062060624", "#3d4a6b", "#ffd36e", 1, 2],
+    ["b14", "Sea of Tranquility", "Emily St. John Mandel", 2022, "9780593321447", "#bfe1ec", "#1d2f45", 3, 1],
+    ["b15", "Educated", "Tara Westover", 2018, "9780399590504", "#f6efe2", "#2b1d14", 2, 5],
+    ["b16", "Remarkably Bright Creatures", "Shelby Van Pelt", 2022, "9780063204157", "#8cc7c7", "#12383d", 1, 0],
+    ["b17", "The Remains of the Day", "Kazuo Ishiguro", 1989, "9780679731726", "#d7dfae", "#3b4418", 2, 0],
+    ["b18", "Normal People", "Sally Rooney", 2018, "9781984822185", "#c7ead8", "#18302a", 3, 0],
+    ["b19", "The Midnight Library", "Matt Haig", 2020, "9780525559474", "#2f4a78", "#ffe08f", 1, 0],
+    ["b20", "A Gentleman in Moscow", "Amor Towles", 2016, "9780670026197", "#f2b8a8", "#5a1520", 2, 2],
+    ["b21", "Hamnet", "Maggie O'Farrell", 2020, "9780525657606", "#b9d7b0", "#23432a", 3, 2],
+    ["b22", "The Name of the Wind", "Patrick Rothfuss", 2007, "9780756404741", "#e8c39a", "#3b2416", 1, 1],
+    ["b23", "Beloved", "Toni Morrison", 1987, "9781400033416", "#e3c3d8", "#4a1d38", 2, 0],
+    ["b24", "Braiding Sweetgrass", "Robin Wall Kimmerer", 2013, "9781571313560", "#d9e3a0", "#3d4a12", 3, 5],
+    ["b25", "Dune", "Frank Herbert", 1965, "9780441172719", "#ffc58a", "#4a2408", 3, 1],
+    ["b26", "The Thursday Murder Club", "Richard Osman", 2020, "9781984880963", "#a6dcdf", "#12474d", 1, 3],
+    ["b27", "Gone Girl", "Gillian Flynn", 2012, "9780307588371", "#2e2a28", "#f6ecdc", 2, 3],
+    ["b28", "Beach Read", "Emily Henry", 2020, "9781984806734", "#ffc4b4", "#24304a", 1, 4],
+    ["b29", "Book Lovers", "Emily Henry", 2022, "9780593334836", "#ffe58f", "#2b4a3a", 3, 4],
+    ["b30", "Sapiens", "Yuval Noah Harari", 2015, "9780062316097", "#f4efe6", "#c0392b", 2, 5],
   ].map(([id, title, author, year, isbn, bg, fg, motif, g]) => ({ id, title, author, year, isbn, bg, fg, motif, genre: GENRES[g] }));
   const CATALOG_BY_ID = Object.fromEntries(CATALOG.map((b) => [b.id, b]));
   // Jacket colors for real books that don't come with a cover image.
-  const PALETTE = [["#1f6e68", "#f2e8d5"], ["#cf5228", "#fff4e3"], ["#e2a52b", "#2b1d14"], ["#7e8c33", "#f8f1dc"], ["#5b3a24", "#f2bd4f"], ["#e7a39a", "#2b1d14"], ["#2b1d14", "#e2a52b"], ["#a7c4bc", "#1f3b37"]];
+  const PALETTE = [["#9fd8cb", "#1d4a44"], ["#ffb48a", "#3a1d0f"], ["#ffd36e", "#2a1f17"], ["#c8d58e", "#2c3a12"], ["#d8c8f2", "#2e2350"], ["#f8c6bd", "#5a2018"], ["#a9d4f0", "#1d3550"], ["#3d4a6b", "#ffd36e"]];
 
   const DEMO_USERS = {
     me: { id: "me", name: "Andrew P.", handle: "andrew.p", city: "Brooklyn, NY", rating: 5.0 },
@@ -241,7 +241,7 @@
   const now = () => (LIVE ? Date.now() + skew : S.now);
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const money = (n) => "$" + Number(n).toFixed(2);
-  const UNKNOWN_BOOK = { id: "?", title: "Unknown book", author: "", year: "", isbn: "", bg: "#5b3a24", fg: "#f2e8d5", motif: 1, genre: "Other" };
+  const UNKNOWN_BOOK = { id: "?", title: "Unknown book", author: "", year: "", isbn: "", bg: "#f4ecdd", fg: "#2f241b", motif: 1, genre: "Other" };
   const bk = (id) => CATALOG_BY_ID[id] || S.extraBooks[id] || UNKNOWN_BOOK;
   const copy = (id) => S.copies.find((c) => c.id === id);
   const listing = (id) => S.listings.find((l) => l.id === id);
@@ -548,44 +548,55 @@
   };
   const icon = (n, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
 
-  // The Worm bookworm: a segmented body and round reading glasses.
-  function mascot(cls = "mascot") {
-    return `<svg class="${cls}" viewBox="0 0 160 110" role="img" aria-label="Worm, a bookworm in round glasses">
-      <circle class="seg-a outline" cx="22" cy="80" r="14"/>
-      <circle class="seg-b outline" cx="46" cy="70" r="16"/>
-      <circle class="seg-c outline" cx="72" cy="76" r="17"/>
-      <circle class="seg-d outline" cx="98" cy="66" r="18"/>
-      <circle class="head outline" cx="124" cy="46" r="26"/>
-      <circle class="lens" cx="114" cy="44" r="9"/>
-      <circle class="lens" cx="136" cy="44" r="9"/>
-      <path class="line" stroke-width="2.5" d="M123 44h4M105 42l-6-3"/>
-      <circle class="eye" cx="116" cy="45" r="2.6"/>
-      <circle class="eye" cx="138" cy="45" r="2.6"/>
-      <path class="line" stroke-width="2.5" stroke-linecap="round" d="M118 60q8 6 16 0"/>
-      <path class="line" stroke-width="2.5" stroke-linecap="round" d="M120 21q-4-12 4-14M130 21q6-10 14-8"/>
+  // Three book spines, for empty shelves.
+  function spines() {
+    return `<svg class="spines" viewBox="0 0 96 72" aria-hidden="true">
+      <rect x="14" y="10" width="18" height="56" rx="3" fill="var(--sea)" stroke="var(--edge)" stroke-width="1.5"/>
+      <rect x="34" y="18" width="16" height="48" rx="3" fill="var(--sun)" stroke="var(--edge)" stroke-width="1.5"/>
+      <rect x="52" y="6" width="14" height="62" rx="3" fill="var(--peach)" stroke="var(--edge)" stroke-width="1.5" transform="rotate(8 59 37)"/>
+      <path d="M6 68h84" stroke="var(--edge)" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="23" cy="22" r="3" fill="var(--edge)"/>
+      <path d="M38 30h8M38 34h8" stroke="var(--edge)" stroke-width="1.5"/>
     </svg>`;
   }
-  function starburst(points = 14, cls = "burst-fill") {
+  function starburst(points = 14) {
     const pts = [];
     for (let i = 0; i < points * 2; i++) {
       const r = i % 2 ? 38 : 50;
       const a = (Math.PI * i) / points - Math.PI / 2;
       pts.push((50 + r * Math.cos(a)).toFixed(1) + "," + (50 + r * Math.sin(a)).toFixed(1));
     }
-    return `<svg viewBox="-2 -2 104 104" aria-hidden="true"><polygon class="${cls}" points="${pts.join(" ")}"/></svg>`;
+    // A peach copy sits slightly off-register behind the sun-yellow burst, like old two-color print.
+    return `<svg viewBox="-2 -2 108 108" aria-hidden="true"><polygon class="burst-back" points="${pts.join(" ")}" transform="translate(5 5)"/><polygon class="burst-fill" points="${pts.join(" ")}"/></svg>`;
   }
   // A scatter of atomic-age shapes behind the sign-in screen.
   function atomicDeco() {
     return `<svg class="deco" viewBox="0 0 120 120" aria-hidden="true">
-      <ellipse cx="60" cy="60" rx="52" ry="18" fill="none" stroke="var(--teal)" stroke-width="3" transform="rotate(30 60 60)"/>
-      <ellipse cx="60" cy="60" rx="52" ry="18" fill="none" stroke="var(--tangerine)" stroke-width="3" transform="rotate(-30 60 60)"/>
-      <ellipse cx="60" cy="60" rx="52" ry="18" fill="none" stroke="var(--mustard)" stroke-width="3" transform="rotate(90 60 60)"/>
-      <circle cx="60" cy="60" r="9" fill="var(--avocado)" stroke="var(--hard)" stroke-width="2.5"/>
+      <ellipse cx="60" cy="60" rx="52" ry="18" fill="none" stroke="var(--sea)" stroke-width="4" transform="rotate(30 60 60)"/>
+      <ellipse cx="60" cy="60" rx="52" ry="18" fill="none" stroke="var(--peach)" stroke-width="4" transform="rotate(-30 60 60)"/>
+      <ellipse cx="60" cy="60" rx="52" ry="18" fill="none" stroke="var(--sun)" stroke-width="4" transform="rotate(90 60 60)"/>
+      <circle cx="60" cy="60" r="9" fill="var(--lilac)" stroke="var(--edge)" stroke-width="1.5"/>
+      <circle cx="104" cy="38" r="4" fill="var(--sage)"/>
     </svg>`;
   }
 
+  /* Arriving content. Each card or book animates the first time it appears, staggered within
+     a screen. Its start time is remembered, so a redraw mid-animation continues where it was
+     (negative delay) and a redraw afterwards shows it still. */
+  const RISE_MS = 560;
+  const firstSeen = new Map();
+  let riseOrder = 0;
+  function rv(key) {
+    const t = performance.now();
+    if (!firstSeen.has(key)) firstSeen.set(key, t + Math.min(riseOrder++, 12) * 45);
+    const delay = firstSeen.get(key) - t;
+    return delay < -RISE_MS ? "" : `data-rv style="animation-delay:${Math.round(delay)}ms"`;
+  }
+  // Cover images fade in over their generated jacket once loaded, and only the first time.
+  const loadedCovers = new Set();
+
   function cover(b, cls = "") {
-    const img = LIVE && b.cover ? `<img class="cover-img" src="${esc(b.cover)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : "";
+    const img = LIVE && b.cover ? `<img class="cover-img${loadedCovers.has(b.cover) ? " loaded" : ""}" src="${esc(b.cover)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : "";
     return `<div class="cover-wrap"><div class="cover m${b.motif || 1} ${cls}" style="background:${esc(b.bg)};color:${esc(b.fg)}" role="img" aria-label="Cover of ${esc(b.title)}">
       <span class="c-mark"></span>
       <span class="c-title">${esc(b.title)}</span>
@@ -594,7 +605,7 @@
     </div></div>`;
   }
 
-  function listingTile(l) {
+  function listingTile(l, ctx = "l") {
     const c = copy(l.copyId);
     const b = bk(c.bookId);
     const busy = activeExchange(c.id);
@@ -602,7 +613,7 @@
     if (busy) tags.push('<span class="cond off">IN AN EXCHANGE</span>');
     else if (onWishlist(b.id) && c.owner !== "me") tags.push('<span class="cond wish">WISHLIST</span>');
     const owner = c.owner === "me" ? "" : `<span>@${esc(user(c.owner).handle)}</span>`;
-    return `<button class="book ${busy ? "dim" : ""}" data-act="openListing" data-id="${esc(l.id)}">
+    return `<button class="book ${busy ? "dim" : ""}" data-act="openListing" data-id="${esc(l.id)}" ${rv(ctx + ":" + l.id)}>
       <div class="book-cover-box">${cover(b)}</div>
       <span class="b-title">${esc(b.title)}</span>
       <span class="b-meta">${tags.join("")}${owner}</span>
@@ -612,7 +623,7 @@
   function copyTile(c) {
     const b = bk(c.bookId);
     const busy = activeExchange(c.id);
-    return `<button class="book" data-act="openCopy" data-id="${esc(c.id)}">
+    return `<button class="book" data-act="openCopy" data-id="${esc(c.id)}" ${rv("copy:" + c.id)}>
       <div class="book-cover-box">${cover(b)}</div>
       <span class="b-title">${esc(b.title)}</span>
       <span class="b-meta"><span class="cond">${COND[c.cond].short}</span>${busy ? '<span class="cond wish">IN AN EXCHANGE</span>' : ""}</span>
@@ -622,7 +633,7 @@
   function wishTile(bookId) {
     const b = bk(bookId);
     const avail = S.listings.filter((l) => requestable(l) && copy(l.copyId).bookId === bookId && copy(l.copyId).owner !== "me").length;
-    return `<button class="book" data-act="openBook" data-id="${esc(bookId)}">
+    return `<button class="book" data-act="openBook" data-id="${esc(bookId)}" ${rv("wish:" + bookId)}>
       <div class="book-cover-box">${cover(b)}</div>
       <span class="b-title">${esc(b.title)}</span>
       <span class="b-meta">${avail ? `<span class="cond wish">${avail} AVAILABLE</span>` : "<span>Watching</span>"}</span>
@@ -638,7 +649,7 @@
     const st = stageInfo(d);
     const dir = d.role === "sender" ? `To ${esc(user(d.other).name)}` : `From ${esc(user(d.other).name)}`;
     const stamp = d.stage === "accepted" && d.role === "sender" ? stampHTML(d.x.shipBy) : "";
-    return `<button class="card tap ${needsMe(d) ? "attn" : ""}" data-act="openDeal" data-id="${esc(d.r.id)}">
+    return `<button class="card tap ${needsMe(d) ? "attn" : ""}" data-act="openDeal" data-id="${esc(d.r.id)}" ${rv("deal:" + d.r.id)}>
       <div class="deal-row">
         ${cover(d.book)}
         <div class="who"><strong>${esc(d.book.title)}</strong><span>${dir} · ${stars(user(d.other))}</span><span class="status ${st.cls}">${esc(st.text)}</span></div>
@@ -685,7 +696,7 @@
         return (b.title + " " + b.author + " " + b.isbn).toLowerCase().includes(q);
       });
       return `<div class="section"><p class="eyebrow">${hits.length} found</p>${
-        hits.length ? `<div class="grid">${hits.map(listingTile).join("")}</div>` : `<div class="empty">${mascot()}<h3>Nobody has listed that yet</h3><p>Find it under Scan and add it to your wishlist. We'll tell you the moment someone lists it.</p><button class="btn ghost sm" data-act="tab" data-id="scan">Search all books</button></div>`
+        hits.length ? `<div class="grid">${hits.map((l) => listingTile(l, "hit")).join("")}</div>` : `<div class="empty">${spines()}<h3>Nobody has listed that yet</h3><p>Find it under Scan and add it to your wishlist. We'll tell you the moment someone lists it.</p><button class="btn ghost sm" data-act="tab" data-id="scan">Search all books</button></div>`
       }</div>`;
     }
     let html = welcomeBanner();
@@ -694,20 +705,20 @@
       html += `<p class="ready">You have ${plural(b.available, "credit")}. ${plural(avail.length, "book")} ${avail.length === 1 ? "is" : "are"} ready for you to discover.</p>`;
     }
     if (!pool.length) {
-      return html + `<div class="empty">${mascot()}<h3>The shelves are filling up</h3><p>No one near you has listed books yet. Scan yours so the first readers find them.</p><button class="btn primary sm" data-act="tab" data-id="scan">Scan my books</button></div>`;
+      return html + `<div class="empty">${spines()}<h3>The shelves are filling up</h3><p>No one near you has listed books yet. Scan yours so the first readers find them.</p><button class="btn primary sm" data-act="tab" data-id="scan">Scan my books</button></div>`;
     }
     const wished = avail.filter((l) => onWishlist(copy(l.copyId).bookId));
     if (wished.length) {
       html += `<div class="section">
         <div class="section-head"><h2>From your wishlist</h2><span class="eyebrow">${wished.length} available</span></div>
-        <div class="rail">${wished.map(listingTile).join("")}</div>
+        <div class="rail">${wished.map((l) => listingTile(l, "wished")).join("")}</div>
       </div>`;
     }
     const trending = avail.slice().sort((a, z) => trendScore(copy(z.copyId).bookId) - trendScore(copy(a.copyId).bookId)).slice(0, 6);
     if (trending.length) {
       html += `<div class="section">
         <div class="section-head"><h2>Trending</h2><span class="eyebrow">Most wanted</span></div>
-        <div class="rail">${trending.map(listingTile).join("")}</div>
+        <div class="rail">${trending.map((l) => listingTile(l, "trend")).join("")}</div>
       </div>`;
     }
     const genres = ["All"].concat(GENRES);
@@ -725,7 +736,7 @@
         ${conds.map((c) => `<button class="chip sm" data-act="cond" data-id="${c}" aria-pressed="${ui.cond === c}">${c === "all" ? "Any condition" : COND[c].label + " +"}</button>`).join("")}
         <button class="chip sm" data-act="showAll" aria-pressed="${ui.showAll}">Include books in exchanges</button>
       </div>
-      ${recent.length ? `<div class="grid">${recent.map(listingTile).join("")}</div>` : '<p class="lede">No books match these filters yet.</p>'}
+      ${recent.length ? `<div class="grid">${recent.map((l) => listingTile(l, "recent")).join("")}</div>` : '<p class="lede">No books match these filters yet.</p>'}
     </div>`;
     return html;
   }
@@ -734,7 +745,7 @@
     if (S.me.welcome !== "locked") return "";
     const p = welcomeProgress();
     const next = p.listed < welcomeListings() ? 'data-act="tab" data-id="scan"' : 'data-act="topup"';
-    return `<button class="card tap welcome" ${next}>
+    return `<button class="card tap welcome" ${next} ${rv("welcome")}>
       <span class="eyebrow">Your first book is on us</span>
       <strong>List ${welcomeListings()} books and add to your fee balance to get a welcome credit.</strong>
       <span class="checks">
@@ -754,7 +765,7 @@
     if (ui.shelf === "available") {
       body = avail.length
         ? `<p class="lede">Anyone can request these. You earn 1 credit for each one that reaches its new reader.</p><div class="grid">${avail.map(copyTile).join("")}</div>`
-        : `<div class="empty">${mascot()}<h3>Nothing available yet</h3><p>Scan the books you've finished. Each one you send earns a credit.</p><button class="btn primary sm" data-act="tab" data-id="scan">Scan books</button></div>`;
+        : `<div class="empty">${spines()}<h3>Nothing available yet</h3><p>Scan the books you've finished. Each one you send earns a credit.</p><button class="btn primary sm" data-act="tab" data-id="scan">Scan books</button></div>`;
     } else if (ui.shelf === "unavailable") {
       body = unavail.length
         ? `<p class="lede">Your library. Hidden from Discover until you make them available.</p><div class="grid">${unavail.map(copyTile).join("")}</div>`
@@ -822,7 +833,7 @@
     if (isbn) return `<button class="btn ghost" data-act="lookupIsbn" data-id="${esc(isbn)}">Look up ISBN ${esc(isbn)}</button>`;
     return hits.map((b) => {
       const key = LIVE ? b.isbn : b.id;
-      return `<div class="result-row"><div class="mini">${cover(b)}</div><div class="grow"><strong>${esc(b.title)}</strong><p class="lede">${esc(b.author)}${b.year ? ", " + b.year : ""}</p></div><button class="btn ghost sm" data-act="addFromSearch" data-id="${esc(key)}">Add</button><button class="btn ghost sm" data-act="wishSearch" data-id="${esc(key)}">${onWishlist(key) ? "Wished ✓" : "Wish"}</button></div>`;
+      return `<div class="result-row" ${rv("hit:" + key)}><div class="mini">${cover(b)}</div><div class="grow"><strong>${esc(b.title)}</strong><p class="lede">${esc(b.author)}${b.year ? ", " + b.year : ""}</p></div><button class="btn ghost sm" data-act="addFromSearch" data-id="${esc(key)}">Add</button><button class="btn ghost sm" data-act="wishSearch" data-id="${esc(key)}">${onWishlist(key) ? "Wished ✓" : "Wish"}</button></div>`;
     }).join("");
   }
   function scanRow(cid) {
@@ -830,7 +841,7 @@
     if (!c || c.owner !== "me") return "";
     const b = bk(c.bookId);
     const on = !!openListing(c.id);
-    return `<div class="scan-row">
+    return `<div class="scan-row" ${rv("scan:" + c.id)}>
       <div class="mini">${cover(b)}</div>
       <div class="grow">
         <strong>${esc(b.title)}</strong>
@@ -861,7 +872,7 @@
         <button data-act="xTab" data-id="incoming" aria-pressed="${ui.xTab === "incoming"}">Coming to me<span class="count">${lists.incoming.length}</span></button>
         <button data-act="xTab" data-id="past" aria-pressed="${ui.xTab === "past"}">History<span class="count">${lists.past.length}</span></button>
       </div>
-      ${list.length ? `<div class="list">${list.map(dealCard).join("")}</div>` : `<div class="empty">${mascot()}<h3>${empty[0]}</h3><p>${empty[1]}</p></div>`}
+      ${list.length ? `<div class="list">${list.map(dealCard).join("")}</div>` : `<div class="empty">${spines()}<h3>${empty[0]}</h3><p>${empty[1]}</p></div>`}
     </div>`;
   }
 
@@ -877,14 +888,14 @@
         <div class="grow"><h2 class="page-title" style="font-size:var(--t-xl)">${esc(S.me.name || "New reader")}</h2><p class="lede">@${esc(S.me.handle || "you")}${place ? " · " + esc(place) : ""}${S.me.genres.length ? " · " + S.me.genres.map(esc).join(", ") : ""}</p></div>
       </div>
       <button class="link" data-act="editProfile">Edit profile</button>
-      <button class="card tap wallet-card" data-act="wallet">
+      <button class="card tap wallet-card" data-act="wallet" ${rv("wallet-card")}>
         <span class="row"><span class="grow"><span class="eyebrow">Book credits</span><span class="big-num">${b.available}</span></span>${icon("arrow", 20)}</span>
         <span class="mini-stats"><span><b>${b.reserved}</b> reserved</span><span><b>${b.pending}</b> pending</span><span><b>${mineDone.length}</b> exchanges</span></span>
       </button>
       <div class="stats">
-        <div class="stat"><b>${sent}</b><span>books sent</span></div>
-        <div class="stat"><b>${mineDone.length - sent}</b><span>received</span></div>
-        <div class="stat"><b>${money(feeFree())}</b><span>fee balance</span></div>
+        <div class="stat" ${rv("stat:sent")}><b>${sent}</b><span>books sent</span></div>
+        <div class="stat" ${rv("stat:recv")}><b>${mineDone.length - sent}</b><span>received</span></div>
+        <div class="stat" ${rv("stat:fee")}><b>${money(feeFree())}</b><span>fee balance</span></div>
       </div>
       ${S.disputes ? `<button class="card tap attn" data-act="support"><span class="eyebrow">Worm support</span><strong>${S.disputes.length ? plural(S.disputes.length, "problem report") + " to review" : "No open problem reports"}</strong></button>` : ""}
       ${S.me.strikes ? `<p class="note warn"><strong>${plural(S.me.strikes, "strike")}.</strong> Missing a ship window adds one. 3 in 6 months pauses requests.</p>` : ""}
@@ -944,8 +955,8 @@
           <div class="field"><label for="si-email">Email</label><input id="si-email" name="email" type="email" required autocomplete="email" placeholder="you@example.com"></div>
           <button class="btn ghost" type="submit">Email me a sign-in link</button>
         </form>`;
-    return `<div class="signin">
-      <div class="hero">${atomicDeco()}${mascot()}<h2>Your shelf is full of books <em>someone else wants.</em></h2>
+    return `<div class="signin ${entering("signin")}">
+      <div class="hero">${atomicDeco()}<h2>Your shelf is full of books <em>someone else wants.</em></h2>
         <p class="lede">Send the books you've finished. Earn a credit for each one. Spend credits on your next read.</p></div>
       <div class="list">
         <button class="btn auth-btn apple" data-act="signIn" data-id="apple">${APPLE_LOGO} Continue with Apple</button>
@@ -957,8 +968,16 @@
     </div>`;
   }
 
+  // Placeholder shelves that shimmer while the real ones load.
   function viewLoading() {
-    return `<div class="signin" style="align-items:center;text-align:center">${mascot()}<p class="lede">Opening your shelf…</p></div>`;
+    const book = `<span class="skel-book"><span class="skel cover-skel"></span><span class="skel line"></span><span class="skel line w40"></span></span>`;
+    return `<div class="view" aria-busy="true" aria-label="Loading your shelf">
+      <span class="skel pill"></span>
+      <span class="skel title"></span>
+      <div class="rail">${book.repeat(4)}</div>
+      <span class="skel title"></span>
+      <div class="grid">${book.repeat(6)}</div>
+    </div>`;
   }
 
   /* ---------------- onboarding ---------------- */
@@ -1011,7 +1030,7 @@
         <p class="note stamped">List ${welcomeListings()} books and make your first fee-balance top-up, and your first credit is on us.</p>
         <button class="btn primary" data-act="obDone">Scan my first books</button>`;
     }
-    return `<div class="view onboarding">${dots}${body}${step > 0 ? '<button class="link" data-act="obBack">Back</button>' : ""}</div>`;
+    return `<div class="view onboarding ${entering("ob" + step)}">${dots}${body}${step > 0 ? '<button class="link" data-act="obBack">Back</button>' : ""}</div>`;
   }
 
   /* ---------------- sheets ---------------- */
@@ -1312,7 +1331,7 @@
     const list = S.disputes || [];
     if (!list.length) return '<p class="lede">No open problem reports.</p>';
     return `<p class="lede">"Recipient was right" returns their credit, gives the sender no credit and a strike. "Book matched" completes the exchange normally.</p>
-      <div class="list">${list.map((x) => `<div class="card">
+      <div class="list">${list.map((x) => `<div class="card" ${rv("dispute:" + x.requestId)}>
         <strong>${esc(x.title)}</strong>
         <p class="lede">${esc(x.sender)} (@${esc(x.senderHandle)}) → ${esc(x.recipient)} (@${esc(x.recipientHandle)})</p>
         <p class="note warn">${esc(x.reason)}</p>
@@ -1332,7 +1351,7 @@
   function sheetAlerts() {
     if (!S.notes.length) return '<p class="lede">No alerts yet.</p>';
     return `${S.notes.some((n) => !n.read) ? '<button class="link" data-act="readAll">Mark all read</button>' : ""}
-      <div>${S.notes.map((n) => `<button class="alert ${n.read ? "" : "unread"}" data-act="openNote" data-id="${esc(n.id)}">
+      <div>${S.notes.map((n) => `<button class="alert ${n.read ? "" : "unread"}" data-act="openNote" data-id="${esc(n.id)}" ${rv("note:" + n.id)}>
         <span class="dot"></span>
         <span><strong>${esc(n.title)}</strong><p>${esc(n.body)}</p></span>
         <time>${ago(n.at)}</time>
@@ -1447,10 +1466,17 @@
   /* ---------------- render ---------------- */
 
   const app = document.getElementById("app");
+  // Returns "entering" the first time a screen is drawn, so its parts rise in once.
+  let lastScreen = null;
+  let screenNow = null;
+  function entering(key) {
+    screenNow = key;
+    return key !== lastScreen ? "entering" : "";
+  }
 
   function render() {
     const signedOut = LIVE ? ui.screen === "signin" : !S.signedIn;
-    const loading = LIVE && ui.screen === "loading";
+    const loading = ui.screen === "loading" && (LIVE || S.signedIn);
     const onboarding = !signedOut && !loading && (!S.me.onboarded || ui.obActive);
     const inApp = !signedOut && !loading && !onboarding;
     const unread = S.notes.filter((n) => !n.read).length;
@@ -1470,10 +1496,13 @@
       ui.sheetEnter = false;
     }
     const prevScroll = document.querySelector(".sheet")?.scrollTop;
+    riseOrder = 0;
+    screenNow = null;
     const body = signedOut ? viewSignIn() : loading ? viewLoading() : onboarding ? viewOnboarding() : views[ui.tab]();
+    lastScreen = screenNow;
     app.innerHTML = `
       <header class="top">
-        <div class="brand">${signedOut ? "" : mascot("mascot")}<h1>worm</h1></div>
+        <div class="brand"><h1>worm</h1></div>
         ${inApp ? creditPill() : ""}
         ${inApp ? `<button class="icon-btn" data-act="alerts" aria-label="Alerts${unread ? ", " + unread + " unread" : ""}">${icon("bell", 22)}${unread ? `<span class="badge">${unread}</span>` : ""}</button>` : ""}
         ${LIVE ? "" : '<button class="demo-btn" data-act="demo">Demo</button>'}
@@ -2472,9 +2501,23 @@
   document.addEventListener("error", (e) => {
     if (e.target && e.target.classList && e.target.classList.contains("cover-img")) e.target.remove();
   }, true);
+  document.addEventListener("load", (e) => {
+    const img = e.target;
+    if (img && img.classList && img.classList.contains("cover-img")) {
+      loadedCovers.add(img.getAttribute("src"));
+      requestAnimationFrame(() => img.classList.add("loaded"));
+    }
+  }, true);
 
-  render();
-  if (LIVE) bootLive();
+  if (LIVE) {
+    render();
+    bootLive();
+  } else {
+    // The demo opens the way the real app does: placeholder shelves, then the books arrive.
+    ui.screen = "loading";
+    render();
+    setTimeout(() => { ui.screen = "app"; render(); }, 700);
+  }
 
   // Offline support when installed as a PWA. Hosts that don't allow service workers just skip this.
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {

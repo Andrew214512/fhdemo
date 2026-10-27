@@ -20,7 +20,7 @@ Readers scan their books into a personal library, send books other readers reque
 | Sign-in | **Continue with Apple**, **Continue with Google**, or an **email link / 6-digit code**. No passwords |
 | Profile | Name, @handle, photo, city and state (public); street address (private, shown only to the reader shipping you a book, until they ship) |
 | "Points" | Read as fee-balance top-ups. Book credits still can't be bought |
-| Brand | **Worm**. Eclectic mid-century look: oatmeal and walnut, teal/tangerine/mustard/avocado/blush accents, a bookworm mascot |
+| Brand | **Worm**, set as a wordmark (no mascot). Light, eclectic mid-century look: warm near-white ground, pastel sea glass, peach, sun, sage, blush, sky and lilac with dark text, thin ink outlines with colored offset shadows. Cards and books fade in as they load, over shimmering placeholder shelves |
 | Region | US only (50 states + DC) |
 | Navigation | Discover · My Shelf (Available / Not available / Wishlist) · **Scan** · **Exchanges** · Profile. Credit balance and alerts sit in the header |
 
